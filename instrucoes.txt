@@ -1,0 +1,563 @@
+# PLANO MESTRE DE SPRINTS
+
+## Projeto: Sistema de Gestão de Loja com Etiquetas QR Code
+
+**Cliente:** IWR Modas
+**Responsável do projeto:** Wayster Cruz Di Melo
+**Diretriz central:** código limpo, padronizado, legível, escalável e de fácil manutenção.
+
+---
+
+# 1. OBJETIVO DO PROJETO
+
+Desenvolver um sistema de loja com foco em:
+
+* cadastro de produtos
+* geração de código único por produto
+* geração de QR Code
+* impressão de etiquetas
+* leitura via scanner 2D
+* registro de vendas
+* baixa automática de estoque
+* histórico de vendas
+
+---
+
+# 2. STACK DEFINIDA
+
+## Frontend
+
+* React
+* TypeScript
+* Vite
+
+## Backend
+
+* Spring Boot
+* Java 21
+
+## Banco de dados
+
+* PostgreSQL
+
+## Integrações
+
+* Impressora térmica de etiquetas Goldensky
+* Leitor 2D USB
+
+---
+
+# 3. DIRETRIZES GERAIS DE ENGENHARIA
+
+Toda a equipe deve seguir obrigatoriamente os princípios abaixo:
+
+## Padrões de código
+
+* código simples e de fácil entendimento
+* nomes claros e sem abreviações desnecessárias
+* separação de responsabilidades
+* baixo acoplamento
+* alta coesão
+* evitar duplicação
+* evitar lógica de negócio em controller
+* evitar lógica complexa em JSX
+* evitar código “inteligente demais” que prejudique manutenção
+
+## Padrões de arquitetura
+
+### Backend
+
+* Controller-Service-Repository
+* DTO Pattern
+* Mapper Pattern
+* Global Exception Handler
+* Service Interface + Implementation
+* Transaction boundary em service
+
+### Frontend
+
+* separação entre pages, components e services
+* custom hooks quando necessário
+* chamadas HTTP centralizadas
+* tipagem forte com TypeScript
+* componentes reutilizáveis e pequenos
+
+## Regras de projeto
+
+* nomes técnicos e banco em inglês
+* interface pode exibir português
+* migrations obrigatórias
+* documentação mínima obrigatória
+* toda entrega deve ter critério de aceite claro
+* nenhuma sprint pode ser considerada concluída sem evidência funcional
+
+---
+
+# 4. VISÃO GERAL DAS SPRINTS
+
+O projeto será dividido nas seguintes sprints:
+
+* Sprint 0 — Fundação técnica do projeto
+* Sprint 1 — Cadastro de produtos e fundação do domínio
+* Sprint 2 — Geração de código e QR Code
+* Sprint 3 — Impressão de etiquetas
+* Sprint 4 — Tela de venda e leitura por scanner
+* Sprint 5 — Finalização da venda e baixa de estoque
+* Sprint 6 — Histórico, ajustes operacionais e estabilização
+* Sprint 7 — Homologação, implantação e entrega
+
+---
+
+# 5. DETALHAMENTO DAS SPRINTS
+
+---
+
+## SPRINT 0 — FUNDAÇÃO TÉCNICA DO PROJETO
+
+### Objetivo
+
+Criar a base técnica correta do sistema, garantindo organização, padronização e estrutura escalável antes do início das regras de negócio.
+
+### Escopo
+
+* criação do frontend
+* criação do backend
+* conexão com PostgreSQL
+* migrations iniciais
+* organização de pastas
+* padronização arquitetural
+* tratamento global de erros
+* healthcheck
+* documentação mínima
+
+### Entregáveis
+
+* frontend criado e rodando
+* backend criado e rodando
+* banco configurado
+* migrations funcionando
+* endpoint `/health`
+* frontend consumindo `/health`
+* README backend
+* README frontend
+
+### Critérios de aceite
+
+* projetos compilando sem erro
+* banco conectado
+* migration executando corretamente
+* integração básica frontend/backend funcionando
+* arquitetura documentada
+
+### Fora do escopo
+
+* cadastro de produto
+* vendas
+* QR Code
+* impressão
+* estoque real
+
+---
+
+## SPRINT 1 — CADASTRO DE PRODUTOS E FUNDAÇÃO DO DOMÍNIO
+
+### Objetivo
+
+Construir a primeira funcionalidade real do sistema: gestão de produtos.
+
+### Escopo
+
+* modelagem da entidade Product
+* CRUD completo de produtos
+* validações de cadastro
+* listagem de produtos
+* edição de produto
+* ativação/inativação
+* tela de cadastro
+* tela de listagem
+* busca básica por nome ou código
+
+### Campos mínimos do produto
+
+* id
+* name
+* code
+* price
+* stockQuantity
+* active
+* createdAt
+* updatedAt
+
+### Entregáveis
+
+* endpoints de produto
+* DTOs de request/response
+* mappers
+* services
+* repository
+* telas de cadastro e listagem
+* validações no frontend e backend
+
+### Critérios de aceite
+
+* produto cadastra corretamente
+* produto edita corretamente
+* listagem funciona
+* validações impedem dados inválidos
+* produto pode ser ativado/inativado
+* busca básica funcionando
+
+### Fora do escopo
+
+* QR Code
+* impressão
+* venda
+* baixa de estoque por venda
+
+---
+
+## SPRINT 2 — GERAÇÃO DE CÓDIGO E QR CODE
+
+### Objetivo
+
+Adicionar a identificação única do produto e sua representação em QR Code.
+
+### Escopo
+
+* definição do padrão de código do produto
+* geração automática ou validada de código único
+* geração de QR Code pelo backend
+* endpoint para visualização/obtenção do QR Code
+* exibição do QR Code na tela de produto
+* validação de unicidade do código
+
+### Regra principal
+
+O QR Code deve conter apenas um identificador simples do produto, como:
+
+* `IWR-000001`
+
+### Entregáveis
+
+* regra de geração de código
+* garantia de unicidade
+* geração de QR Code
+* tela exibindo QR Code do produto
+* endpoint para obter QR Code
+
+### Critérios de aceite
+
+* todo produto possui código único
+* QR Code é gerado corretamente
+* leitura do QR retorna o valor esperado
+* código duplicado é bloqueado
+
+### Fora do escopo
+
+* impressão física
+* carrinho
+* venda
+* estoque por transação
+
+---
+
+## SPRINT 3 — IMPRESSÃO DE ETIQUETAS
+
+### Objetivo
+
+Permitir imprimir etiquetas dos produtos com QR Code e dados básicos.
+
+### Escopo
+
+* definição de layout padrão da etiqueta
+* montagem da etiqueta
+* exibição prévia da etiqueta
+* fluxo de impressão
+* botão “imprimir etiqueta” no produto
+* testes com impressora Goldensky
+* ajustes de legibilidade
+
+### Conteúdo mínimo da etiqueta
+
+* nome do produto
+* preço
+* código do produto
+* QR Code
+
+### Entregáveis
+
+* layout de etiqueta padronizado
+* integração de impressão
+* botão de impressão
+* testes de legibilidade
+* documentação básica do fluxo de impressão
+
+### Critérios de aceite
+
+* etiqueta imprime corretamente
+* QR Code impresso é legível
+* nome e preço estão legíveis
+* operador consegue imprimir a partir da tela do produto
+
+### Fora do escopo
+
+* venda
+* carrinho
+* fechamento de venda
+
+---
+
+## SPRINT 4 — TELA DE VENDA E LEITURA POR SCANNER
+
+### Objetivo
+
+Construir a operação de caixa com leitura do QR Code e montagem do carrinho.
+
+### Escopo
+
+* tela de PDV
+* campo de leitura com foco automático
+* leitura via scanner 2D
+* busca de produto por código
+* adição ao carrinho
+* soma de quantidade se produto repetido
+* subtotal e total
+
+### Fluxo esperado
+
+* scanner lê o QR
+* código entra no campo
+* sistema busca produto
+* produto vai para o carrinho
+
+### Entregáveis
+
+* tela de venda funcional
+* busca por código
+* carrinho com itens
+* cálculo de subtotal e total
+* mensagens de erro padronizadas
+
+### Critérios de aceite
+
+* leitura adiciona item corretamente
+* produto repetido soma quantidade
+* produto inexistente retorna erro amigável
+* produto inativo não entra no carrinho
+* tela mantém foco para leitura contínua
+
+### Fora do escopo
+
+* persistência definitiva da venda
+* baixa de estoque
+* histórico
+
+---
+
+## SPRINT 5 — FINALIZAÇÃO DA VENDA E BAIXA DE ESTOQUE
+
+### Objetivo
+
+Persistir a venda e refletir corretamente no estoque.
+
+### Escopo
+
+* criação da entidade Sale
+* criação da entidade SaleItem
+* criação da entidade StockMovement
+* endpoint de fechamento de venda
+* persistência transacional
+* baixa automática de estoque
+* validação de estoque disponível
+* regras de consistência
+
+### Regras obrigatórias
+
+* venda deve ser transacional
+* se falhar estoque, falha toda a venda
+* movimentação de estoque deve ser registrada
+* produto sem estoque não pode ser vendido
+
+### Entregáveis
+
+* endpoints de venda
+* persistência de venda
+* persistência de itens
+* baixa de estoque
+* movimentação de estoque
+* feedback de sucesso/erro no frontend
+
+### Critérios de aceite
+
+* venda salva corretamente
+* estoque é reduzido corretamente
+* movimentação de estoque é criada
+* falhas impedem inconsistência
+* valor total fecha corretamente
+
+### Fora do escopo
+
+* relatório avançado
+* dashboard gerencial
+* integração fiscal
+
+---
+
+## SPRINT 6 — HISTÓRICO, AJUSTES OPERACIONAIS E ESTABILIZAÇÃO
+
+### Objetivo
+
+Dar robustez operacional ao sistema e permitir consulta de vendas.
+
+### Escopo
+
+* tela de histórico de vendas
+* detalhes da venda
+* filtros básicos por período
+* ajustes finos de UX
+* mensagens operacionais
+* revisão de validações
+* revisão de erros
+* revisão de performance em fluxos principais
+
+### Entregáveis
+
+* listagem de vendas
+* detalhe da venda
+* filtros básicos
+* melhorias de usabilidade
+* correções de bugs
+* revisão técnica geral
+
+### Critérios de aceite
+
+* histórico consulta vendas reais
+* detalhe da venda exibe itens corretamente
+* sistema apresenta estabilidade de uso
+* bugs críticos das sprints anteriores resolvidos
+
+### Fora do escopo
+
+* BI avançado
+* financeiro
+* nota fiscal
+* multiempresa
+
+---
+
+## SPRINT 7 — HOMOLOGAÇÃO, IMPLANTAÇÃO E ENTREGA
+
+### Objetivo
+
+Preparar o sistema para uso real pelo cliente.
+
+### Escopo
+
+* testes finais ponta a ponta
+* homologação com fluxo real
+* ajuste final de impressão
+* ajuste final de scanner
+* documentação operacional básica
+* empacotamento para uso local
+* suporte de implantação inicial
+
+### Entregáveis
+
+* fluxo completo validado
+* ambiente preparado
+* checklist de implantação
+* manual operacional básico
+* versão final para entrega
+
+### Critérios de aceite
+
+* cadastro funciona
+* QR Code funciona
+* impressão funciona
+* leitura funciona
+* venda funciona
+* estoque baixa corretamente
+* cliente consegue executar operação básica
+
+---
+
+# 6. ORDEM OFICIAL DE DESENVOLVIMENTO
+
+A ordem obrigatória do projeto é:
+
+1. fundação técnica
+2. cadastro de produtos
+3. geração de código e QR
+4. impressão de etiquetas
+5. tela de venda
+6. persistência da venda
+7. baixa de estoque
+8. histórico e estabilização
+9. homologação e entrega
+
+A equipe não deve inverter essa ordem sem aprovação.
+
+---
+
+# 7. REGRAS DE ENTREGA POR SPRINT
+
+Cada sprint deve obrigatoriamente retornar:
+
+* resumo técnico do que foi feito
+* funcionalidades implementadas
+* estrutura criada ou alterada
+* endpoints criados
+* telas criadas
+* evidências de funcionamento
+* pontos de atenção
+* débitos técnicos identificados
+* sugestões para sprint seguinte
+
+---
+
+# 8. PADRÃO DE QUALIDADE OBRIGATÓRIO
+
+Nenhuma entrega será aceita se houver:
+
+* controller com regra de negócio
+* acesso direto indevido ao banco
+* ausência de DTO
+* ausência de validação
+* código confuso
+* duplicação desnecessária
+* falta de padrão entre módulos
+* nomes ruins
+* falta de tratamento de erro
+* frontend com lógica excessiva em componentes de tela
+
+---
+
+# 9. DEFINIÇÃO DE SUCESSO DO PROJETO
+
+O projeto será considerado bem sucedido quando o cliente puder:
+
+* cadastrar um produto
+* gerar seu QR Code
+* imprimir a etiqueta
+* fixar no produto
+* ler no caixa com scanner
+* registrar a venda
+* baixar estoque automaticamente
+
+---
+
+# 10. INSTRUÇÃO OFICIAL À EQUIPE
+
+Este documento é a referência oficial de execução do projeto.
+
+Toda decisão técnica deve respeitar:
+
+* clareza
+* padronização
+* manutenibilidade
+* escalabilidade
+* simplicidade
+
+Nenhuma sprint deve avançar sem validação da sprint anterior.
+
+A liderança técnica do projeto definirá as instruções detalhadas de cada sprint conforme a evolução do desenvolvimento.
