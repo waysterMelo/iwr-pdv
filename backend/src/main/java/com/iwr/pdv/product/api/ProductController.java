@@ -1,6 +1,7 @@
 package com.iwr.pdv.product.api;
 
 import com.iwr.pdv.product.api.dto.ProductActivationRequest;
+import com.iwr.pdv.product.api.dto.ProductPageResponse;
 import com.iwr.pdv.product.api.dto.ProductRequest;
 import com.iwr.pdv.product.api.dto.ProductResponse;
 import com.iwr.pdv.product.application.ProductService;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -94,6 +96,35 @@ public class ProductController {
     @ApiResponse(responseCode = "200", description = "Products returned successfully")
     public List<ProductResponse> list(@RequestParam(name = "search", required = false) String search) {
         return productService.list(search);
+    }
+
+    @GetMapping("/page")
+    @Operation(summary = "List products with pagination and inventory filters")
+    @ApiResponse(responseCode = "200", description = "Product page returned successfully")
+    public ProductPageResponse listPage(
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "active", required = false) Boolean active,
+            @RequestParam(name = "stockStatus", required = false) String stockStatus,
+            @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(name = "lowStockThreshold", defaultValue = "5") int lowStockThreshold,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size,
+            @RequestParam(name = "sort", defaultValue = "createdAt") String sort,
+            @RequestParam(name = "direction", defaultValue = "desc") String direction
+    ) {
+        return productService.listPage(
+                search,
+                active,
+                stockStatus,
+                minPrice,
+                maxPrice,
+                lowStockThreshold,
+                page,
+                size,
+                sort,
+                direction
+        );
     }
 
     @GetMapping("/{productId}")

@@ -1,8 +1,10 @@
 package com.iwr.pdv.product.application;
 
 import com.iwr.pdv.product.api.dto.ProductActivationRequest;
+import com.iwr.pdv.product.api.dto.ProductPageResponse;
 import com.iwr.pdv.product.api.dto.ProductRequest;
 import com.iwr.pdv.product.api.dto.ProductResponse;
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductService {
@@ -10,6 +12,19 @@ public interface ProductService {
     ProductResponse create(ProductRequest request);
 
     List<ProductResponse> list(String search);
+
+    ProductPageResponse listPage(
+            String search,
+            Boolean active,
+            String stockStatus,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            int lowStockThreshold,
+            int page,
+            int size,
+            String sort,
+            String direction
+    );
 
     ProductResponse findById(Long productId);
 

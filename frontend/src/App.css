@@ -72,7 +72,6 @@ h3 {
 .metric-pill span,
 .stat-card span,
 .product-card-grid span,
-.status-detail span,
 .cart-item-main span,
 .cart-item-main small,
 .cart-price span,
@@ -298,14 +297,12 @@ h3 {
 }
 
 .hero-panel,
-.status-panel,
 .product-form-panel,
 .product-list-panel,
 .checkout-hero-panel,
 .scanner-panel,
 .cart-panel,
 .checkout-footer-panel,
-.acceptance-card,
 .stat-card,
 .product-card,
 .cart-item {
@@ -315,14 +312,12 @@ h3 {
 }
 
 .hero-panel,
-.status-panel,
 .product-form-panel,
 .product-list-panel,
 .checkout-hero-panel,
 .scanner-panel,
 .cart-panel,
-.checkout-footer-panel,
-.acceptance-card {
+.checkout-footer-panel {
   border-radius: 8px;
   padding: 32px;
 }
@@ -371,8 +366,6 @@ h3 {
 .checkout-hero-panel p,
 .product-form-panel p,
 .product-list-panel p,
-.status-card-header p,
-.acceptance-card p,
 .section-header p {
   margin: 0;
   color: var(--color-muted);
@@ -448,8 +441,6 @@ h3 {
 }
 
 .section-header h2,
-.status-card-header h2,
-.acceptance-card h2,
 .product-card h3 {
   margin: 0 0 8px;
   font-size: 1.55rem;
@@ -549,6 +540,49 @@ h3 {
   flex-wrap: wrap;
 }
 
+.inventory-toolbar {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(120px, 1fr));
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-soft);
+}
+
+.inventory-toolbar .secondary-button {
+  align-self: end;
+}
+
+.field-group--wide {
+  min-width: 0;
+}
+
+.inventory-result-bar,
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+}
+
+.inventory-result-bar strong,
+.pagination-bar span {
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.pagination-bar {
+  margin: 18px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
 .action-button,
 .secondary-button,
 .icon-button,
@@ -636,8 +670,16 @@ h3 {
   margin-bottom: 18px;
 }
 
+.product-card-badges {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .product-card-code,
-.status-badge {
+.status-badge,
+.stock-chip {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
@@ -661,14 +703,22 @@ h3 {
   color: #b91c1c;
 }
 
-.status-badge--degraded,
-.status-badge--loading {
-  border-color: rgba(217, 119, 6, 0.28);
+.stock-chip--ok {
+  border-color: rgba(22, 163, 74, 0.28);
+  color: #15803d;
+}
+
+.stock-chip--low {
+  border-color: rgba(217, 119, 6, 0.32);
   color: #b45309;
 }
 
-.product-card-grid,
-.status-card-grid {
+.stock-chip--empty {
+  border-color: rgba(220, 38, 38, 0.28);
+  color: #b91c1c;
+}
+
+.product-card-grid {
   display: grid;
   gap: 1px;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -677,16 +727,14 @@ h3 {
   border: 1px solid var(--color-border);
 }
 
-.product-card-grid div,
-.status-detail {
+.product-card-grid div {
   padding: 16px;
   background: var(--color-panel-soft);
   border: 0;
   border-radius: 0;
 }
 
-.product-card-grid strong,
-.status-detail strong {
+.product-card-grid strong {
   font-size: 1.05rem;
 }
 
@@ -740,55 +788,6 @@ h3 {
   border: 1px dashed var(--color-border-strong);
   background: var(--color-panel-soft);
   color: var(--color-muted);
-}
-
-.status-card {
-  display: grid;
-  gap: 24px;
-}
-
-.status-card-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-
-.status-badges {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.status-message,
-.status-meta {
-  color: var(--color-muted);
-}
-
-.acceptance-list {
-  list-style: none;
-  margin: 18px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
-}
-
-.acceptance-list li {
-  position: relative;
-  padding-left: 22px;
-  color: #374151;
-  line-height: 1.6;
-}
-
-.acceptance-list li::before {
-  content: '';
-  position: absolute;
-  top: 0.62rem;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  background: var(--color-ink);
 }
 
 .cart-panel,
@@ -1051,6 +1050,7 @@ h3 {
   .content-grid,
   .history-grid,
   .history-filter-form,
+  .inventory-toolbar,
   .cart-item {
     grid-template-columns: 1fr;
   }
@@ -1087,8 +1087,6 @@ h3 {
   .product-list-panel,
   .scanner-panel,
   .cart-panel,
-  .status-panel,
-  .acceptance-card,
   .checkout-footer-panel {
     padding: 22px;
   }

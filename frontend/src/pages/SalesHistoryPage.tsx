@@ -1,24 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { cancelSale, getSaleReceiptUrl, getSales } from '../services/saleService'
 import type { Sale } from '../types/sale'
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value)
-}
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return '-'
-  }
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+import { getErrorMessage } from '../utils/errors'
+import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 
 export function SalesHistoryPage() {
   const [sales, setSales] = useState<Sale[]>([])
@@ -43,7 +27,7 @@ export function SalesHistoryPage() {
       setSelectedSale(response[0] ?? null)
       setErrorMessage(null)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Nao foi possivel carregar o historico.')
+      setErrorMessage(getErrorMessage(error, 'Nao foi possivel carregar o historico.'))
     } finally {
       setIsLoading(false)
     }
@@ -91,7 +75,7 @@ export function SalesHistoryPage() {
       await loadSales(startDate, endDate)
       setErrorMessage(null)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Nao foi possivel cancelar a venda.')
+      setErrorMessage(getErrorMessage(error, 'Nao foi possivel cancelar a venda.'))
     } finally {
       setIsCancelling(false)
     }
@@ -177,7 +161,8 @@ export function SalesHistoryPage() {
                     <span>Venda #{sale.id}</span>
                     <strong>{formatCurrency(sale.totalAmount)}</strong>
                     <small>
-                      {sale.status === 'CANCELLED' ? 'Cancelada' : 'Concluida'} - {sale.paymentMethod} - {formatDate(sale.soldAt)}
+                      {sale.status === 'CANCELLED' ? 'Cancelada' : 'Concluida'} - {sale.paymentMethod} -{' '}
+                      {formatNullableDateTime(sale.soldAt)}
                     </small>
                   </button>
                 ))}
@@ -238,7 +223,7 @@ export function SalesHistoryPage() {
                 </article>
                 {selectedSale.status === 'CANCELLED' ? (
                   <div className="feedback-message feedback-message--error">
-                    Venda cancelada em {formatDate(selectedSale.cancelledAt ?? '')}. Motivo:{' '}
+                    Venda cancelada em {formatNullableDateTime(selectedSale.cancelledAt)}. Motivo:{' '}
                     {selectedSale.cancellationReason}
                   </div>
                 ) : null}

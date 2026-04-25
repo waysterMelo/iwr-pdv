@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { login } from '../services/authService'
 import type { AuthUser } from '../types/auth'
+import { getErrorMessage } from '../utils/errors'
 
 type LoginPageProps = {
   onAuthenticated: (user: AuthUser) => void
@@ -27,7 +28,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       const response = await login(username.trim(), password)
       onAuthenticated(response.user)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Nao foi possivel entrar no sistema.')
+      setErrorMessage(getErrorMessage(error, 'Nao foi possivel entrar no sistema.'))
     } finally {
       setIsSubmitting(false)
     }

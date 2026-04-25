@@ -5,17 +5,12 @@ import { closeSale, getSaleReceiptUrl } from '../services/saleService'
 import type { CashRegister } from '../types/cashRegister'
 import type { Product } from '../types/product'
 import type { PaymentMethod, Sale } from '../types/sale'
+import { getErrorMessage } from '../utils/errors'
+import { formatCurrency } from '../utils/formatters'
 
 type CartItem = {
   product: Product
   quantity: number
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value)
 }
 
 function getCartItemTotal(item: CartItem) {
@@ -120,7 +115,7 @@ export function SalesCheckoutPage() {
       addProductToCart(product)
       setScanCode('')
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : 'Nao foi possivel buscar o produto.', 'error')
+      showMessage(getErrorMessage(error, 'Nao foi possivel buscar o produto.'), 'error')
     } finally {
       setIsSearching(false)
       scannerInputRef.current?.focus()
@@ -196,7 +191,7 @@ export function SalesCheckoutPage() {
       await refreshCashRegister()
       showMessage(`Venda #${sale.id} finalizada com sucesso.`, 'success')
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : 'Nao foi possivel finalizar a venda.', 'error')
+      showMessage(getErrorMessage(error, 'Nao foi possivel finalizar a venda.'), 'error')
     } finally {
       setIsClosingSale(false)
       scannerInputRef.current?.focus()

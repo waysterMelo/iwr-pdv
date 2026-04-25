@@ -1,7 +1,13 @@
-import type { Product, ProductActivationPayload, ProductPayload } from '../types/product'
+import type {
+  Product,
+  ProductActivationPayload,
+  ProductPage,
+  ProductPageFilters,
+  ProductPayload,
+} from '../types/product'
 import { get, patch, post, put } from './httpClient'
 
-export async function getProducts(search: string) {
+export async function getProducts(search: string, signal?: AbortSignal) {
   const searchParams = new URLSearchParams()
 
   if (search.trim()) {
@@ -9,7 +15,39 @@ export async function getProducts(search: string) {
   }
 
   const query = searchParams.size > 0 ? `?${searchParams.toString()}` : ''
-  return get<Product[]>(`/api/products${query}`)
+  return get<Product[]>(`/api/products${query}`, { signal })
+}
+
+export async function getProductPage(filters: ProductPageFilters, page: number, signal?: AbortSignal) {
+  const searchParams = new URLSearchParams()
+
+  if (filters.search.trim()) {
+    searchParams.set('search', filters.search.trim())
+  }
+
+  if (filters.active !== 'ALL') {
+    searchParams.set('active', String(filters.active === 'ACTIVE'))
+  }
+
+  if (filters.stockStatus !== 'ALL') {
+    searchParams.set('stockStatus', filters.stockStatus)
+  }
+
+  if (filters.minPrice.trim()) {
+    searchParams.set('minPrice', filters.minPrice.trim())
+  }
+
+  if (filters.maxPrice.trim()) {
+    searchParams.set('maxPrice', filters.maxPrice.trim())
+  }
+
+  searchParams.set('lowStockThreshold', filters.lowStockThreshold.trim() || '5')
+  searchParams.set('page', String(page))
+  searchParams.set('size', String(filters.size))
+  searchParams.set('sort', filters.sort)
+  searchParams.set('direction', filters.direction)
+
+  return get<ProductPage>(`/api/products/page?${searchParams.toString()}`, { signal })
 }
 
 export async function findProductByCode(code: string) {

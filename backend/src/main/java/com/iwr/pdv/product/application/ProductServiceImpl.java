@@ -3,21 +3,38 @@ package com.iwr.pdv.product.application;
 import com.iwr.pdv.common.exception.ResourceConflictException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import com.iwr.pdv.product.api.dto.ProductActivationRequest;
+import com.iwr.pdv.product.api.dto.ProductPageResponse;
 import com.iwr.pdv.product.api.dto.ProductRequest;
 import com.iwr.pdv.product.api.dto.ProductResponse;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.product.domain.ProductSearchRepository;
 import com.iwr.pdv.product.mapper.ProductMapper;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.Set;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
 public class ProductServiceImpl implements ProductService {
+
+    private static final int DEFAULT_LOW_STOCK_THRESHOLD = 5;
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "name",
+            "code",
+            "price",
+            "stockQuantity",
+            "createdAt",
+            "updatedAt"
+    );
 
     private final ProductRepository productRepository;
     private final ProductSearchRepository productSearchRepository;
@@ -64,6 +81,48 @@ public class ProductServiceImpl implements ProductService {
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductPageResponse listPage(
+            String search,
+            Boolean active,
+            String stockStatus,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            int lowStockThreshold,
+            int page,
+            int size,
+            String sort,
+            String direction
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        int safeLowStockThreshold = lowStockThreshold > 0 ? lowStockThreshold : DEFAULT_LOW_STOCK_THRESHOLD;
+        String safeSort = ALLOWED_SORT_FIELDS.contains(sort) ? sort : "createdAt";
+        Sort.Direction safeDirection = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        PageRequest pageRequest = PageRequest.of(safePage, safeSize, Sort.by(safeDirection, safeSort));
+
+        Page<Product> products = productSearchRepository.findPageByFilters(
+                search,
+                active,
+                stockStatus,
+                minPrice,
+                maxPrice,
+                safeLowStockThreshold,
+                pageRequest
+        );
+
+        return new ProductPageResponse(
+                products.getContent().stream().map(productMapper::toResponse).toList(),
+                products.getNumber(),
+                products.getSize(),
+                products.getTotalElements(),
+                products.getTotalPages(),
+                products.isFirst(),
+                products.isLast()
+        );
     }
 
     @Override

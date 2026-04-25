@@ -153,6 +153,36 @@ class ProductControllerIntegrationTest {
     }
 
     @Test
+    void shouldReturnPagedProductsWithInventoryFilters() throws Exception {
+        productRepository.save(buildProduct("Vestido Amarelo", "IWR-101", new BigDecimal("80.00"), 3, true));
+        productRepository.save(buildProduct("Vestido Azul", "IWR-102", new BigDecimal("120.00"), 10, true));
+        productRepository.save(buildProduct("Vestido Inativo", "IWR-103", new BigDecimal("90.00"), 2, false));
+        productRepository.save(buildProduct("Blusa Verde", "IWR-104", new BigDecimal("60.00"), 0, true));
+
+        mockMvc.perform(get("/api/products/page")
+                        .header("Authorization", authHeader)
+                        .param("search", "vestido")
+                        .param("active", "true")
+                        .param("stockStatus", "LOW_STOCK")
+                        .param("lowStockThreshold", "5")
+                        .param("minPrice", "70")
+                        .param("maxPrice", "100")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("sort", "name")
+                        .param("direction", "asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].code").value("IWR-101"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(true));
+    }
+
+    @Test
     void shouldActivateAndInactivateProduct() throws Exception {
         Product savedProduct = productRepository.save(buildProduct(
                 "Blazer Feminino",
@@ -286,6 +316,9 @@ class ProductControllerIntegrationTest {
                     if (!html.contains("IWR MODAS")
                             || !html.contains("Vestido Festa")
                             || !html.contains("IWR-050")
+                            || !html.contains("@page { size: 50mm 30mm; margin: 0; }")
+                            || !html.contains("width: 18mm;")
+                            || !html.contains("class=\"qr-frame\"")
                             || !html.contains("data:image/png;base64,")) {
                         throw new AssertionError("Expected a printable label HTML response.");
                     }

@@ -31,7 +31,7 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                   <meta name="viewport" content="width=device-width, initial-scale=1">
                   <title>Etiqueta %s</title>
                   <style>
-                    @page { size: 58mm 38mm; margin: 0; }
+                    @page { size: 50mm 30mm; margin: 0; }
                     * { box-sizing: border-box; }
                     body {
                       margin: 0;
@@ -43,45 +43,60 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       font-family: Arial, sans-serif;
                     }
                     .label {
-                      width: 58mm;
-                      height: 38mm;
+                      width: 50mm;
+                      height: 30mm;
                       display: grid;
-                      grid-template-columns: 1fr 23mm;
-                      gap: 2.5mm;
+                      grid-template-columns: minmax(0, 1fr) 21mm;
+                      gap: 2mm;
                       align-items: center;
-                      padding: 3mm;
+                      padding: 2.4mm;
                       background: #fff;
                       border: 1px solid #d1d5db;
                     }
+                    .content {
+                      min-width: 0;
+                    }
                     .brand {
-                      margin: 0 0 1.8mm;
-                      font-size: 9pt;
+                      margin: 0 0 1.1mm;
+                      font-size: 6.4pt;
                       font-weight: 800;
-                      letter-spacing: 0.5pt;
+                      letter-spacing: 0.45pt;
+                      color: #4b5563;
                     }
                     .name {
-                      margin: 0 0 2.2mm;
-                      max-height: 12mm;
+                      margin: 0 0 1.3mm;
+                      max-height: 8mm;
                       overflow: hidden;
-                      font-size: 8pt;
-                      line-height: 1.2;
+                      font-size: 7.4pt;
+                      line-height: 1.12;
                       font-weight: 700;
+                      word-break: break-word;
                     }
                     .price {
-                      margin: 0 0 1.8mm;
-                      font-size: 13pt;
+                      margin: 0 0 1.1mm;
+                      font-size: 12.4pt;
                       line-height: 1;
                       font-weight: 900;
                     }
                     .code {
                       margin: 0;
-                      font-size: 7pt;
-                      letter-spacing: 0.7pt;
+                      font-size: 6.6pt;
+                      letter-spacing: 0.45pt;
                       color: #374151;
                     }
+                    .qr-frame {
+                      width: 21mm;
+                      height: 21mm;
+                      display: grid;
+                      place-items: center;
+                      padding: 1.5mm;
+                      background: #fff;
+                      border: 0;
+                    }
                     img {
-                      width: 23mm;
-                      height: 23mm;
+                      width: 18mm;
+                      height: 18mm;
+                      display: block;
                       object-fit: contain;
                     }
                     @media print {
@@ -92,13 +107,15 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                 </head>
                 <body>
                   <section class="label" aria-label="Etiqueta de produto">
-                    <div>
+                    <div class="content">
                       <p class="brand">IWR MODAS</p>
                       <p class="name">%s</p>
                       <p class="price">%s</p>
                       <p class="code">%s</p>
                     </div>
-                    <img src="data:image/png;base64,%s" alt="QR Code %s">
+                    <div class="qr-frame" aria-label="QR Code do produto">
+                      <img src="data:image/png;base64,%s" alt="QR Code %s">
+                    </div>
                   </section>
                   <script>
                     window.addEventListener('load', () => {

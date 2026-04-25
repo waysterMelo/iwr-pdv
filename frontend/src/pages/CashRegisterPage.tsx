@@ -6,24 +6,8 @@ import {
   openCashRegister,
 } from '../services/cashRegisterService'
 import type { CashMovementType, CashRegister } from '../types/cashRegister'
-
-function formatCurrency(value: number | null | undefined) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value ?? 0)
-}
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return '-'
-  }
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+import { getErrorMessage } from '../utils/errors'
+import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 
 export function CashRegisterPage() {
   const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
@@ -43,7 +27,7 @@ export function CashRegisterPage() {
     try {
       setCashRegister(await getCurrentCashRegister())
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : 'Nao foi possivel carregar o caixa.', 'error')
+      showMessage(getErrorMessage(error, 'Nao foi possivel carregar o caixa.'), 'error')
     } finally {
       setIsLoading(false)
     }
@@ -71,7 +55,7 @@ export function CashRegisterPage() {
       setCashRegister(response)
       showMessage('Caixa aberto com sucesso.', 'success')
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : 'Nao foi possivel abrir o caixa.', 'error')
+      showMessage(getErrorMessage(error, 'Nao foi possivel abrir o caixa.'), 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -94,7 +78,7 @@ export function CashRegisterPage() {
       setMovementReason('')
       showMessage('Movimentacao registrada.', 'success')
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : 'Nao foi possivel registrar a movimentacao.', 'error')
+      showMessage(getErrorMessage(error, 'Nao foi possivel registrar a movimentacao.'), 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -114,7 +98,7 @@ export function CashRegisterPage() {
       setCashRegister(response)
       showMessage('Caixa fechado com sucesso.', 'success')
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : 'Nao foi possivel fechar o caixa.', 'error')
+      showMessage(getErrorMessage(error, 'Nao foi possivel fechar o caixa.'), 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -137,7 +121,7 @@ export function CashRegisterPage() {
           <div className="checkout-summary">
             <span>Status do caixa</span>
             <strong>{isLoading ? '...' : cashRegister?.status === 'OPEN' ? 'Aberto' : 'Fechado'}</strong>
-            <small>{cashRegister ? `Aberto em ${formatDate(cashRegister.openedAt)}` : 'Nenhum caixa aberto'}</small>
+            <small>{cashRegister ? `Aberto em ${formatNullableDateTime(cashRegister.openedAt)}` : 'Nenhum caixa aberto'}</small>
           </div>
         </section>
 
@@ -288,7 +272,7 @@ export function CashRegisterPage() {
                       <article className="sale-history-item" key={movement.id}>
                         <span>{movement.type === 'CASH_IN' ? 'Suprimento' : 'Sangria'}</span>
                         <strong>{formatCurrency(movement.amount)}</strong>
-                        <small>{movement.reason} - {formatDate(movement.createdAt)}</small>
+                        <small>{movement.reason} - {formatNullableDateTime(movement.createdAt)}</small>
                       </article>
                     ))
                   )}

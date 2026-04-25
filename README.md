@@ -18,12 +18,35 @@ Fundacao tecnica do sistema de gestao de loja da IWR Modas.
 - [CHECKLIST_IMPLANTACAO.md](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\CHECKLIST_IMPLANTACAO.md)
 - [MANUAL_OPERACIONAL.md](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\MANUAL_OPERACIONAL.md)
 
-## Como subir o ambiente
+## Como subir o ambiente com Docker
 
-1. Inicie o PostgreSQL com `docker compose up -d`.
+1. Suba banco, backend e frontend com `docker compose up -d --build`.
+2. Acesse o sistema em `http://localhost:5173`.
+3. Acesse o backend em `http://localhost:8080/health`.
+4. Acesse o Swagger em `http://localhost:5173/swagger-ui.html` ou `http://localhost:8080/swagger-ui.html`.
+5. Entre no sistema com `admin` / `admin123` no primeiro acesso local.
+
+Comandos uteis:
+
+- Ver logs: `docker compose logs -f`.
+- Parar containers: `docker compose down`.
+- Parar e apagar o banco local: `docker compose down -v`.
+- Rebuild completo: `docker compose build --no-cache`.
+
+Para definir o usuario inicial em Docker, execute o compose com variaveis de ambiente:
+
+```powershell
+$env:DEFAULT_ADMIN_USERNAME='admin'
+$env:DEFAULT_ADMIN_PASSWORD='troque-esta-senha'
+$env:DEFAULT_ADMIN_DISPLAY_NAME='Administrador'
+docker compose up -d --build
+```
+
+## Como subir em desenvolvimento sem Docker
+
+1. Inicie apenas o PostgreSQL com `docker compose up -d postgres`.
 2. Suba o backend com `backend\mvnw.cmd spring-boot:run`.
 3. Suba o frontend com `npm install` e `npm run dev` dentro de `frontend`.
-4. Entre no sistema com `admin` / `admin123` no primeiro acesso local.
 
 Antes de entregar ao cliente, defina `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_PASSWORD` e `DEFAULT_ADMIN_DISPLAY_NAME` no ambiente do backend.
 

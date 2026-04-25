@@ -1,14 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { HealthStatusCard } from '../components/HealthStatusCard'
-import { getHealthStatus, HttpRequestError } from '../services/healthService'
+import { useDeferredValue, useEffect, useState, type FormEvent } from 'react'
 import {
   createProduct,
-  getProducts,
+  getProductPage,
   updateProduct,
   updateProductActivation,
 } from '../services/productService'
-import type { HealthStatus } from '../types/health'
-import type { Product, ProductPayload } from '../types/product'
+import type { Product, ProductPage, ProductPageFilters, ProductPayload } from '../types/product'
+import { getErrorMessage } from '../utils/errors'
+import { formatCurrency, formatDateTime } from '../utils/formatters'
 
 type ProductFormState = {
   name: string
@@ -26,39 +25,16 @@ const initialFormState: ProductFormState = {
   active: 'true',
 }
 
-const acceptanceItems = [
-  'Gerar codigo no padrao IWR-000001 quando o campo ficar vazio.',
-  'Manter unicidade do codigo do produto.',
-  'Exibir QR Code do identificador do produto na tela.',
-  'Gerar etiqueta imprimivel com nome, preco, codigo e QR Code.',
-  'Buscar por nome ou codigo.',
-  'Bloquear dados invalidos no backend e no frontend.',
-]
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof HttpRequestError) {
-    return error.message
-  }
-
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return 'Nao foi possivel concluir a operacao.'
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value)
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
+const initialFilters: ProductPageFilters = {
+  search: '',
+  active: 'ALL',
+  stockStatus: 'ALL',
+  minPrice: '',
+  maxPrice: '',
+  lowStockThreshold: '5',
+  sort: 'createdAt',
+  direction: 'desc',
+  size: 12,
 }
 
 function toPayload(form: ProductFormState): ProductPayload {
@@ -109,13 +85,47 @@ function getLabelUrl(productId: number) {
   return `/api/products/${productId}/label`
 }
 
+function getStockStatusLabel(product: Product, lowStockThreshold: number) {
+  if (product.stockQuantity === 0) {
+    return 'Sem estoque'
+  }
+
+  if (product.stockQuantity <= lowStockThreshold) {
+    return 'Estoque baixo'
+  }
+
+  return 'Em estoque'
+}
+
+function getStockStatusClassName(product: Product, lowStockThreshold: number) {
+  if (product.stockQuantity === 0) {
+    return 'stock-chip stock-chip--empty'
+  }
+
+  if (product.stockQuantity <= lowStockThreshold) {
+    return 'stock-chip stock-chip--low'
+  }
+
+  return 'stock-chip stock-chip--ok'
+}
+
+function buildEmptyProductPage(size: number): ProductPage {
+  return {
+    content: [],
+    page: 0,
+    size,
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+  }
+}
+
 export function ProductManagementPage() {
-  const [health, setHealth] = useState<HealthStatus | null>(null)
-  const [healthErrorMessage, setHealthErrorMessage] = useState<string | null>(null)
-  const [isHealthLoading, setIsHealthLoading] = useState(true)
-  const [products, setProducts] = useState<Product[]>([])
-  const [search, setSearch] = useState('')
-  const [searchDraft, setSearchDraft] = useState('')
+  const [productPage, setProductPage] = useState<ProductPage>(() => buildEmptyProductPage(initialFilters.size))
+  const [filters, setFilters] = useState<ProductPageFilters>(initialFilters)
+  const deferredFilters = useDeferredValue(filters)
+  const [page, setPage] = useState(0)
   const [form, setForm] = useState<ProductFormState>(initialFormState)
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null)
@@ -128,39 +138,29 @@ export function ProductManagementPage() {
   const [selectedLabelProduct, setSelectedLabelProduct] = useState<Product | null>(null)
   const [copiedProductId, setCopiedProductId] = useState<number | null>(null)
 
+  const products = productPage.content
+  const lowStockThreshold = Number(filters.lowStockThreshold) || 5
   const activeProducts = products.filter((product) => product.active).length
-  const inactiveProducts = products.length - activeProducts
-  const totalStock = products.reduce((sum, product) => sum + product.stockQuantity, 0)
+  const lowStockProducts = products.filter(
+    (product) => product.stockQuantity > 0 && product.stockQuantity <= lowStockThreshold,
+  ).length
+  const outOfStockProducts = products.filter((product) => product.stockQuantity === 0).length
+  const inventoryValue = products.reduce(
+    (sum, product) => sum + product.price * product.stockQuantity,
+    0,
+  )
 
-  async function loadHealth(signal?: AbortSignal) {
-    setIsHealthLoading(true)
-
-    try {
-      const response = await getHealthStatus(signal)
-      setHealth(response)
-      setHealthErrorMessage(null)
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return
-      }
-
-      setHealthErrorMessage(getErrorMessage(error))
-    } finally {
-      setIsHealthLoading(false)
-    }
-  }
-
-  async function loadProducts(currentSearch: string, signal?: AbortSignal) {
+  async function loadProducts(nextFilters: ProductPageFilters, nextPage: number, signal?: AbortSignal) {
     setIsProductsLoading(true)
 
     try {
-      const response = await getProducts(currentSearch)
+      const response = await getProductPage(nextFilters, nextPage, signal)
 
       if (signal?.aborted) {
         return
       }
 
-      setProducts(response)
+      setProductPage(response)
       setListErrorMessage(null)
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -169,22 +169,33 @@ export function ProductManagementPage() {
 
       setListErrorMessage(getErrorMessage(error))
     } finally {
-      setIsProductsLoading(false)
+      if (!signal?.aborted) {
+        setIsProductsLoading(false)
+      }
     }
   }
 
   useEffect(() => {
     const controller = new AbortController()
     const timeoutId = window.setTimeout(() => {
-      void loadHealth(controller.signal)
-      void loadProducts(search, controller.signal)
-    }, 0)
+      void loadProducts(deferredFilters, page, controller.signal)
+    }, 220)
 
     return () => {
       window.clearTimeout(timeoutId)
       controller.abort()
     }
-  }, [search])
+  }, [deferredFilters, page])
+
+  function updateFilter<Key extends keyof ProductPageFilters>(key: Key, value: ProductPageFilters[Key]) {
+    setPage(0)
+    setFilters((current) => ({ ...current, [key]: value }))
+  }
+
+  function clearFilters() {
+    setPage(0)
+    setFilters(initialFilters)
+  }
 
   function resetForm(clearMessages = true) {
     setForm(initialFormState)
@@ -200,6 +211,7 @@ export function ProductManagementPage() {
     setForm(toFormState(product))
     setFormErrorMessage(null)
     setFormSuccessMessage(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -230,7 +242,7 @@ export function ProductManagementPage() {
       }
 
       setFormErrorMessage(null)
-      await loadProducts(search)
+      await loadProducts(filters, page)
     } catch (error) {
       setFormErrorMessage(getErrorMessage(error))
     } finally {
@@ -243,7 +255,7 @@ export function ProductManagementPage() {
 
     try {
       await updateProductActivation(product.id, { active: !product.active })
-      await loadProducts(search)
+      await loadProducts(filters, page)
     } catch (error) {
       setListErrorMessage(getErrorMessage(error))
     } finally {
@@ -274,42 +286,42 @@ export function ProductManagementPage() {
         <section className="hero-panel">
           <header className="hero-header">
             <div className="hero-copy">
-              <span className="eyebrow">Produtos</span>
-              <h1>Etiquetas de produtos prontas para impressao</h1>
+              <span className="eyebrow">Estoque</span>
+              <h1>Gestao completa de produtos</h1>
               <p>
-                O cadastro agora conecta codigo unico, QR Code e uma etiqueta simples
-                para acelerar a operacao da loja no estoque e no caixa.
+                Cadastre, filtre, ordene e acompanhe estoque com foco em operacao de loja:
+                produtos ativos, ruptura, estoque baixo, QR Code e etiquetas prontas para venda.
               </p>
             </div>
 
             <div className="hero-highlight">
               <div className="metric-pill">
-                <strong>{products.length}</strong>
-                <span>produtos carregados</span>
+                <strong>{productPage.totalElements}</strong>
+                <span>produtos filtrados</span>
               </div>
               <div className="metric-pill">
                 <strong>{activeProducts}</strong>
-                <span>ativos para venda</span>
+                <span>ativos nesta pagina</span>
               </div>
               <div className="metric-pill">
-                <strong>{products.filter((product) => product.code.startsWith('IWR-')).length}</strong>
-                <span>codigos prontos para QR</span>
+                <strong>{formatCurrency(inventoryValue)}</strong>
+                <span>valor nesta pagina</span>
               </div>
             </div>
           </header>
 
           <div className="stats-grid">
             <article className="stat-card">
-              <strong>{inactiveProducts}</strong>
-              <span>produtos inativos</span>
+              <strong>{products.length}</strong>
+              <span>itens na pagina</span>
             </article>
             <article className="stat-card">
-              <strong>{totalStock}</strong>
-              <span>itens em estoque</span>
+              <strong>{lowStockProducts}</strong>
+              <span>estoque baixo</span>
             </article>
             <article className="stat-card">
-              <strong>{health?.status ?? '...'}</strong>
-              <span>status geral do backend</span>
+              <strong>{outOfStockProducts}</strong>
+              <span>sem estoque</span>
             </article>
           </div>
         </section>
@@ -420,30 +432,139 @@ export function ProductManagementPage() {
             <header className="section-header">
               <div>
                 <h2>Produtos cadastrados</h2>
-                <p>Busque por nome ou codigo e edite sem sair da tela.</p>
+                <p>Use filtros combinados para encontrar produtos, controlar ruptura e imprimir etiquetas.</p>
               </div>
             </header>
 
-            <div className="list-toolbar">
-              <input
-                className="search-input"
-                value={searchDraft}
-                onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder="Buscar por nome ou codigo"
-              />
-              <button className="action-button" type="button" onClick={() => setSearch(searchDraft)}>
-                Buscar
+            <section className="inventory-toolbar" aria-label="Filtros de estoque">
+              <div className="field-group field-group--wide">
+                <label htmlFor="productSearch">Busca</label>
+                <input
+                  id="productSearch"
+                  className="search-input"
+                  value={filters.search}
+                  onChange={(event) => updateFilter('search', event.target.value)}
+                  placeholder="Nome ou codigo"
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="activeFilter">Status</label>
+                <select
+                  id="activeFilter"
+                  value={filters.active}
+                  onChange={(event) => updateFilter('active', event.target.value as ProductPageFilters['active'])}
+                >
+                  <option value="ALL">Todos</option>
+                  <option value="ACTIVE">Ativos</option>
+                  <option value="INACTIVE">Inativos</option>
+                </select>
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="stockFilter">Estoque</label>
+                <select
+                  id="stockFilter"
+                  value={filters.stockStatus}
+                  onChange={(event) =>
+                    updateFilter('stockStatus', event.target.value as ProductPageFilters['stockStatus'])
+                  }
+                >
+                  <option value="ALL">Todos</option>
+                  <option value="IN_STOCK">Em estoque</option>
+                  <option value="LOW_STOCK">Estoque baixo</option>
+                  <option value="OUT_OF_STOCK">Sem estoque</option>
+                </select>
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="minPrice">Preco min.</label>
+                <input
+                  id="minPrice"
+                  inputMode="decimal"
+                  value={filters.minPrice}
+                  onChange={(event) => updateFilter('minPrice', event.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="maxPrice">Preco max.</label>
+                <input
+                  id="maxPrice"
+                  inputMode="decimal"
+                  value={filters.maxPrice}
+                  onChange={(event) => updateFilter('maxPrice', event.target.value)}
+                  placeholder="999.00"
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="lowStockThreshold">Minimo</label>
+                <input
+                  id="lowStockThreshold"
+                  inputMode="numeric"
+                  value={filters.lowStockThreshold}
+                  onChange={(event) => updateFilter('lowStockThreshold', event.target.value)}
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="sortField">Ordenar por</label>
+                <select
+                  id="sortField"
+                  value={filters.sort}
+                  onChange={(event) => updateFilter('sort', event.target.value as ProductPageFilters['sort'])}
+                >
+                  <option value="createdAt">Cadastro</option>
+                  <option value="updatedAt">Atualizacao</option>
+                  <option value="name">Nome</option>
+                  <option value="code">Codigo</option>
+                  <option value="price">Preco</option>
+                  <option value="stockQuantity">Estoque</option>
+                </select>
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="sortDirection">Direcao</label>
+                <select
+                  id="sortDirection"
+                  value={filters.direction}
+                  onChange={(event) => updateFilter('direction', event.target.value as ProductPageFilters['direction'])}
+                >
+                  <option value="desc">Maior primeiro</option>
+                  <option value="asc">Menor primeiro</option>
+                </select>
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="pageSize">Por pagina</label>
+                <select
+                  id="pageSize"
+                  value={filters.size}
+                  onChange={(event) => updateFilter('size', Number(event.target.value))}
+                >
+                  <option value={8}>8</option>
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={48}>48</option>
+                </select>
+              </div>
+
+              <button className="secondary-button" type="button" onClick={clearFilters}>
+                Limpar filtros
               </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => {
-                  setSearchDraft('')
-                  setSearch('')
-                }}
-              >
-                Limpar busca
-              </button>
+            </section>
+
+            <div className="inventory-result-bar">
+              <span>
+                {isProductsLoading
+                  ? 'Atualizando listagem...'
+                  : `${productPage.totalElements} produto(s) encontrados`}
+              </span>
+              <strong>
+                Pagina {productPage.totalPages === 0 ? 0 : productPage.page + 1} de {productPage.totalPages}
+              </strong>
             </div>
 
             {listErrorMessage ? (
@@ -454,7 +575,7 @@ export function ProductManagementPage() {
               {isProductsLoading ? (
                 <div className="product-empty">Carregando produtos...</div>
               ) : products.length === 0 ? (
-                <div className="product-empty">Nenhum produto encontrado para o filtro atual.</div>
+                <div className="product-empty">Nenhum produto encontrado para os filtros atuais.</div>
               ) : (
                 products.map((product) => (
                   <article className="product-card" key={product.id}>
@@ -463,13 +584,18 @@ export function ProductManagementPage() {
                         <h3>{product.name}</h3>
                         <span className="product-card-code">{product.code}</span>
                       </div>
-                      <span
-                        className={`status-badge ${
-                          product.active ? 'status-badge--up' : 'status-badge--down'
-                        }`}
-                      >
-                        {product.active ? 'Ativo' : 'Inativo'}
-                      </span>
+                      <div className="product-card-badges">
+                        <span className={getStockStatusClassName(product, lowStockThreshold)}>
+                          {getStockStatusLabel(product, lowStockThreshold)}
+                        </span>
+                        <span
+                          className={`status-badge ${
+                            product.active ? 'status-badge--up' : 'status-badge--down'
+                          }`}
+                        >
+                          {product.active ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="product-card-grid">
@@ -482,13 +608,17 @@ export function ProductManagementPage() {
                         <strong>{product.stockQuantity}</strong>
                       </div>
                       <div>
+                        <span>Total estoque</span>
+                        <strong>{formatCurrency(product.price * product.stockQuantity)}</strong>
+                      </div>
+                      <div>
                         <span>Atualizado</span>
-                        <strong>{formatDate(product.updatedAt)}</strong>
+                        <strong>{formatDateTime(product.updatedAt)}</strong>
                       </div>
                     </div>
 
                     <div className="product-card-meta">
-                      Criado em {formatDate(product.createdAt)}
+                      Criado em {formatDateTime(product.createdAt)}
                     </div>
 
                     <div className="product-qr-block">
@@ -561,28 +691,30 @@ export function ProductManagementPage() {
                 ))
               )}
             </div>
+
+            <footer className="pagination-bar">
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={productPage.first || isProductsLoading}
+                onClick={() => setPage((current) => Math.max(current - 1, 0))}
+              >
+                Anterior
+              </button>
+              <span>
+                Mostrando {products.length} de {productPage.totalElements}
+              </span>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={productPage.last || productPage.totalPages === 0 || isProductsLoading}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Proxima
+              </button>
+            </footer>
           </section>
         </div>
-
-        <HealthStatusCard
-          health={health}
-          errorMessage={healthErrorMessage}
-          isLoading={isHealthLoading}
-          onRefresh={() => void loadHealth()}
-        />
-
-        <section className="acceptance-card">
-          <h2>Checklist operacional de produtos</h2>
-          <p>
-            Agora o modulo precisa transformar o cadastro em material de loja, com
-            etiquetas legiveis e prontas para impressao.
-          </p>
-          <ul className="acceptance-list">
-            {acceptanceItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
       </div>
 
       {selectedQrProduct ? (

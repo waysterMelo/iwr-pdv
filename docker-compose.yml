@@ -16,5 +16,46 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: ./backend
+    container_name: iwr-pdv-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: iwr_pdv
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DEFAULT_ADMIN_USERNAME: ${DEFAULT_ADMIN_USERNAME:-admin}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-admin123}
+      DEFAULT_ADMIN_DISPLAY_NAME: ${DEFAULT_ADMIN_DISPLAY_NAME:-Administrador}
+      JAVA_OPTS: ${JAVA_OPTS:-}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health | grep -q 'UP'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: iwr-pdv-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ | grep -q '<div id=\"root\"></div>'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
 volumes:
   postgres-data:
