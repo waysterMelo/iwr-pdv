@@ -25,7 +25,8 @@ Fundacao tecnica do sistema de gestao de loja da IWR Modas.
 
 - Sprint 0 concluida com fundacao tecnica, healthcheck e integracao inicial
 - Sprint 1 concluida com CRUD de produtos
-- Sprint 2 iniciada com codigo unico e QR Code
+- Sprint 2 concluida com codigo unico e QR Code
+- Sprint 3 iniciada com etiquetas imprimiveis de produto
 - busca por nome ou codigo
 - ativacao e inativacao de produtos
 - frontend com tela de cadastro, listagem e edicao

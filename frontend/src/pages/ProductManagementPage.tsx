@@ -30,6 +30,7 @@ const acceptanceItems = [
   'Gerar codigo no padrao IWR-000001 quando o campo ficar vazio.',
   'Manter unicidade do codigo do produto.',
   'Exibir QR Code do identificador do produto na tela.',
+  'Gerar etiqueta imprimivel com nome, preco, codigo e QR Code.',
   'Buscar por nome ou codigo.',
   'Bloquear dados invalidos no backend e no frontend.',
 ]
@@ -104,6 +105,10 @@ function getQrDownloadName(product: Product) {
   return `${product.code.toLowerCase()}-qr-code.png`
 }
 
+function getLabelUrl(productId: number) {
+  return `/api/products/${productId}/label`
+}
+
 export function ProductManagementPage() {
   const [health, setHealth] = useState<HealthStatus | null>(null)
   const [healthErrorMessage, setHealthErrorMessage] = useState<string | null>(null)
@@ -120,6 +125,7 @@ export function ProductManagementPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [busyProductId, setBusyProductId] = useState<number | null>(null)
   const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
+  const [selectedLabelProduct, setSelectedLabelProduct] = useState<Product | null>(null)
   const [copiedProductId, setCopiedProductId] = useState<number | null>(null)
 
   const activeProducts = products.filter((product) => product.active).length
@@ -250,17 +256,24 @@ export function ProductManagementPage() {
     }
   }
 
+  function handlePrintLabel(product: Product) {
+    const printWindow = window.open(getLabelUrl(product.id), '_blank')
+    printWindow?.addEventListener('load', () => {
+      printWindow.print()
+    })
+  }
+
   return (
     <main className="app-shell">
       <div className="app-container">
         <section className="hero-panel">
           <header className="hero-header">
             <div className="hero-copy">
-              <span className="eyebrow">Sprint 2 em andamento</span>
-              <h1>Codigo unico e QR Code dos produtos</h1>
+              <span className="eyebrow">Sprint 3 em andamento</span>
+              <h1>Etiquetas de produtos prontas para impressao</h1>
               <p>
-                O cadastro de produtos agora evolui com identificacao unica no padrao da
-                loja e geracao de QR Code pronta para leitura no caixa.
+                O cadastro agora conecta codigo unico, QR Code e uma etiqueta simples
+                para acelerar a operacao da loja no estoque e no caixa.
               </p>
             </div>
 
@@ -301,7 +314,7 @@ export function ProductManagementPage() {
             <header className="section-header">
               <div>
                 <h2>{editingProductId === null ? 'Novo produto' : 'Editar produto'}</h2>
-                <p>Deixe o codigo vazio para gerar automaticamente no padrao da Sprint 2.</p>
+                <p>Deixe o codigo vazio para gerar automaticamente no padrao da loja.</p>
               </div>
             </header>
 
@@ -520,6 +533,13 @@ export function ProductManagementPage() {
                         Editar
                       </button>
                       <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => setSelectedLabelProduct(product)}
+                      >
+                        Etiqueta
+                      </button>
+                      <button
                         className="action-button"
                         type="button"
                         disabled={busyProductId === product.id}
@@ -547,10 +567,10 @@ export function ProductManagementPage() {
         />
 
         <section className="acceptance-card">
-          <h2>Criterios de aceite da Sprint 2</h2>
+          <h2>Criterios de aceite da Sprint 3</h2>
           <p>
-            Agora o modulo precisa identificar cada produto com clareza e preparar a
-            leitura por QR Code sem perder a simplicidade operacional.
+            Agora o modulo precisa transformar o cadastro em material de loja, com
+            etiquetas legiveis e prontas para impressao.
           </p>
           <ul className="acceptance-list">
             {acceptanceItems.map((item) => (
@@ -608,6 +628,60 @@ export function ProductManagementPage() {
               >
                 Baixar PNG
               </a>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {selectedLabelProduct ? (
+        <div
+          className="qr-modal-backdrop"
+          role="presentation"
+          onClick={() => setSelectedLabelProduct(null)}
+        >
+          <section
+            className="label-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="label-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="qr-modal-header">
+              <div>
+                <span className="eyebrow">Etiqueta</span>
+                <h2 id="label-modal-title">{selectedLabelProduct.name}</h2>
+                <p>{selectedLabelProduct.code}</p>
+              </div>
+              <button
+                className="icon-button icon-button--close"
+                type="button"
+                onClick={() => setSelectedLabelProduct(null)}
+                aria-label="Fechar visualizacao da etiqueta"
+              >
+                Fechar
+              </button>
+            </header>
+            <iframe
+              className="label-preview-frame"
+              src={getLabelUrl(selectedLabelProduct.id)}
+              title={`Etiqueta do produto ${selectedLabelProduct.code}`}
+            />
+            <div className="qr-modal-actions">
+              <a
+                className="secondary-button action-button--link"
+                href={getLabelUrl(selectedLabelProduct.id)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir etiqueta
+              </a>
+              <button
+                className="action-button"
+                type="button"
+                onClick={() => handlePrintLabel(selectedLabelProduct)}
+              >
+                Imprimir etiqueta
+              </button>
             </div>
           </section>
         </div>

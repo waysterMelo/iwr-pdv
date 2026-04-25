@@ -419,7 +419,8 @@
   background: rgba(31, 41, 55, 0.58);
 }
 
-.qr-modal {
+.qr-modal,
+.label-modal {
   width: min(520px, 100%);
   max-height: calc(100vh - 40px);
   overflow: auto;
@@ -428,6 +429,10 @@
   background: #fffdf8;
   border: 1px solid rgba(86, 69, 43, 0.12);
   box-shadow: 0 28px 70px rgba(20, 20, 20, 0.24);
+}
+
+.label-modal {
+  width: min(760px, 100%);
 }
 
 .qr-modal-header {
@@ -468,6 +473,16 @@
 
 .qr-modal-actions {
   justify-content: center;
+}
+
+.label-preview-frame {
+  width: 100%;
+  height: min(420px, 58vh);
+  display: block;
+  margin-bottom: 20px;
+  border: 1px solid rgba(86, 69, 43, 0.14);
+  border-radius: 18px;
+  background: #f8fafc;
 }
 
 .product-empty {
@@ -601,7 +616,8 @@
     gap: 8px;
   }
 
-  .qr-modal {
+  .qr-modal,
+  .label-modal {
     padding: 20px;
     border-radius: 20px;
   }

@@ -247,6 +247,29 @@ class ProductControllerIntegrationTest {
                 });
     }
 
+    @Test
+    void shouldGeneratePrintableProductLabelAsHtml() throws Exception {
+        Product savedProduct = productRepository.save(buildProduct(
+                "Vestido Festa",
+                "IWR-050",
+                new BigDecimal("259.90"),
+                2,
+                true
+        ));
+
+        mockMvc.perform(get("/api/products/{productId}/label", savedProduct.getId()))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String html = result.getResponse().getContentAsString();
+                    if (!html.contains("IWR MODAS")
+                            || !html.contains("Vestido Festa")
+                            || !html.contains("IWR-050")
+                            || !html.contains("data:image/png;base64,")) {
+                        throw new AssertionError("Expected a printable label HTML response.");
+                    }
+                });
+    }
+
     private Product buildProduct(
             String name,
             String code,

@@ -154,4 +154,20 @@ public class ProductController {
                 .contentType(MediaType.IMAGE_PNG)
                 .body(productService.generateQrCode(productId));
     }
+
+    @GetMapping(value = "/{productId}/label", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(summary = "Generate a printable label for a product")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Printable HTML label generated successfully",
+                    content = @Content(mediaType = MediaType.TEXT_HTML_VALUE)
+            ),
+            @ApiResponse(responseCode = "404", description = "Product not found")
+    })
+    public ResponseEntity<String> generateLabel(@PathVariable Long productId) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(productService.generateLabel(productId));
+    }
 }

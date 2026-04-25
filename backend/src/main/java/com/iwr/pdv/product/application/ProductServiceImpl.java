@@ -24,6 +24,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductCodeGenerator productCodeGenerator;
     private final ProductQrCodeService productQrCodeService;
+    private final ProductLabelService productLabelService;
     private final Clock clock;
 
     public ProductServiceImpl(
@@ -32,6 +33,7 @@ public class ProductServiceImpl implements ProductService {
             ProductMapper productMapper,
             ProductCodeGenerator productCodeGenerator,
             ProductQrCodeService productQrCodeService,
+            ProductLabelService productLabelService,
             Clock clock
     ) {
         this.productRepository = productRepository;
@@ -39,6 +41,7 @@ public class ProductServiceImpl implements ProductService {
         this.productMapper = productMapper;
         this.productCodeGenerator = productCodeGenerator;
         this.productQrCodeService = productQrCodeService;
+        this.productLabelService = productLabelService;
         this.clock = clock;
     }
 
@@ -95,6 +98,13 @@ public class ProductServiceImpl implements ProductService {
     public byte[] generateQrCode(Long productId) {
         Product product = findProductById(productId);
         return productQrCodeService.generateQrCode(product.getCode());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String generateLabel(Long productId) {
+        Product product = findProductById(productId);
+        return productLabelService.generateLabel(product);
     }
 
     private Product findProductById(Long productId) {

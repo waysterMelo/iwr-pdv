@@ -18,4 +18,6 @@ public interface ProductService {
     ProductResponse updateActivation(Long productId, ProductActivationRequest request);
 
     byte[] generateQrCode(Long productId);
+
+    String generateLabel(Long productId);
 }

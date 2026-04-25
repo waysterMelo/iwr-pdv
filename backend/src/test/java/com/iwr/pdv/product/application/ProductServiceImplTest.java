@@ -44,6 +44,9 @@ class ProductServiceImplTest {
     @Mock
     private ProductQrCodeService productQrCodeService;
 
+    @Mock
+    private ProductLabelService productLabelService;
+
     private ProductService productService;
 
     @BeforeEach
@@ -55,6 +58,7 @@ class ProductServiceImplTest {
                 new ProductMapper(),
                 productCodeGenerator,
                 productQrCodeService,
+                productLabelService,
                 clock
         );
     }
@@ -211,5 +215,20 @@ class ProductServiceImplTest {
         byte[] qrCode = productService.generateQrCode(8L);
 
         assertEquals("qr", new String(qrCode, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void shouldGeneratePrintableLabelFromProduct() {
+        Product product = new Product();
+        product.setId(9L);
+        product.setName("Vestido Midi");
+        product.setCode("IWR-000009");
+
+        when(productRepository.findById(9L)).thenReturn(Optional.of(product));
+        when(productLabelService.generateLabel(product)).thenReturn("<html>label</html>");
+
+        String label = productService.generateLabel(9L);
+
+        assertEquals("<html>label</html>", label);
     }
 }

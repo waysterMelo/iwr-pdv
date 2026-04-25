@@ -40,6 +40,7 @@ Base Spring Boot do IWR PDV.
 - `PUT /api/products/{productId}`
 - `PATCH /api/products/{productId}/activation`
 - `GET /api/products/{productId}/qr-code`
+- `GET /api/products/{productId}/label`
 
 ## Swagger
 
