@@ -42,6 +42,12 @@ Base Spring Boot do IWR PDV.
 - `GET /api/products/{productId}/qr-code`
 - `GET /api/products/{productId}/label`
 
+## Endpoints de venda
+
+- `POST /api/sales`
+- `GET /api/sales`
+- `GET /api/sales/{saleId}`
+
 ## Swagger
 
 - `GET /swagger-ui.html`

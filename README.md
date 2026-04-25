@@ -15,6 +15,8 @@ Fundacao tecnica do sistema de gestao de loja da IWR Modas.
 - [frontend](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\frontend)
 - [docker-compose.yml](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\docker-compose.yml)
 - [CHECKLIST_HOMOLOGACAO_HARDWARE.md](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\CHECKLIST_HOMOLOGACAO_HARDWARE.md)
+- [CHECKLIST_IMPLANTACAO.md](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\CHECKLIST_IMPLANTACAO.md)
+- [MANUAL_OPERACIONAL.md](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\MANUAL_OPERACIONAL.md)
 
 ## Como subir o ambiente
 
@@ -28,7 +30,10 @@ Fundacao tecnica do sistema de gestao de loja da IWR Modas.
 - Sprint 1 concluida com CRUD de produtos
 - Sprint 2 concluida com codigo unico e QR Code
 - Sprint 3 concluida em software com etiquetas imprimiveis de produto
-- Sprint 4 iniciada com tela de venda e carrinho local por codigo
+- Sprint 4 concluida com tela de venda e leitura por codigo
+- Sprint 5 concluida com fechamento de venda e baixa automatica de estoque
+- Sprint 6 concluida com historico de vendas e filtros basicos
+- Sprint 7 preparada em software com manual e checklist de implantacao
 - busca por nome ou codigo
 - ativacao e inativacao de produtos
-- frontend com tela de cadastro, listagem, edicao e caixa
+- frontend com tela de cadastro, listagem, edicao, caixa e historico

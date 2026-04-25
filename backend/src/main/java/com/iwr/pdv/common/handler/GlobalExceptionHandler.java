@@ -3,6 +3,7 @@ package com.iwr.pdv.common.handler;
 import com.iwr.pdv.common.api.ErrorResponse;
 import com.iwr.pdv.common.api.ValidationErrorResponse;
 import com.iwr.pdv.common.api.ValidationErrorResponse.FieldViolation;
+import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceConflictException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +51,22 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessRule(
+            BusinessRuleException exception,
+            HttpServletRequest request
+    ) {
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                HttpStatus.UNPROCESSABLE_ENTITY.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                OffsetDateTime.now()
+        );
+
+        return ResponseEntity.unprocessableEntity().body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

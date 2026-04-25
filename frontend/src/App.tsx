@@ -2,8 +2,9 @@ import { useState } from 'react'
 import './App.css'
 import { ProductManagementPage } from './pages/ProductManagementPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
+import { SalesHistoryPage } from './pages/SalesHistoryPage'
 
-type AppView = 'checkout' | 'products'
+type AppView = 'checkout' | 'products' | 'history'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('checkout')
@@ -19,6 +20,13 @@ function App() {
           Caixa
         </button>
         <button
+          className={currentView === 'history' ? 'nav-button nav-button--active' : 'nav-button'}
+          type="button"
+          onClick={() => setCurrentView('history')}
+        >
+          Historico
+        </button>
+        <button
           className={currentView === 'products' ? 'nav-button nav-button--active' : 'nav-button'}
           type="button"
           onClick={() => setCurrentView('products')}
@@ -26,7 +34,9 @@ function App() {
           Produtos
         </button>
       </nav>
-      {currentView === 'checkout' ? <SalesCheckoutPage /> : <ProductManagementPage />}
+      {currentView === 'checkout' ? <SalesCheckoutPage /> : null}
+      {currentView === 'history' ? <SalesHistoryPage /> : null}
+      {currentView === 'products' ? <ProductManagementPage /> : null}
     </>
   )
 }

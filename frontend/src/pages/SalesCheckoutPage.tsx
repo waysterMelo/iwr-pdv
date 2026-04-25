@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { findProductByCode } from '../services/productService'
+import { closeSale } from '../services/saleService'
 import type { Product } from '../types/product'
 
 type CartItem = {
@@ -24,6 +25,7 @@ export function SalesCheckoutPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
   const [isSearching, setIsSearching] = useState(false)
+  const [isClosingSale, setIsClosingSale] = useState(false)
   const scannerInputRef = useRef<HTMLInputElement>(null)
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
@@ -124,6 +126,32 @@ export function SalesCheckoutPage() {
     scannerInputRef.current?.focus()
   }
 
+  async function handleCloseSale() {
+    if (cartItems.length === 0) {
+      showMessage('Adicione pelo menos um item antes de finalizar a venda.', 'error')
+      return
+    }
+
+    setIsClosingSale(true)
+
+    try {
+      const sale = await closeSale({
+        items: cartItems.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+      })
+
+      setCartItems([])
+      showMessage(`Venda #${sale.id} finalizada com sucesso.`, 'success')
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : 'Nao foi possivel finalizar a venda.', 'error')
+    } finally {
+      setIsClosingSale(false)
+      scannerInputRef.current?.focus()
+    }
+  }
+
   return (
     <main className="app-shell">
       <div className="app-container checkout-container">
@@ -132,8 +160,8 @@ export function SalesCheckoutPage() {
             <span className="eyebrow">Sprint 4 em andamento</span>
             <h1>Caixa com leitura por codigo</h1>
             <p>
-              Leia o QR Code ou digite o codigo do produto para montar a venda. Nesta sprint
-              o carrinho ainda e local; gravacao e baixa de estoque entram na Sprint 5.
+              Leia o QR Code ou digite o codigo do produto para montar a venda, finalizar
+              no backend e baixar estoque automaticamente.
             </p>
           </div>
           <div className="checkout-summary">
@@ -176,7 +204,7 @@ export function SalesCheckoutPage() {
           <header className="section-header">
             <div>
               <h2>Carrinho da venda</h2>
-              <p>Revise quantidades antes de finalizar na proxima sprint.</p>
+              <p>Revise quantidades antes de finalizar a venda.</p>
             </div>
             <button className="secondary-button" type="button" onClick={clearCart} disabled={cartItems.length === 0}>
               Limpar carrinho
@@ -233,8 +261,13 @@ export function SalesCheckoutPage() {
             <span>Subtotal</span>
             <strong>{formatCurrency(totalAmount)}</strong>
           </div>
-          <button className="action-button" type="button" disabled>
-            Finalizar na Sprint 5
+          <button
+            className="action-button"
+            type="button"
+            disabled={cartItems.length === 0 || isClosingSale}
+            onClick={() => void handleCloseSale()}
+          >
+            {isClosingSale ? 'Finalizando...' : 'Finalizar venda'}
           </button>
         </section>
       </div>
