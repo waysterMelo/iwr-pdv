@@ -34,7 +34,9 @@ export function SalesCheckoutPage() {
   const [discountAmount, setDiscountAmount] = useState('0.00')
   const [amountReceived, setAmountReceived] = useState('')
   const [lastSale, setLastSale] = useState<Sale | null>(null)
+  const [receiptSale, setReceiptSale] = useState<Sale | null>(null)
   const scannerInputRef = useRef<HTMLInputElement>(null)
+  const receiptFrameRef = useRef<HTMLIFrameElement>(null)
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
   const subtotalAmount = useMemo(
@@ -190,9 +192,9 @@ export function SalesCheckoutPage() {
       setDiscountAmount('0.00')
       setAmountReceived('')
       setLastSale(sale)
+      setReceiptSale(sale)
       await refreshCashRegister()
       showMessage(`Venda #${sale.id} finalizada com sucesso.`, 'success')
-      window.open(getSaleReceiptUrl(sale.id), '_blank')
     } catch (error) {
       showMessage(error instanceof Error ? error.message : 'Nao foi possivel finalizar a venda.', 'error')
     } finally {
@@ -370,12 +372,67 @@ export function SalesCheckoutPage() {
             {isClosingSale ? 'Finalizando...' : 'Finalizar venda'}
           </button>
           {lastSale ? (
-            <a className="icon-link" href={getSaleReceiptUrl(lastSale.id)} target="_blank" rel="noreferrer">
+            <button className="icon-link" type="button" onClick={() => setReceiptSale(lastSale)}>
               Recibo #{lastSale.id}
-            </a>
+            </button>
           ) : null}
         </section>
       </div>
+
+      {receiptSale ? (
+        <div
+          className="qr-modal-backdrop"
+          role="presentation"
+          onClick={() => setReceiptSale(null)}
+        >
+          <section
+            className="receipt-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="receipt-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="qr-modal-header">
+              <div>
+                <span className="eyebrow">Venda finalizada</span>
+                <h2 id="receipt-modal-title">Recibo da venda #{receiptSale.id}</h2>
+                <p>Total: {formatCurrency(receiptSale.totalAmount)}</p>
+              </div>
+              <button
+                className="icon-button icon-button--close"
+                type="button"
+                onClick={() => setReceiptSale(null)}
+                aria-label="Fechar recibo"
+              >
+                Fechar
+              </button>
+            </header>
+            <iframe
+              className="receipt-preview-frame"
+              ref={receiptFrameRef}
+              src={getSaleReceiptUrl(receiptSale.id)}
+              title={`Recibo da venda ${receiptSale.id}`}
+            />
+            <div className="qr-modal-actions">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => receiptFrameRef.current?.contentWindow?.print()}
+              >
+                Imprimir recibo
+              </button>
+              <a
+                className="action-button action-button--link"
+                href={getSaleReceiptUrl(receiptSale.id)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir em nova aba
+              </a>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   )
 }

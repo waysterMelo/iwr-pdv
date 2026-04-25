@@ -931,7 +931,8 @@ h3 {
 }
 
 .qr-modal,
-.label-modal {
+.label-modal,
+.receipt-modal {
   width: min(520px, 100%);
   max-height: calc(100vh - 48px);
   overflow: auto;
@@ -944,6 +945,10 @@ h3 {
 
 .label-modal {
   width: min(760px, 100%);
+}
+
+.receipt-modal {
+  width: min(860px, 100%);
 }
 
 .qr-modal-header {
@@ -987,6 +992,15 @@ h3 {
   margin-bottom: 22px;
   border: 1px solid var(--color-border);
   background: var(--color-panel-soft);
+}
+
+.receipt-preview-frame {
+  width: 100%;
+  height: min(560px, 62vh);
+  display: block;
+  margin-bottom: 22px;
+  border: 1px solid var(--color-border);
+  background: #fff;
 }
 
 @media (max-width: 1100px) {
