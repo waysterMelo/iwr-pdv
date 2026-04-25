@@ -23,3 +23,4 @@ Aplicacao React da Sprint 0 do IWR PDV.
 - geracao automatica de codigo no padrao `IWR-000001`
 - exibicao do QR Code do produto na listagem
 - preview e impressao de etiqueta do produto
+- tela de caixa com leitura por codigo e carrinho local

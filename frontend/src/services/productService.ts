@@ -12,6 +12,11 @@ export async function getProducts(search: string) {
   return get<Product[]>(`/api/products${query}`)
 }
 
+export async function findProductByCode(code: string) {
+  const products = await getProducts(code)
+  return products.find((product) => product.code.toUpperCase() === code.trim().toUpperCase()) ?? null
+}
+
 export async function createProduct(payload: ProductPayload) {
   return post<Product>('/api/products', payload)
 }
