@@ -96,6 +96,14 @@ function validateForm(form: ProductFormState) {
   return null
 }
 
+function getQrCodeUrl(productId: number) {
+  return `/api/products/${productId}/qr-code`
+}
+
+function getQrDownloadName(product: Product) {
+  return `${product.code.toLowerCase()}-qr-code.png`
+}
+
 export function ProductManagementPage() {
   const [health, setHealth] = useState<HealthStatus | null>(null)
   const [healthErrorMessage, setHealthErrorMessage] = useState<string | null>(null)
@@ -111,6 +119,8 @@ export function ProductManagementPage() {
   const [isProductsLoading, setIsProductsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [busyProductId, setBusyProductId] = useState<number | null>(null)
+  const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
+  const [copiedProductId, setCopiedProductId] = useState<number | null>(null)
 
   const activeProducts = products.filter((product) => product.active).length
   const inactiveProducts = products.length - activeProducts
@@ -227,6 +237,16 @@ export function ProductManagementPage() {
       setListErrorMessage(getErrorMessage(error))
     } finally {
       setBusyProductId(null)
+    }
+  }
+
+  async function handleCopyCode(product: Product) {
+    try {
+      await navigator.clipboard.writeText(product.code)
+      setCopiedProductId(product.id)
+      window.setTimeout(() => setCopiedProductId(null), 1800)
+    } catch {
+      setListErrorMessage('Nao foi possivel copiar o codigo do produto.')
     }
   }
 
@@ -454,15 +474,44 @@ export function ProductManagementPage() {
                     </div>
 
                     <div className="product-qr-block">
-                      <img
-                        className="product-qr-image"
-                        src={`/api/products/${product.id}/qr-code`}
-                        alt={`QR Code do produto ${product.code}`}
-                        loading="lazy"
-                      />
-                      <div className="product-qr-copy">
-                        <span>QR Code</span>
-                        <strong>{product.code}</strong>
+                      <button
+                        className="product-qr-preview"
+                        type="button"
+                        onClick={() => setSelectedQrProduct(product)}
+                        aria-label={`Ampliar QR Code do produto ${product.code}`}
+                      >
+                        <img
+                          className="product-qr-image"
+                          src={getQrCodeUrl(product.id)}
+                          alt={`QR Code do produto ${product.code}`}
+                          loading="lazy"
+                        />
+                      </button>
+                      <div className="product-qr-content">
+                        <div className="product-qr-copy">
+                          <span>QR Code</span>
+                          <strong>{product.code}</strong>
+                        </div>
+                        <div className="product-qr-actions">
+                          <button
+                            className="icon-button"
+                            type="button"
+                            title="Copiar codigo"
+                            aria-label={`Copiar codigo ${product.code}`}
+                            onClick={() => void handleCopyCode(product)}
+                          >
+                            {copiedProductId === product.id ? 'OK' : 'Copiar'}
+                          </button>
+                          <a
+                            className="icon-link"
+                            href={getQrCodeUrl(product.id)}
+                            download={getQrDownloadName(product)}
+                            title="Baixar QR Code"
+                            aria-label={`Baixar QR Code do produto ${product.code}`}
+                          >
+                            Baixar
+                          </a>
+                        </div>
                       </div>
                     </div>
 
@@ -510,6 +559,59 @@ export function ProductManagementPage() {
           </ul>
         </section>
       </div>
+
+      {selectedQrProduct ? (
+        <div
+          className="qr-modal-backdrop"
+          role="presentation"
+          onClick={() => setSelectedQrProduct(null)}
+        >
+          <section
+            className="qr-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qr-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="qr-modal-header">
+              <div>
+                <span className="eyebrow">QR Code</span>
+                <h2 id="qr-modal-title">{selectedQrProduct.name}</h2>
+                <p>{selectedQrProduct.code}</p>
+              </div>
+              <button
+                className="icon-button icon-button--close"
+                type="button"
+                onClick={() => setSelectedQrProduct(null)}
+                aria-label="Fechar visualizacao do QR Code"
+              >
+                Fechar
+              </button>
+            </header>
+            <img
+              className="qr-modal-image"
+              src={getQrCodeUrl(selectedQrProduct.id)}
+              alt={`QR Code ampliado do produto ${selectedQrProduct.code}`}
+            />
+            <div className="qr-modal-actions">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => void handleCopyCode(selectedQrProduct)}
+              >
+                {copiedProductId === selectedQrProduct.id ? 'Codigo copiado' : 'Copiar codigo'}
+              </button>
+              <a
+                className="action-button action-button--link"
+                href={getQrCodeUrl(selectedQrProduct.id)}
+                download={getQrDownloadName(selectedQrProduct)}
+              >
+                Baixar PNG
+              </a>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   )
 }
