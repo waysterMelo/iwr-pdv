@@ -23,6 +23,9 @@ Fundacao tecnica do sistema de gestao de loja da IWR Modas.
 1. Inicie o PostgreSQL com `docker compose up -d`.
 2. Suba o backend com `backend\mvnw.cmd spring-boot:run`.
 3. Suba o frontend com `npm install` e `npm run dev` dentro de `frontend`.
+4. Entre no sistema com `admin` / `admin123` no primeiro acesso local.
+
+Antes de entregar ao cliente, defina `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_PASSWORD` e `DEFAULT_ADMIN_DISPLAY_NAME` no ambiente do backend.
 
 ## Entregas atuais
 
@@ -34,6 +37,7 @@ Fundacao tecnica do sistema de gestao de loja da IWR Modas.
 - Sprint 5 concluida com fechamento de venda e baixa automatica de estoque
 - Sprint 6 concluida com historico de vendas e filtros basicos
 - Sprint 7 preparada em software com manual e checklist de implantacao
+- login de acesso ao sistema com sessao protegida
 - busca por nome ou codigo
 - ativacao e inativacao de produtos
 - frontend com tela de cadastro, listagem, edicao, caixa e historico

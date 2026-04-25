@@ -15,6 +15,9 @@ Base Spring Boot do IWR PDV.
 - `DB_NAME`: nome do banco. Padrao `iwr_pdv`
 - `DB_USERNAME`: usuario do banco. Padrao `postgres`
 - `DB_PASSWORD`: senha do banco. Padrao `postgres`
+- `DEFAULT_ADMIN_USERNAME`: usuario administrador inicial. Padrao `admin`
+- `DEFAULT_ADMIN_PASSWORD`: senha inicial. Padrao `admin123`
+- `DEFAULT_ADMIN_DISPLAY_NAME`: nome exibido no sistema. Padrao `Administrador`
 
 ## Como executar
 
@@ -31,6 +34,14 @@ Base Spring Boot do IWR PDV.
 
 - `GET /health`
 - `GET /actuator/health`
+
+## Endpoints de autenticacao
+
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
+
+Os endpoints de produto e venda exigem sessao autenticada.
 
 ## Endpoints de produto
 

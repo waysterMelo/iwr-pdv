@@ -1,13 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
+import { LoginPage } from './pages/LoginPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
 import { SalesHistoryPage } from './pages/SalesHistoryPage'
+import { getCurrentUser, logout } from './services/authService'
+import { clearAuthToken, getAuthToken } from './services/httpClient'
+import type { AuthUser } from './types/auth'
 
 type AppView = 'checkout' | 'products' | 'history'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('checkout')
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
+  const [isSessionChecking, setIsSessionChecking] = useState(() => Boolean(getAuthToken()))
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const menuItems: Array<{ id: AppView; label: string; eyebrow: string }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas' },
@@ -15,6 +22,57 @@ function App() {
   ]
 
   const currentItem = menuItems.find((item) => item.id === currentView) ?? menuItems[0]
+  const operatorInitial = currentUser?.displayName.trim().charAt(0).toUpperCase() || 'I'
+
+  useEffect(() => {
+    if (!getAuthToken()) {
+      return
+    }
+
+    async function loadCurrentUser() {
+      try {
+        const user = await getCurrentUser()
+        setCurrentUser(user)
+      } catch {
+        clearAuthToken()
+        setCurrentUser(null)
+      } finally {
+        setIsSessionChecking(false)
+      }
+    }
+
+    void loadCurrentUser()
+  }, [])
+
+  async function handleLogout() {
+    setIsLoggingOut(true)
+
+    try {
+      await logout()
+    } finally {
+      setCurrentUser(null)
+      setIsLoggingOut(false)
+      setCurrentView('checkout')
+    }
+  }
+
+  if (isSessionChecking) {
+    return (
+      <main className="login-shell">
+        <section className="login-card">
+          <div className="login-brand">
+            <span className="brand-mark">IWR.</span>
+            <span className="brand-caption">Atelier PDV</span>
+          </div>
+          <div className="product-empty">Validando sessao local...</div>
+        </section>
+      </main>
+    )
+  }
+
+  if (!currentUser) {
+    return <LoginPage onAuthenticated={setCurrentUser} />
+  }
 
   return (
     <div className="app-layout">
@@ -39,11 +97,19 @@ function App() {
         </nav>
 
         <div className="operator-card">
-          <div className="operator-avatar">W</div>
-          <div>
-            <strong>Wayster</strong>
-            <span>Operacao local</span>
+          <div className="operator-avatar">{operatorInitial}</div>
+          <div className="operator-details">
+            <strong>{currentUser.displayName}</strong>
+            <span>{currentUser.role === 'ADMIN' ? 'Administrador' : 'Operador'}</span>
           </div>
+          <button
+            className="logout-button"
+            type="button"
+            onClick={() => void handleLogout()}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? 'Saindo...' : 'Sair'}
+          </button>
         </div>
       </aside>
 

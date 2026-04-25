@@ -1,5 +1,6 @@
 package com.iwr.pdv.common.handler;
 
+import com.iwr.pdv.auth.exception.AuthenticationFailedException;
 import com.iwr.pdv.common.api.ErrorResponse;
 import com.iwr.pdv.common.api.ValidationErrorResponse;
 import com.iwr.pdv.common.api.ValidationErrorResponse.FieldViolation;
@@ -67,6 +68,22 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.unprocessableEntity().body(response);
+    }
+
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationFailed(
+            AuthenticationFailedException exception,
+            HttpServletRequest request
+    ) {
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                OffsetDateTime.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

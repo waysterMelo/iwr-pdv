@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { getSales } from '../services/saleService'
 import type { Sale } from '../types/sale'
 
@@ -29,7 +29,7 @@ export function SalesHistoryPage() {
     [sales],
   )
 
-  async function loadSales(nextStartDate = startDate, nextEndDate = endDate) {
+  const loadSales = useCallback(async (nextStartDate: string, nextEndDate: string) => {
     setIsLoading(true)
 
     try {
@@ -42,15 +42,19 @@ export function SalesHistoryPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    void loadSales('', '')
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      void loadSales('', '')
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadSales])
 
   function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    void loadSales()
+    void loadSales(startDate, endDate)
   }
 
   function clearFilters() {

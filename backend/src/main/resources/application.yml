@@ -36,6 +36,13 @@ info:
     description: Store management platform for IWR Modas.
     sprint: Sprint 7
 
+app:
+  auth:
+    default-admin:
+      username: ${DEFAULT_ADMIN_USERNAME:admin}
+      password: ${DEFAULT_ADMIN_PASSWORD:admin123}
+      display-name: ${DEFAULT_ADMIN_DISPLAY_NAME:Administrador}
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

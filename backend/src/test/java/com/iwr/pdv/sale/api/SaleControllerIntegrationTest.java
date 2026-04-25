@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.iwr.pdv.auth.api.dto.LoginRequest;
+import com.iwr.pdv.auth.application.AuthService;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
@@ -37,11 +39,16 @@ class SaleControllerIntegrationTest {
     @Autowired
     private StockMovementRepository stockMovementRepository;
 
+    @Autowired
+    private AuthService authService;
+
     private MockMvc mockMvc;
+    private String authHeader;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
         stockMovementRepository.deleteAll();
         saleRepository.deleteAll();
         productRepository.deleteAll();
@@ -63,6 +70,7 @@ class SaleControllerIntegrationTest {
                 """.formatted(product.getId());
 
         mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
@@ -92,6 +100,7 @@ class SaleControllerIntegrationTest {
                 """.formatted(product.getId());
 
         mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isUnprocessableEntity())
@@ -118,6 +127,7 @@ class SaleControllerIntegrationTest {
                 """.formatted(product.getId());
 
         String saleJson = mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
@@ -128,12 +138,14 @@ class SaleControllerIntegrationTest {
 
         Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
 
-        mockMvc.perform(get("/api/sales"))
+        mockMvc.perform(get("/api/sales")
+                        .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(saleId))
                 .andExpect(jsonPath("$[0].items[0].productCode").value("IWR-102"));
 
-        mockMvc.perform(get("/api/sales/{saleId}", saleId))
+        mockMvc.perform(get("/api/sales/{saleId}", saleId)
+                        .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saleId))
                 .andExpect(jsonPath("$.items[0].productName").value("Blusa Linho"));

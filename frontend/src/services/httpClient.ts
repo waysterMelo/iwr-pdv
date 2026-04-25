@@ -24,6 +24,22 @@ export class HttpRequestError extends Error {
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
 const apiBaseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl
+const authTokenStorageKey = 'iwr-pdv-auth-token'
+let authToken = window.localStorage.getItem(authTokenStorageKey)
+
+export function setAuthToken(token: string) {
+  authToken = token
+  window.localStorage.setItem(authTokenStorageKey, token)
+}
+
+export function clearAuthToken() {
+  authToken = null
+  window.localStorage.removeItem(authTokenStorageKey)
+}
+
+export function getAuthToken() {
+  return authToken
+}
 
 async function parseResponse<T>(response: Response): Promise<T | ErrorPayload | string> {
   const contentType = response.headers.get('content-type') ?? ''
@@ -44,9 +60,11 @@ async function request<T>(
   const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: {
       Accept: 'application/json',
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
+    credentials: 'include',
     method,
     signal: options.signal,
   })
@@ -69,7 +87,7 @@ export async function get<T>(path: string, options: RequestOptions = {}) {
   return request<T>(path, 'GET', undefined, options)
 }
 
-export async function post<T>(path: string, body: unknown, options: RequestOptions = {}) {
+export async function post<T>(path: string, body?: unknown, options: RequestOptions = {}) {
   return request<T>(path, 'POST', body, options)
 }
 

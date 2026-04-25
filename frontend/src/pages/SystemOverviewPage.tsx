@@ -69,9 +69,14 @@ export function SystemOverviewPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    void loadHealth(controller.signal)
+    const timeoutId = window.setTimeout(() => {
+      void loadHealth(controller.signal)
+    }, 0)
 
-    return () => controller.abort()
+    return () => {
+      window.clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [])
 
   return (

@@ -5,7 +5,9 @@ Manual curto para a operacao basica da loja.
 ## Acessar o sistema
 
 1. Abra `http://127.0.0.1:5173/`.
-2. Use a navegacao superior para alternar entre `Caixa`, `Historico` e `Produtos`.
+2. Entre com o usuario e senha fornecidos para a loja.
+3. No ambiente local inicial, o padrao e `admin` / `admin123`.
+4. Use a navegacao para alternar entre `Caixa`, `Historico` e `Produtos`.
 
 ## Cadastrar produto
 
@@ -44,4 +46,4 @@ O sistema valida produto ativo e estoque disponivel antes de finalizar. Ao final
 - Produto sem estoque nao pode ser vendido.
 - A baixa de estoque acontece apenas quando a venda e finalizada.
 - Impressao e leitura fisica dependem da homologacao dos equipamentos.
-
+- A senha padrao deve ser alterada no ambiente antes da entrega final.

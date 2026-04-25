@@ -175,10 +175,15 @@ export function ProductManagementPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    void loadHealth(controller.signal)
-    void loadProducts(search, controller.signal)
+    const timeoutId = window.setTimeout(() => {
+      void loadHealth(controller.signal)
+      void loadProducts(search, controller.signal)
+    }, 0)
 
-    return () => controller.abort()
+    return () => {
+      window.clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [search])
 
   function resetForm(clearMessages = true) {

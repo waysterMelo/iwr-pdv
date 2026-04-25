@@ -1,0 +1,12 @@
+package com.iwr.pdv.auth.domain;
+
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AuthSessionRepository extends JpaRepository<AuthSession, Long> {
+
+    Optional<AuthSession> findByTokenHash(String tokenHash);
+
+    void deleteByExpiresAtBefore(OffsetDateTime expiresAt);
+}

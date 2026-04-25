@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.iwr.pdv.auth.api.dto.LoginRequest;
+import com.iwr.pdv.auth.application.AuthService;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductCodeControl;
 import com.iwr.pdv.product.domain.ProductCodeControlRepository;
@@ -36,11 +38,16 @@ class ProductControllerIntegrationTest {
     @Autowired
     private ProductCodeControlRepository productCodeControlRepository;
 
+    @Autowired
+    private AuthService authService;
+
     private MockMvc mockMvc;
+    private String authHeader;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
         productRepository.deleteAll();
         resetProductCodeSequence();
     }
@@ -58,6 +65,7 @@ class ProductControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/products")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
@@ -66,7 +74,8 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.stockQuantity").value(8))
                 .andExpect(jsonPath("$.active").value(true));
 
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/api/products")
+                        .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Vestido Midi"))
                 .andExpect(jsonPath("$[0].code").value("IWR-001"));
@@ -85,6 +94,7 @@ class ProductControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/products")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isBadRequest())
@@ -113,6 +123,7 @@ class ProductControllerIntegrationTest {
                 """;
 
         mockMvc.perform(put("/api/products/{productId}", savedProduct.getId())
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
@@ -126,12 +137,16 @@ class ProductControllerIntegrationTest {
         productRepository.save(buildProduct("Saia Jeans", "IWR-010", new BigDecimal("99.90"), 5, true));
         productRepository.save(buildProduct("Vestido Floral", "IWR-011", new BigDecimal("159.90"), 7, true));
 
-        mockMvc.perform(get("/api/products").param("search", "vest"))
+        mockMvc.perform(get("/api/products")
+                        .header("Authorization", authHeader)
+                        .param("search", "vest"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].code").value("IWR-011"));
 
-        mockMvc.perform(get("/api/products").param("search", "010"))
+        mockMvc.perform(get("/api/products")
+                        .header("Authorization", authHeader)
+                        .param("search", "010"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("Saia Jeans"));
@@ -159,12 +174,14 @@ class ProductControllerIntegrationTest {
                 """;
 
         mockMvc.perform(patch("/api/products/{productId}/activation", savedProduct.getId())
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(disablePayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
 
         mockMvc.perform(patch("/api/products/{productId}/activation", savedProduct.getId())
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(enablePayload))
                 .andExpect(status().isOk())
@@ -192,6 +209,7 @@ class ProductControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/products")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isConflict())
@@ -211,12 +229,14 @@ class ProductControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/products")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("IWR-000001"));
 
         mockMvc.perform(post("/api/products")
+                        .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload.replace("Macacao Linho", "Macacao Linho Premium")))
                 .andExpect(status().isCreated())
@@ -233,7 +253,8 @@ class ProductControllerIntegrationTest {
                 true
         ));
 
-        mockMvc.perform(get("/api/products/{productId}/qr-code", savedProduct.getId()))
+        mockMvc.perform(get("/api/products/{productId}/qr-code", savedProduct.getId())
+                        .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(result -> {
                     byte[] bytes = result.getResponse().getContentAsByteArray();
@@ -257,7 +278,8 @@ class ProductControllerIntegrationTest {
                 true
         ));
 
-        mockMvc.perform(get("/api/products/{productId}/label", savedProduct.getId()))
+        mockMvc.perform(get("/api/products/{productId}/label", savedProduct.getId())
+                        .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(result -> {
                     String html = result.getResponse().getContentAsString();
