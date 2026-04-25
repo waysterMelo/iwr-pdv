@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { getSales } from '../services/saleService'
+import { cancelSale, getSaleReceiptUrl, getSales } from '../services/saleService'
 import type { Sale } from '../types/sale'
 
 function formatCurrency(value: number) {
@@ -9,7 +9,11 @@ function formatCurrency(value: number) {
   }).format(value)
 }
 
-function formatDate(value: string) {
+function formatDate(value: string | null) {
+  if (!value) {
+    return '-'
+  }
+
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -22,6 +26,7 @@ export function SalesHistoryPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isCancelling, setIsCancelling] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const totalAmount = useMemo(
@@ -61,6 +66,35 @@ export function SalesHistoryPage() {
     setStartDate('')
     setEndDate('')
     void loadSales('', '')
+  }
+
+  async function handleCancelSale() {
+    if (!selectedSale || selectedSale.status === 'CANCELLED') {
+      return
+    }
+
+    const reason = window.prompt(`Informe o motivo do cancelamento da venda #${selectedSale.id}:`)
+    if (!reason?.trim()) {
+      return
+    }
+
+    const confirmed = window.confirm('Cancelar esta venda e devolver os itens ao estoque?')
+    if (!confirmed) {
+      return
+    }
+
+    setIsCancelling(true)
+
+    try {
+      const cancelledSale = await cancelSale(selectedSale.id, reason.trim())
+      setSelectedSale(cancelledSale)
+      await loadSales(startDate, endDate)
+      setErrorMessage(null)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Nao foi possivel cancelar a venda.')
+    } finally {
+      setIsCancelling(false)
+    }
   }
 
   return (
@@ -142,7 +176,9 @@ export function SalesHistoryPage() {
                   >
                     <span>Venda #{sale.id}</span>
                     <strong>{formatCurrency(sale.totalAmount)}</strong>
-                    <small>{formatDate(sale.soldAt)} - {sale.totalItems} item(ns)</small>
+                    <small>
+                      {sale.status === 'CANCELLED' ? 'Cancelada' : 'Concluida'} - {sale.paymentMethod} - {formatDate(sale.soldAt)}
+                    </small>
                   </button>
                 ))}
               </div>
@@ -153,14 +189,59 @@ export function SalesHistoryPage() {
             <header className="section-header">
               <div>
                 <h2>Detalhe da venda</h2>
-                <p>{selectedSale ? `Venda #${selectedSale.id}` : 'Nenhuma venda selecionada.'}</p>
+                <p>
+                  {selectedSale
+                    ? `Venda #${selectedSale.id} - ${selectedSale.status === 'CANCELLED' ? 'Cancelada' : 'Concluida'}`
+                    : 'Nenhuma venda selecionada.'}
+                </p>
               </div>
+              {selectedSale ? (
+                <div className="form-actions">
+                  <a
+                    className="icon-link"
+                    href={getSaleReceiptUrl(selectedSale.id)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Imprimir recibo
+                  </a>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={selectedSale.status === 'CANCELLED' || isCancelling}
+                    onClick={() => void handleCancelSale()}
+                  >
+                    {isCancelling ? 'Cancelando...' : 'Cancelar venda'}
+                  </button>
+                </div>
+              ) : null}
             </header>
 
             {!selectedSale ? (
               <div className="product-empty">Selecione uma venda para visualizar os itens.</div>
             ) : (
               <div className="cart-list">
+                <article className="cart-item">
+                  <div className="cart-item-main">
+                    <span>Pagamento</span>
+                    <strong>{selectedSale.paymentMethod}</strong>
+                    <small>Operador: {selectedSale.operator.displayName}</small>
+                  </div>
+                  <div className="cart-price">
+                    <span>Desconto</span>
+                    <strong>{formatCurrency(selectedSale.discountAmount)}</strong>
+                  </div>
+                  <div className="cart-price">
+                    <span>Total</span>
+                    <strong>{formatCurrency(selectedSale.totalAmount)}</strong>
+                  </div>
+                </article>
+                {selectedSale.status === 'CANCELLED' ? (
+                  <div className="feedback-message feedback-message--error">
+                    Venda cancelada em {formatDate(selectedSale.cancelledAt ?? '')}. Motivo:{' '}
+                    {selectedSale.cancellationReason}
+                  </div>
+                ) : null}
                 {selectedSale.items.map((item) => (
                   <article className="cart-item" key={item.id}>
                     <div className="cart-item-main">

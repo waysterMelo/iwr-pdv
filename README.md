@@ -38,6 +38,10 @@ Antes de entregar ao cliente, defina `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_PA
 - Sprint 6 concluida com historico de vendas e filtros basicos
 - Sprint 7 preparada em software com manual e checklist de implantacao
 - login de acesso ao sistema com sessao protegida
+- pagamento por dinheiro, Pix, debito e credito
+- abertura, movimentacao e fechamento de caixa
+- cancelamento de venda com estorno de estoque
+- recibo nao fiscal imprimivel
 - busca por nome ou codigo
 - ativacao e inativacao de produtos
 - frontend com tela de cadastro, listagem, edicao, caixa e historico

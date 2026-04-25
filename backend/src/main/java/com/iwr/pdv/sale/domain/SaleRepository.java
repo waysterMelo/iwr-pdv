@@ -11,6 +11,9 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     @EntityGraph(attributePaths = "items")
     List<Sale> findBySoldAtBetweenOrderBySoldAtDesc(OffsetDateTime start, OffsetDateTime end);
 
+    @EntityGraph(attributePaths = {"items", "operator", "cashRegister"})
+    List<Sale> findByCashRegisterIdAndStatus(Long cashRegisterId, SaleStatus status);
+
     @EntityGraph(attributePaths = "items")
     List<Sale> findAllByOrderBySoldAtDesc();
 

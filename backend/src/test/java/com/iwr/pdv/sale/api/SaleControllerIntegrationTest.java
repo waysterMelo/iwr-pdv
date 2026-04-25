@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iwr.pdv.auth.api.dto.LoginRequest;
 import com.iwr.pdv.auth.application.AuthService;
+import com.iwr.pdv.cash.domain.CashMovementRepository;
+import com.iwr.pdv.cash.domain.CashRegisterRepository;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
@@ -40,18 +42,27 @@ class SaleControllerIntegrationTest {
     private StockMovementRepository stockMovementRepository;
 
     @Autowired
+    private CashMovementRepository cashMovementRepository;
+
+    @Autowired
+    private CashRegisterRepository cashRegisterRepository;
+
+    @Autowired
     private AuthService authService;
 
     private MockMvc mockMvc;
     private String authHeader;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
         stockMovementRepository.deleteAll();
         saleRepository.deleteAll();
+        cashMovementRepository.deleteAll();
+        cashRegisterRepository.deleteAll();
         productRepository.deleteAll();
+        openCashRegister();
     }
 
     @Test
@@ -65,7 +76,10 @@ class SaleControllerIntegrationTest {
                       "productId": %d,
                       "quantity": 2
                     }
-                  ]
+                  ],
+                  "paymentMethod": "CASH",
+                  "discountAmount": 10.00,
+                  "amountReceived": 300.00
                 }
                 """.formatted(product.getId());
 
@@ -74,7 +88,13 @@ class SaleControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.totalAmount").value(299.80))
+                .andExpect(jsonPath("$.subtotalAmount").value(299.80))
+                .andExpect(jsonPath("$.discountAmount").value(10.00))
+                .andExpect(jsonPath("$.totalAmount").value(289.80))
+                .andExpect(jsonPath("$.changeAmount").value(10.20))
+                .andExpect(jsonPath("$.paymentMethod").value("CASH"))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.operator.username").value("admin"))
                 .andExpect(jsonPath("$.totalItems").value(2))
                 .andExpect(jsonPath("$.items[0].productCode").value("IWR-100"))
                 .andExpect(jsonPath("$.items[0].quantity").value(2));
@@ -95,7 +115,9 @@ class SaleControllerIntegrationTest {
                       "productId": %d,
                       "quantity": 2
                     }
-                  ]
+                  ],
+                  "paymentMethod": "PIX",
+                  "discountAmount": 0
                 }
                 """.formatted(product.getId());
 
@@ -122,7 +144,9 @@ class SaleControllerIntegrationTest {
                       "productId": %d,
                       "quantity": 1
                     }
-                  ]
+                  ],
+                  "paymentMethod": "DEBIT_CARD",
+                  "discountAmount": 0
                 }
                 """.formatted(product.getId());
 
@@ -142,6 +166,7 @@ class SaleControllerIntegrationTest {
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(saleId))
+                .andExpect(jsonPath("$[0].paymentMethod").value("DEBIT_CARD"))
                 .andExpect(jsonPath("$[0].items[0].productCode").value("IWR-102"));
 
         mockMvc.perform(get("/api/sales/{saleId}", saleId)
@@ -149,6 +174,181 @@ class SaleControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saleId))
                 .andExpect(jsonPath("$.items[0].productName").value("Blusa Linho"));
+    }
+
+    @Test
+    void shouldRejectSaleWithoutOpenCashRegister() throws Exception {
+        cashMovementRepository.deleteAll();
+        saleRepository.deleteAll();
+        cashRegisterRepository.deleteAll();
+        Product product = productRepository.save(buildProduct("Top Basico", "IWR-103", new BigDecimal("49.90"), 4, true));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "PIX",
+                  "discountAmount": 0
+                }
+                """.formatted(product.getId());
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Open the cash register before closing sales."));
+    }
+
+    @Test
+    void shouldRejectCashPaymentWhenReceivedAmountIsInsufficient() throws Exception {
+        Product product = productRepository.save(buildProduct("Cinto Couro", "IWR-104", new BigDecimal("80.00"), 2, true));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "CASH",
+                  "discountAmount": 0,
+                  "amountReceived": 70.00
+                }
+                """.formatted(product.getId());
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Cash received amount must be greater than or equal to sale total."));
+    }
+
+    @Test
+    void shouldRejectDiscountGreaterThanSubtotal() throws Exception {
+        Product product = productRepository.save(buildProduct("Bolsa Pequena", "IWR-105", new BigDecimal("50.00"), 2, true));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "PIX",
+                  "discountAmount": 60.00
+                }
+                """.formatted(product.getId());
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Discount amount cannot be greater than sale subtotal."));
+    }
+
+    @Test
+    void shouldCancelSaleAndRestoreStock() throws Exception {
+        Product product = productRepository.save(buildProduct("Jaqueta Jeans", "IWR-106", new BigDecimal("200.00"), 5, true));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 2
+                    }
+                  ],
+                  "paymentMethod": "CREDIT_CARD",
+                  "discountAmount": 0
+                }
+                """.formatted(product.getId());
+
+        String saleJson = mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+
+        mockMvc.perform(post("/api/sales/{saleId}/cancel", saleId)
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Cliente desistiu\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.cancellationReason").value("Cliente desistiu"));
+
+        Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(5, updatedProduct.getStockQuantity());
+        org.junit.jupiter.api.Assertions.assertEquals(2, stockMovementRepository.count());
+
+        mockMvc.perform(post("/api/sales/{saleId}/cancel", saleId)
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Duplicado\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Sale is already cancelled."));
+    }
+
+    @Test
+    void shouldGenerateSaleReceiptAsHtml() throws Exception {
+        Product product = productRepository.save(buildProduct("Lenco Seda", "IWR-107", new BigDecimal("39.90"), 3, true));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "PIX",
+                  "discountAmount": 0
+                }
+                """.formatted(product.getId());
+
+        String saleJson = mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+
+        mockMvc.perform(get("/api/sales/{saleId}/receipt", saleId)
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String html = result.getResponse().getContentAsString();
+                    if (!html.contains("Recibo nao fiscal")
+                            || !html.contains("Lenco Seda")
+                            || !html.contains("PIX")
+                            || !html.contains("Administrador")) {
+                        throw new AssertionError("Expected a sale receipt HTML response.");
+                    }
+                });
+    }
+
+    private void openCashRegister() throws Exception {
+        mockMvc.perform(post("/api/cash-register/open")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingAmount\":100.00}"))
+                .andExpect(status().isCreated());
     }
 
     private Product buildProduct(

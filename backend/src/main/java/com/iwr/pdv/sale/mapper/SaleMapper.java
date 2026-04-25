@@ -1,5 +1,6 @@
 package com.iwr.pdv.sale.mapper;
 
+import com.iwr.pdv.auth.mapper.AuthMapper;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.sale.api.dto.SaleItemResponse;
 import com.iwr.pdv.sale.api.dto.SaleResponse;
@@ -10,6 +11,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SaleMapper {
+
+    private final AuthMapper authMapper;
+
+    public SaleMapper(AuthMapper authMapper) {
+        this.authMapper = authMapper;
+    }
 
     public SaleItem toItem(Product product, int quantity) {
         BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(quantity));
@@ -28,9 +35,18 @@ public class SaleMapper {
     public SaleResponse toResponse(Sale sale) {
         return new SaleResponse(
                 sale.getId(),
+                sale.getStatus(),
+                sale.getOperator() == null ? null : authMapper.toResponse(sale.getOperator()),
+                sale.getPaymentMethod(),
+                sale.getSubtotalAmount(),
+                sale.getDiscountAmount(),
                 sale.getTotalAmount(),
+                sale.getAmountReceived(),
+                sale.getChangeAmount(),
                 sale.getItems().stream().mapToInt(SaleItem::getQuantity).sum(),
                 sale.getSoldAt(),
+                sale.getCancelledAt(),
+                sale.getCancellationReason(),
                 sale.getCreatedAt(),
                 sale.getItems()
                         .stream()

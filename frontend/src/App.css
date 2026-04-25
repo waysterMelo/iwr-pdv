@@ -868,6 +868,15 @@ h3 {
   font-weight: 500;
 }
 
+.payment-total {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
 .checkout-footer-panel .action-button {
   background: #fff;
   color: var(--color-dark);

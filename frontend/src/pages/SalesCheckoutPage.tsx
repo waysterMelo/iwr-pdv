@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { getCurrentCashRegister } from '../services/cashRegisterService'
 import { findProductByCode } from '../services/productService'
-import { closeSale } from '../services/saleService'
+import { closeSale, getSaleReceiptUrl } from '../services/saleService'
+import type { CashRegister } from '../types/cashRegister'
 import type { Product } from '../types/product'
+import type { PaymentMethod, Sale } from '../types/sale'
 
 type CartItem = {
   product: Product
@@ -26,17 +29,35 @@ export function SalesCheckoutPage() {
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
   const [isSearching, setIsSearching] = useState(false)
   const [isClosingSale, setIsClosingSale] = useState(false)
+  const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH')
+  const [discountAmount, setDiscountAmount] = useState('0.00')
+  const [amountReceived, setAmountReceived] = useState('')
+  const [lastSale, setLastSale] = useState<Sale | null>(null)
   const scannerInputRef = useRef<HTMLInputElement>(null)
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-  const totalAmount = useMemo(
+  const subtotalAmount = useMemo(
     () => cartItems.reduce((sum, item) => sum + getCartItemTotal(item), 0),
     [cartItems],
   )
+  const parsedDiscountAmount = Number(discountAmount) || 0
+  const totalAmount = Math.max(subtotalAmount - parsedDiscountAmount, 0)
+  const parsedAmountReceived = Number(amountReceived) || 0
+  const changeAmount = paymentMethod === 'CASH' ? Math.max(parsedAmountReceived - totalAmount, 0) : 0
 
   useEffect(() => {
     scannerInputRef.current?.focus()
+    void refreshCashRegister()
   }, [])
+
+  async function refreshCashRegister() {
+    try {
+      setCashRegister(await getCurrentCashRegister())
+    } catch {
+      setCashRegister(null)
+    }
+  }
 
   function showMessage(nextMessage: string, nextType: 'success' | 'error') {
     setMessage(nextMessage)
@@ -132,6 +153,26 @@ export function SalesCheckoutPage() {
       return
     }
 
+    if (!cashRegister) {
+      showMessage('Abra o caixa antes de finalizar vendas.', 'error')
+      return
+    }
+
+    if (parsedDiscountAmount > subtotalAmount) {
+      showMessage('O desconto nao pode ser maior que o subtotal.', 'error')
+      return
+    }
+
+    if (paymentMethod === 'CASH' && parsedAmountReceived < totalAmount) {
+      showMessage('O valor recebido em dinheiro deve cobrir o total da venda.', 'error')
+      return
+    }
+
+    const confirmed = window.confirm(`Finalizar venda de ${formatCurrency(totalAmount)}?`)
+    if (!confirmed) {
+      return
+    }
+
     setIsClosingSale(true)
 
     try {
@@ -140,10 +181,18 @@ export function SalesCheckoutPage() {
           productId: item.product.id,
           quantity: item.quantity,
         })),
+        paymentMethod,
+        discountAmount: parsedDiscountAmount,
+        amountReceived: paymentMethod === 'CASH' ? parsedAmountReceived : undefined,
       })
 
       setCartItems([])
+      setDiscountAmount('0.00')
+      setAmountReceived('')
+      setLastSale(sale)
+      await refreshCashRegister()
       showMessage(`Venda #${sale.id} finalizada com sucesso.`, 'success')
+      window.open(getSaleReceiptUrl(sale.id), '_blank')
     } catch (error) {
       showMessage(error instanceof Error ? error.message : 'Nao foi possivel finalizar a venda.', 'error')
     } finally {
@@ -167,7 +216,9 @@ export function SalesCheckoutPage() {
           <div className="checkout-summary">
             <span>Total da venda</span>
             <strong>{formatCurrency(totalAmount)}</strong>
-            <small>{totalItems} item(ns) no carrinho</small>
+            <small>
+              {cashRegister ? `Caixa #${cashRegister.id} aberto` : 'Abra o caixa antes de vender'} - {totalItems} item(ns)
+            </small>
           </div>
         </section>
 
@@ -198,6 +249,55 @@ export function SalesCheckoutPage() {
               {message}
             </div>
           ) : null}
+        </section>
+
+        <section className="scanner-panel">
+          <header className="section-header">
+            <div>
+              <h2>Pagamento</h2>
+              <p>Revise subtotal, desconto e forma de pagamento antes de finalizar.</p>
+            </div>
+          </header>
+          <div className="form-grid">
+            <div className="field-group">
+              <label htmlFor="paymentMethod">Forma de pagamento</label>
+              <select
+                id="paymentMethod"
+                value={paymentMethod}
+                onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
+              >
+                <option value="CASH">Dinheiro</option>
+                <option value="PIX">Pix</option>
+                <option value="DEBIT_CARD">Cartao debito</option>
+                <option value="CREDIT_CARD">Cartao credito</option>
+              </select>
+            </div>
+            <div className="field-group">
+              <label htmlFor="discountAmount">Desconto R$</label>
+              <input
+                id="discountAmount"
+                inputMode="decimal"
+                value={discountAmount}
+                onChange={(event) => setDiscountAmount(event.target.value)}
+              />
+            </div>
+            {paymentMethod === 'CASH' ? (
+              <div className="field-group">
+                <label htmlFor="amountReceived">Valor recebido</label>
+                <input
+                  id="amountReceived"
+                  inputMode="decimal"
+                  value={amountReceived}
+                  onChange={(event) => setAmountReceived(event.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            ) : null}
+            <div className="field-group">
+              <label>Troco</label>
+              <strong className="payment-total">{formatCurrency(changeAmount)}</strong>
+            </div>
+          </div>
         </section>
 
         <section className="cart-panel">
@@ -258,17 +358,22 @@ export function SalesCheckoutPage() {
 
         <section className="checkout-footer-panel">
           <div>
-            <span>Subtotal</span>
+            <span>Subtotal {formatCurrency(subtotalAmount)} - desconto {formatCurrency(parsedDiscountAmount)}</span>
             <strong>{formatCurrency(totalAmount)}</strong>
           </div>
           <button
             className="action-button"
             type="button"
-            disabled={cartItems.length === 0 || isClosingSale}
+            disabled={cartItems.length === 0 || isClosingSale || !cashRegister}
             onClick={() => void handleCloseSale()}
           >
             {isClosingSale ? 'Finalizando...' : 'Finalizar venda'}
           </button>
+          {lastSale ? (
+            <a className="icon-link" href={getSaleReceiptUrl(lastSale.id)} target="_blank" rel="noreferrer">
+              Recibo #{lastSale.id}
+            </a>
+          ) : null}
         </section>
       </div>
     </main>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import { CashRegisterPage } from './pages/CashRegisterPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
@@ -8,7 +9,7 @@ import { getCurrentUser, logout } from './services/authService'
 import { clearAuthToken, getAuthToken } from './services/httpClient'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'products' | 'history'
+type AppView = 'checkout' | 'cash-register' | 'products' | 'history'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('checkout')
@@ -17,6 +18,7 @@ function App() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const menuItems: Array<{ id: AppView; label: string; eyebrow: string }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
+    { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas' },
     { id: 'products', label: 'Produtos', eyebrow: 'Estoque' },
   ]
@@ -133,6 +135,7 @@ function App() {
         </div>
 
         {currentView === 'checkout' ? <SalesCheckoutPage /> : null}
+        {currentView === 'cash-register' ? <CashRegisterPage /> : null}
         {currentView === 'history' ? <SalesHistoryPage /> : null}
         {currentView === 'products' ? <ProductManagementPage /> : null}
       </section>

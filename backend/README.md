@@ -58,6 +58,15 @@ Os endpoints de produto e venda exigem sessao autenticada.
 - `POST /api/sales`
 - `GET /api/sales`
 - `GET /api/sales/{saleId}`
+- `POST /api/sales/{saleId}/cancel`
+- `GET /api/sales/{saleId}/receipt`
+
+## Endpoints de caixa
+
+- `POST /api/cash-register/open`
+- `POST /api/cash-register/movements`
+- `GET /api/cash-register/current`
+- `POST /api/cash-register/{cashRegisterId}/close`
 
 ## Swagger
 

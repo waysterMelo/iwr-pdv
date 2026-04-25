@@ -19,3 +19,11 @@ export async function getSales(startDate?: string, endDate?: string) {
   const query = searchParams.size > 0 ? `?${searchParams.toString()}` : ''
   return get<Sale[]>(`/api/sales${query}`)
 }
+
+export async function cancelSale(saleId: number, reason: string) {
+  return post<Sale>(`/api/sales/${saleId}/cancel`, { reason })
+}
+
+export function getSaleReceiptUrl(saleId: number) {
+  return `/api/sales/${saleId}/receipt`
+}

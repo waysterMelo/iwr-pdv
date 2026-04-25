@@ -1,5 +1,7 @@
 package com.iwr.pdv.sale.api;
 
+import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.sale.api.dto.SaleCancellationRequest;
 import com.iwr.pdv.sale.api.dto.SaleRequest;
 import com.iwr.pdv.sale.api.dto.SaleResponse;
 import com.iwr.pdv.sale.application.SaleService;
@@ -9,11 +11,14 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,8 +64,11 @@ public class SaleController {
                     )
             )
     })
-    public SaleResponse closeSale(@Valid @RequestBody SaleRequest request) {
-        return saleService.closeSale(request);
+    public SaleResponse closeSale(
+            @Valid @RequestBody SaleRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return saleService.closeSale(request, currentUser(servletRequest));
     }
 
     @GetMapping
@@ -85,5 +93,27 @@ public class SaleController {
     })
     public SaleResponse findById(@PathVariable Long saleId) {
         return saleService.findById(saleId);
+    }
+
+    @PostMapping("/{saleId}/cancel")
+    @Operation(summary = "Cancel a sale and restore stock")
+    public SaleResponse cancel(
+            @PathVariable Long saleId,
+            @Valid @RequestBody SaleCancellationRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return saleService.cancel(saleId, request, currentUser(servletRequest));
+    }
+
+    @GetMapping(value = "/{saleId}/receipt", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(summary = "Generate a non fiscal sale receipt")
+    public ResponseEntity<String> receipt(@PathVariable Long saleId) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(saleService.generateReceipt(saleId));
+    }
+
+    private AppUser currentUser(HttpServletRequest request) {
+        return (AppUser) request.getAttribute("authenticatedUser");
     }
 }
