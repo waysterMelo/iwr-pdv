@@ -14,6 +14,7 @@ Fundacao tecnica do sistema de gestao de loja da IWR Modas.
 - [backend](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\backend)
 - [frontend](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\frontend)
 - [docker-compose.yml](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\docker-compose.yml)
+- [CHECKLIST_HOMOLOGACAO_HARDWARE.md](C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\CHECKLIST_HOMOLOGACAO_HARDWARE.md)
 
 ## Como subir o ambiente
 
