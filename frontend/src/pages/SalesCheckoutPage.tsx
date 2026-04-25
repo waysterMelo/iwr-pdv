@@ -157,7 +157,7 @@ export function SalesCheckoutPage() {
       <div className="app-container checkout-container">
         <section className="checkout-hero-panel">
           <div>
-            <span className="eyebrow">Sprint 4 em andamento</span>
+            <span className="eyebrow">Caixa</span>
             <h1>Caixa com leitura por codigo</h1>
             <p>
               Leia o QR Code ou digite o codigo do produto para montar a venda, finalizar

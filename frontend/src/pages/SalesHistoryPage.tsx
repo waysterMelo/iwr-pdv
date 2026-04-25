@@ -64,7 +64,7 @@ export function SalesHistoryPage() {
       <div className="app-container history-container">
         <section className="checkout-hero-panel">
           <div>
-            <span className="eyebrow">Sprint 6 em andamento</span>
+            <span className="eyebrow">Historico</span>
             <h1>Historico de vendas</h1>
             <p>
               Consulte vendas reais, revise itens vendidos e acompanhe o total do periodo.

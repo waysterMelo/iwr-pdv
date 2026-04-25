@@ -269,7 +269,7 @@ export function ProductManagementPage() {
         <section className="hero-panel">
           <header className="hero-header">
             <div className="hero-copy">
-              <span className="eyebrow">Sprint 3 em andamento</span>
+              <span className="eyebrow">Produtos</span>
               <h1>Etiquetas de produtos prontas para impressao</h1>
               <p>
                 O cadastro agora conecta codigo unico, QR Code e uma etiqueta simples
@@ -567,7 +567,7 @@ export function ProductManagementPage() {
         />
 
         <section className="acceptance-card">
-          <h2>Criterios de aceite da Sprint 3</h2>
+          <h2>Checklist operacional de produtos</h2>
           <p>
             Agora o modulo precisa transformar o cadastro em material de loja, com
             etiquetas legiveis e prontas para impressao.

@@ -8,7 +8,7 @@ type HealthStatusCardProps = {
 }
 
 const STATUS_DESCRIPTION: Record<string, string> = {
-  UP: 'Aplicacao e banco disponiveis para a base da Sprint 0.',
+  UP: 'Aplicacao e banco disponiveis para operacao.',
   DOWN: 'Servico indisponivel no momento.',
   DEGRADED: 'Aplicacao no ar, mas a dependencia de banco precisa de atencao.',
 }
@@ -57,8 +57,8 @@ export function HealthStatusCard({
       <div className="status-card">
         <header className="status-card-header">
           <div>
-            <h2>Integracao frontend e backend</h2>
-            <p>Esta tela consulta o endpoint `/health` para validar a fundacao da aplicacao.</p>
+            <h2>Status do sistema</h2>
+            <p>Esta tela consulta o endpoint `/health` para validar a disponibilidade da aplicacao.</p>
           </div>
           <div className="status-badges">
             <span className={getBadgeClassName(applicationStatus)}>
@@ -79,7 +79,7 @@ export function HealthStatusCard({
           </div>
           <div className="status-detail">
             <span>Observacao</span>
-            <strong>{applicationStatus === 'UP' ? 'Pronto para Sprint 1' : 'Requer ajuste de ambiente'}</strong>
+            <strong>{applicationStatus === 'UP' ? 'Pronto para operacao' : 'Requer ajuste de ambiente'}</strong>
           </div>
         </div>
 

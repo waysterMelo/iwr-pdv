@@ -80,12 +80,11 @@ export function SystemOverviewPage() {
         <section className="hero-panel">
           <header className="hero-header">
             <div className="hero-copy">
-              <span className="eyebrow">Sprint 0 em execucao</span>
-              <h1>Fundacao tecnica do IWR PDV</h1>
+              <span className="eyebrow">Sistema</span>
+              <h1>Base tecnica do IWR PDV</h1>
               <p>
-                Esta base ja nasce alinhada com o plano mestre: arquitetura organizada,
-                migracoes, integracao frontend/backend e foco em codigo simples, legivel e
-                pronto para evoluir para cadastro de produtos.
+                Esta base mantem arquitetura organizada, migracoes, integracao frontend/backend
+                e foco em codigo simples, legivel e pronto para operacao.
               </p>
             </div>
 
@@ -120,7 +119,7 @@ export function SystemOverviewPage() {
         />
 
         <section className="acceptance-card">
-          <h2>Criterios de aceite da Sprint 0</h2>
+          <h2>Checklist tecnico</h2>
           <p>
             A fundacao fica pronta quando ambiente, banco e integracao basica estiverem
             funcionando juntos.
