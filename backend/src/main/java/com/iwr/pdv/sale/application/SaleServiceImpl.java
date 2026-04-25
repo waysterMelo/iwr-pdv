@@ -25,6 +25,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SaleServiceImpl implements SaleService {
 
     private static final String SALE_REFERENCE_TYPE = "SALE";
+    private static final DateTimeFormatter RECEIPT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final SaleRepository saleRepository;
     private final ProductRepository productRepository;
@@ -172,12 +174,16 @@ public class SaleServiceImpl implements SaleService {
         StringBuilder itemsHtml = new StringBuilder();
         for (SaleItem item : sale.getItems()) {
             itemsHtml.append("""
-                    <tr>
-                      <td>%s<br><small>%s</small></td>
-                      <td>%d</td>
-                      <td>%s</td>
-                      <td>%s</td>
-                    </tr>
+                    <article class="item-row">
+                      <div class="item-main">
+                        <strong>%s</strong>
+                        <span>%s</span>
+                      </div>
+                      <div class="item-values">
+                        <span>%d x %s</span>
+                        <strong>%s</strong>
+                      </div>
+                    </article>
                     """.formatted(
                     escape(item.getProductName()),
                     escape(item.getProductCode()),
@@ -192,59 +198,199 @@ public class SaleServiceImpl implements SaleService {
                 <html lang="pt-BR">
                 <head>
                   <meta charset="utf-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1">
                   <title>Recibo Venda #%d</title>
                   <style>
-                    body{font-family:Arial,sans-serif;margin:24px;color:#111827}
-                    .receipt{max-width:420px;margin:0 auto}
-                    h1{font-size:22px;margin:0 0 4px}
-                    .muted{color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-                    table{width:100%%;border-collapse:collapse;margin:18px 0}
-                    th,td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left;font-size:13px}
-                    th{text-transform:uppercase;font-size:11px;color:#6b7280}
-                    .totals{display:grid;gap:8px}
-                    .row{display:flex;justify-content:space-between}
-                    .total{font-weight:700;font-size:18px}
-                    @media print{button{display:none}body{margin:0}.receipt{max-width:none}}
+                    :root{--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--soft:#f8fafc;--dark:#121212}
+                    *{box-sizing:border-box}
+                    body{
+                      margin:0;
+                      padding:28px;
+                      background:linear-gradient(135deg,#f9fafb,#eef2f7);
+                      color:var(--ink);
+                      font-family:"Segoe UI",Arial,sans-serif;
+                    }
+                    .receipt{
+                      width:min(460px,100%%);
+                      margin:0 auto;
+                      background:#fff;
+                      border:1px solid var(--line);
+                      box-shadow:0 22px 70px rgba(15,23,42,.14);
+                    }
+                    .top{
+                      padding:26px 26px 22px;
+                      background:var(--dark);
+                      color:#fff;
+                    }
+                    .brand-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+                    .brand{font-family:Georgia,serif;font-style:italic;font-size:34px;font-weight:700;line-height:1}
+                    .badge{
+                      border:1px solid rgba(255,255,255,.28);
+                      padding:7px 10px;
+                      color:rgba(255,255,255,.78);
+                      font-size:10px;
+                      font-weight:800;
+                      letter-spacing:.12em;
+                      text-transform:uppercase;
+                    }
+                    .top h1{margin:22px 0 8px;font-size:22px;line-height:1.1}
+                    .top p{margin:0;color:rgba(255,255,255,.68);font-size:13px;line-height:1.55}
+                    .content{padding:24px 26px 26px}
+                    .meta-grid{
+                      display:grid;
+                      grid-template-columns:repeat(2,minmax(0,1fr));
+                      gap:1px;
+                      overflow:hidden;
+                      border:1px solid var(--line);
+                      background:var(--line);
+                    }
+                    .meta-card{padding:12px;background:var(--soft)}
+                    .label{
+                      display:block;
+                      margin-bottom:5px;
+                      color:var(--muted);
+                      font-size:10px;
+                      font-weight:800;
+                      letter-spacing:.12em;
+                      text-transform:uppercase;
+                    }
+                    .meta-card strong{font-size:13px}
+                    .section-title{
+                      margin:22px 0 10px;
+                      color:var(--muted);
+                      font-size:10px;
+                      font-weight:900;
+                      letter-spacing:.14em;
+                      text-transform:uppercase;
+                    }
+                    .items{display:grid;border-top:1px dashed #cbd5e1}
+                    .item-row{
+                      display:grid;
+                      grid-template-columns:minmax(0,1fr) auto;
+                      gap:14px;
+                      padding:13px 0;
+                      border-bottom:1px dashed #cbd5e1;
+                    }
+                    .item-main{display:grid;gap:4px}
+                    .item-main strong{font-size:14px;line-height:1.25}
+                    .item-main span,.item-values span{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase}
+                    .item-values{display:grid;gap:4px;text-align:right}
+                    .item-values strong{font-size:14px}
+                    .totals{
+                      display:grid;
+                      gap:9px;
+                      margin-top:18px;
+                      padding:16px;
+                      background:var(--soft);
+                      border:1px solid var(--line);
+                    }
+                    .row{display:flex;justify-content:space-between;gap:16px;font-size:13px}
+                    .row strong{text-align:right}
+                    .total{
+                      margin-top:4px;
+                      padding-top:12px;
+                      border-top:1px solid var(--line);
+                      font-size:20px;
+                      font-weight:900;
+                    }
+                    .total span{font-family:Georgia,serif;font-size:22px}
+                    .status-note{
+                      margin-top:16px;
+                      padding:12px;
+                      border-left:3px solid #dc2626;
+                      background:#fef2f2;
+                      color:#991b1b;
+                      font-size:12px;
+                      line-height:1.5;
+                    }
+                    .footer{
+                      margin-top:20px;
+                      padding-top:16px;
+                      border-top:1px solid var(--line);
+                      color:var(--muted);
+                      text-align:center;
+                      font-size:11px;
+                      line-height:1.55;
+                    }
+                    button{
+                      width:100%%;
+                      margin-top:18px;
+                      border:1px solid var(--dark);
+                      background:var(--dark);
+                      color:#fff;
+                      padding:12px 16px;
+                      font:inherit;
+                      font-size:11px;
+                      font-weight:900;
+                      letter-spacing:.1em;
+                      text-transform:uppercase;
+                      cursor:pointer;
+                    }
+                    @page{size:80mm auto;margin:4mm}
+                    @media print{
+                      body{padding:0;background:#fff}
+                      .receipt{width:100%%;max-width:none;border:0;box-shadow:none}
+                      .top{padding:0 0 12px;background:#fff;color:var(--ink);border-bottom:1px dashed #111}
+                      .badge{border-color:#111;color:#111}
+                      .top p{color:#374151}
+                      .content{padding:12px 0 0}
+                      .meta-grid,.totals{border-color:#111;background:#fff}
+                      .meta-card,.totals{background:#fff}
+                      button{display:none}
+                    }
                   </style>
                 </head>
                 <body>
                   <main class="receipt">
-                    <p class="muted">Recibo nao fiscal</p>
-                    <h1>IWR Modas</h1>
-                    <p>Venda #%d<br>Data: %s<br>Operador: %s<br>Status: %s</p>
-                    <table>
-                      <thead><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
-                      <tbody>%s</tbody>
-                    </table>
+                    <header class="top">
+                      <div class="brand-row">
+                        <div class="brand">IWR.</div>
+                        <div class="badge">Recibo nao fiscal</div>
+                      </div>
+                      <h1>Venda #%d</h1>
+                      <p>Comprovante simples para controle interno e atendimento ao cliente.</p>
+                    </header>
+                    <section class="content">
+                      <div class="meta-grid">
+                        <div class="meta-card"><span class="label">Data</span><strong>%s</strong></div>
+                        <div class="meta-card"><span class="label">Operador</span><strong>%s</strong></div>
+                        <div class="meta-card"><span class="label">Status</span><strong>%s</strong></div>
+                        <div class="meta-card"><span class="label">Pagamento</span><strong>%s</strong></div>
+                      </div>
+                    <h2 class="section-title">Itens vendidos</h2>
+                    <section class="items">%s</section>
                     <section class="totals">
                       <div class="row"><span>Subtotal</span><strong>%s</strong></div>
                       <div class="row"><span>Desconto</span><strong>%s</strong></div>
                       <div class="row total"><span>Total</span><strong>%s</strong></div>
-                      <div class="row"><span>Pagamento</span><strong>%s</strong></div>
                       %s
                     </section>
                     %s
-                    <p class="muted">Obrigado pela preferencia.</p>
+                    <footer class="footer">
+                      <strong>Obrigado pela preferencia.</strong><br>
+                      IWR Modas - Recibo sem valor fiscal.
+                    </footer>
                     <button onclick="window.print()">Imprimir</button>
+                    </section>
                   </main>
                 </body>
                 </html>
                 """.formatted(
                 sale.getId(),
                 sale.getId(),
-                sale.getSoldAt(),
+                formatDateTime(sale.getSoldAt()),
                 escape(sale.getOperator().getDisplayName()),
-                sale.getStatus(),
+                statusLabel(sale.getStatus()),
+                paymentLabel(sale.getPaymentMethod()),
                 itemsHtml,
                 formatMoney(sale.getSubtotalAmount()),
                 formatMoney(sale.getDiscountAmount()),
                 formatMoney(sale.getTotalAmount()),
-                sale.getPaymentMethod(),
                 sale.getPaymentMethod() == PaymentMethod.CASH
                         ? "<div class=\"row\"><span>Recebido</span><strong>" + formatMoney(sale.getAmountReceived()) + "</strong></div><div class=\"row\"><span>Troco</span><strong>" + formatMoney(sale.getChangeAmount()) + "</strong></div>"
                         : "",
                 sale.getStatus() == SaleStatus.CANCELLED
-                        ? "<p>Cancelada em " + sale.getCancelledAt() + "<br>Motivo: " + escape(sale.getCancellationReason()) + "</p>"
+                        ? "<section class=\"status-note\"><strong>Venda cancelada</strong><br>Cancelada em " + formatDateTime(sale.getCancelledAt()) + "<br>Motivo: " + escape(sale.getCancellationReason()) + "</section>"
                         : ""
         );
     }
@@ -320,6 +466,23 @@ public class SaleServiceImpl implements SaleService {
 
     private String formatMoney(BigDecimal value) {
         return "R$ " + (value == null ? BigDecimal.ZERO : value).setScale(2).toString().replace(".", ",");
+    }
+
+    private String formatDateTime(OffsetDateTime value) {
+        return value == null ? "" : RECEIPT_DATE_FORMATTER.format(value);
+    }
+
+    private String paymentLabel(PaymentMethod paymentMethod) {
+        return switch (paymentMethod) {
+            case CASH -> "Dinheiro";
+            case PIX -> "PIX";
+            case DEBIT_CARD -> "Cartao debito";
+            case CREDIT_CARD -> "Cartao credito";
+        };
+    }
+
+    private String statusLabel(SaleStatus status) {
+        return status == SaleStatus.CANCELLED ? "Cancelada" : "Concluida";
     }
 
     private String escape(String value) {
