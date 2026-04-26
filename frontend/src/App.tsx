@@ -3,6 +3,7 @@ import './App.css'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 import { LoginPage } from './pages/LoginPage'
 import { MobileSalesPage } from './pages/MobileSalesPage'
+import { MobileCashRegisterPage } from './pages/MobileCashRegisterPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
 import { SalesHistoryPage } from './pages/SalesHistoryPage'
@@ -13,7 +14,7 @@ import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
 type AppView = 'checkout' | 'cash-register' | 'products' | 'history' | 'users'
-type MobileView = 'home' | 'sale'
+type MobileView = 'home' | 'sale' | 'cash-register'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('checkout')
@@ -112,12 +113,19 @@ function App() {
               <p>Venda por camera com carrinho simplificado e fechamento direto no caixa aberto.</p>
             </section>
 
-            <button className="mobile-sell-button" type="button" onClick={() => setMobileView('sale')}>
-              Vender
-            </button>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <button className="mobile-sell-button" type="button" onClick={() => setMobileView('cash-register')} style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}>
+                Meu Caixa
+              </button>
+              <button className="mobile-sell-button" type="button" onClick={() => setMobileView('sale')}>
+                Vender
+              </button>
+            </div>
           </main>
-        ) : (
+        ) : mobileView === 'sale' ? (
           <MobileSalesPage onBack={() => setMobileView('home')} />
+        ) : (
+          <MobileCashRegisterPage onBack={() => setMobileView('home')} />
         )}
       </div>
     )
