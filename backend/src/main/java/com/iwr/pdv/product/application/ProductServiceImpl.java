@@ -132,6 +132,19 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ProductResponse findByCodeForSale(String code) {
+        if (!StringUtils.hasText(code)) {
+            throw new ResourceNotFoundException("Product not found for code ''.");
+        }
+
+        Product product = productRepository.findByCodeIgnoreCase(code.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found for code " + code.trim() + "."));
+
+        return productMapper.toResponse(product);
+    }
+
+    @Override
     @Transactional
     public ProductResponse update(Long productId, ProductRequest request) {
         Product existingProduct = findProductById(productId);

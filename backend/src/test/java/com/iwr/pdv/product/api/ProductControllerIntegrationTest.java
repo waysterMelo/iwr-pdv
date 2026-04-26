@@ -315,12 +315,14 @@ class ProductControllerIntegrationTest {
                     String html = result.getResponse().getContentAsString();
                     if (!html.contains("IWR MODAS")
                             || !html.contains("Vestido Festa")
-                            || !html.contains("IWR-050")
                             || !html.contains("@page { size: 50mm 30mm; margin: 0; }")
                             || !html.contains("width: 18mm;")
                             || !html.contains("class=\"qr-frame\"")
                             || !html.contains("data:image/png;base64,")) {
                         throw new AssertionError("Expected a printable label HTML response.");
+                    }
+                    if (html.contains("IWR-050") || html.contains("class=\"code\"")) {
+                        throw new AssertionError("Product code must not be visible in the printable label.");
                     }
                 });
     }

@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iwr.pdv.auth.api.dto.LoginRequest;
 import com.iwr.pdv.auth.application.AuthService;
 import com.iwr.pdv.cash.domain.CashMovementRepository;
@@ -50,6 +51,9 @@ class CashRegisterControllerIntegrationTest {
     @Autowired
     private CashRegisterRepository cashRegisterRepository;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+
     private MockMvc mockMvc;
     private String authHeader;
 
@@ -76,7 +80,7 @@ class CashRegisterControllerIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        Long cashRegisterId = Long.valueOf(openJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        Long cashRegisterId = objectMapper.readTree(openJson).path("id").asLong();
 
         mockMvc.perform(post("/api/cash-register/open")
                         .header("Authorization", authHeader)

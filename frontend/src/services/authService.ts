@@ -1,5 +1,12 @@
-import type { AuthUser, LoginResponse } from '../types/auth'
-import { clearAuthToken, get, post, setAuthToken } from './httpClient'
+import type {
+  AuthUser,
+  LoginResponse,
+  ManagedUser,
+  UserCreatePayload,
+  UserPasswordUpdatePayload,
+  UserUpdatePayload,
+} from '../types/auth'
+import { clearAuthToken, get, patch, post, put, setAuthToken } from './httpClient'
 
 export async function login(username: string, password: string) {
   const response = await post<LoginResponse>('/api/auth/login', {
@@ -21,4 +28,20 @@ export async function logout() {
   } finally {
     clearAuthToken()
   }
+}
+
+export async function getUsers() {
+  return get<ManagedUser[]>('/api/users')
+}
+
+export async function createUser(payload: UserCreatePayload) {
+  return post<ManagedUser>('/api/users', payload)
+}
+
+export async function updateUser(userId: number, payload: UserUpdatePayload) {
+  return put<ManagedUser>(`/api/users/${userId}`, payload)
+}
+
+export async function updateUserPassword(userId: number, payload: UserPasswordUpdatePayload) {
+  return patch<ManagedUser>(`/api/users/${userId}/password`, payload)
 }

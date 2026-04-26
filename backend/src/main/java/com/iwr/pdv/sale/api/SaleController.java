@@ -1,6 +1,9 @@
 package com.iwr.pdv.sale.api;
 
 import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.auth.infrastructure.AuthorizationService;
+import com.iwr.pdv.product.api.dto.ProductResponse;
+import com.iwr.pdv.product.application.ProductService;
 import com.iwr.pdv.sale.api.dto.SaleCancellationRequest;
 import com.iwr.pdv.sale.api.dto.SaleRequest;
 import com.iwr.pdv.sale.api.dto.SaleResponse;
@@ -34,9 +37,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class SaleController {
 
     private final SaleService saleService;
+    private final ProductService productService;
+    private final AuthorizationService authorizationService;
 
-    public SaleController(SaleService saleService) {
+    public SaleController(
+            SaleService saleService,
+            ProductService productService,
+            AuthorizationService authorizationService
+    ) {
         this.saleService = saleService;
+        this.productService = productService;
+        this.authorizationService = authorizationService;
     }
 
     @PostMapping
@@ -80,8 +91,10 @@ public class SaleController {
             LocalDate startDate,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate endDate
+            LocalDate endDate,
+            HttpServletRequest servletRequest
     ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return saleService.list(startDate, endDate);
     }
 
@@ -91,7 +104,8 @@ public class SaleController {
             @ApiResponse(responseCode = "200", description = "Sale returned successfully"),
             @ApiResponse(responseCode = "404", description = "Sale not found")
     })
-    public SaleResponse findById(@PathVariable Long saleId) {
+    public SaleResponse findById(@PathVariable Long saleId, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return saleService.findById(saleId);
     }
 
@@ -102,15 +116,23 @@ public class SaleController {
             @Valid @RequestBody SaleCancellationRequest request,
             HttpServletRequest servletRequest
     ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return saleService.cancel(saleId, request, currentUser(servletRequest));
     }
 
     @GetMapping(value = "/{saleId}/receipt", produces = MediaType.TEXT_HTML_VALUE)
     @Operation(summary = "Generate a non fiscal sale receipt")
-    public ResponseEntity<String> receipt(@PathVariable Long saleId) {
+    public ResponseEntity<String> receipt(@PathVariable Long saleId, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .body(saleService.generateReceipt(saleId));
+    }
+
+    @GetMapping("/product-by-code")
+    @Operation(summary = "Find a product by code for checkout")
+    public ProductResponse findProductByCode(@RequestParam String code) {
+        return productService.findByCodeForSale(code);
     }
 
     private AppUser currentUser(HttpServletRequest request) {

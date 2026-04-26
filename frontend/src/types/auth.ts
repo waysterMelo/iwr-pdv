@@ -12,3 +12,23 @@ export type LoginResponse = {
   expiresAt: string
   user: AuthUser
 }
+
+export type ManagedUser = AuthUser & {
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type UserCreatePayload = {
+  username: string
+  displayName: string
+  password: string
+  role: UserRole
+  active: boolean
+}
+
+export type UserUpdatePayload = Omit<UserCreatePayload, 'password'>
+
+export type UserPasswordUpdatePayload = {
+  password: string
+}

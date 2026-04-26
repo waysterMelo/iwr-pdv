@@ -78,12 +78,6 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       line-height: 1;
                       font-weight: 900;
                     }
-                    .code {
-                      margin: 0;
-                      font-size: 6.6pt;
-                      letter-spacing: 0.45pt;
-                      color: #374151;
-                    }
                     .qr-frame {
                       width: 21mm;
                       height: 21mm;
@@ -111,10 +105,9 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       <p class="brand">IWR MODAS</p>
                       <p class="name">%s</p>
                       <p class="price">%s</p>
-                      <p class="code">%s</p>
                     </div>
                     <div class="qr-frame" aria-label="QR Code do produto">
-                      <img src="data:image/png;base64,%s" alt="QR Code %s">
+                      <img src="data:image/png;base64,%s" alt="QR Code do produto">
                     </div>
                   </section>
                   <script>
@@ -125,12 +118,10 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                 </body>
                 </html>
                 """.formatted(
-                escapeHtml(product.getCode()),
+                escapeHtml(product.getName()),
                 escapeHtml(product.getName()),
                 escapeHtml(formatCurrency(product)),
-                escapeHtml(product.getCode()),
-                encodedQrCode,
-                escapeHtml(product.getCode())
+                encodedQrCode
         );
     }
 

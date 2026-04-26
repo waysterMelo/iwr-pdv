@@ -28,6 +28,8 @@ public interface ProductService {
 
     ProductResponse findById(Long productId);
 
+    ProductResponse findByCodeForSale(String code);
+
     ProductResponse update(Long productId, ProductRequest request);
 
     ProductResponse updateActivation(Long productId, ProductActivationRequest request);

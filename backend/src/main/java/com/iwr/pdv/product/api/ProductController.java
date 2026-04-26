@@ -1,5 +1,7 @@
 package com.iwr.pdv.product.api;
 
+import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.auth.infrastructure.AuthorizationService;
 import com.iwr.pdv.product.api.dto.ProductActivationRequest;
 import com.iwr.pdv.product.api.dto.ProductPageResponse;
 import com.iwr.pdv.product.api.dto.ProductRequest;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
@@ -36,9 +39,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
+    private final AuthorizationService authorizationService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, AuthorizationService authorizationService) {
         this.productService = productService;
+        this.authorizationService = authorizationService;
     }
 
     @PostMapping
@@ -87,14 +92,19 @@ public class ProductController {
                     )
             )
     })
-    public ProductResponse create(@Valid @RequestBody ProductRequest request) {
+    public ProductResponse create(@Valid @RequestBody ProductRequest request, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return productService.create(request);
     }
 
     @GetMapping
     @Operation(summary = "List products with optional search by name or code")
     @ApiResponse(responseCode = "200", description = "Products returned successfully")
-    public List<ProductResponse> list(@RequestParam(name = "search", required = false) String search) {
+    public List<ProductResponse> list(
+            @RequestParam(name = "search", required = false) String search,
+            HttpServletRequest servletRequest
+    ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return productService.list(search);
     }
 
@@ -111,8 +121,10 @@ public class ProductController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size,
             @RequestParam(name = "sort", defaultValue = "createdAt") String sort,
-            @RequestParam(name = "direction", defaultValue = "desc") String direction
+            @RequestParam(name = "direction", defaultValue = "desc") String direction,
+            HttpServletRequest servletRequest
     ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return productService.listPage(
                 search,
                 active,
@@ -133,7 +145,8 @@ public class ProductController {
             @ApiResponse(responseCode = "200", description = "Product returned successfully"),
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
-    public ProductResponse findById(@PathVariable Long productId) {
+    public ProductResponse findById(@PathVariable Long productId, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return productService.findById(productId);
     }
 
@@ -147,8 +160,10 @@ public class ProductController {
     })
     public ProductResponse update(
             @PathVariable Long productId,
-            @Valid @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request,
+            HttpServletRequest servletRequest
     ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return productService.update(productId, request);
     }
 
@@ -162,8 +177,10 @@ public class ProductController {
     public ProductResponse updateActivation(
             @Parameter(description = "Product identifier") 
             @PathVariable Long productId,
-            @Valid @RequestBody ProductActivationRequest request
+            @Valid @RequestBody ProductActivationRequest request,
+            HttpServletRequest servletRequest
     ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return productService.updateActivation(productId, request);
     }
 
@@ -180,7 +197,8 @@ public class ProductController {
             ),
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
-    public ResponseEntity<byte[]> generateQrCode(@PathVariable Long productId) {
+    public ResponseEntity<byte[]> generateQrCode(@PathVariable Long productId, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .body(productService.generateQrCode(productId));
@@ -196,9 +214,14 @@ public class ProductController {
             ),
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
-    public ResponseEntity<String> generateLabel(@PathVariable Long productId) {
+    public ResponseEntity<String> generateLabel(@PathVariable Long productId, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .body(productService.generateLabel(productId));
+    }
+
+    private AppUser currentUser(HttpServletRequest request) {
+        return (AppUser) request.getAttribute("authenticatedUser");
     }
 }

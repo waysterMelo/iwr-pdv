@@ -105,6 +105,77 @@ class SaleControllerIntegrationTest {
     }
 
     @Test
+    void shouldSimulateMobilePdvSaleFlowWithoutPrintingOrQrCamera() throws Exception {
+        String productPayload = """
+                {
+                  "name": "Produto Mobile Real",
+                  "code": "IWR-MOBILE-001",
+                  "price": 55.00,
+                  "stockQuantity": 3,
+                  "active": true
+                }
+                """;
+
+        mockMvc.perform(post("/api/products")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(productPayload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value("IWR-MOBILE-001"))
+                .andExpect(jsonPath("$.stockQuantity").value(3));
+
+        Product product = productRepository.findAll().stream()
+                .filter(item -> "IWR-MOBILE-001".equals(item.getCode()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(get("/api/sales/product-by-code")
+                        .header("Authorization", authHeader)
+                        .param("code", "IWR-MOBILE-001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(product.getId()))
+                .andExpect(jsonPath("$.active").value(true));
+
+        String salePayload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    },
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "PIX",
+                  "discountAmount": 0
+                }
+                """.formatted(product.getId(), product.getId());
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(salePayload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.paymentMethod").value("PIX"))
+                .andExpect(jsonPath("$.totalItems").value(2))
+                .andExpect(jsonPath("$.totalAmount").value(110.00))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].quantity").value(2));
+
+        Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(1, updatedProduct.getStockQuantity());
+        org.junit.jupiter.api.Assertions.assertEquals(1, saleRepository.count());
+        org.junit.jupiter.api.Assertions.assertEquals(1, stockMovementRepository.count());
+
+        mockMvc.perform(get("/api/sales")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].items[0].productCode").value("IWR-MOBILE-001"));
+    }
+
+    @Test
     void shouldRejectSaleWhenStockIsInsufficient() throws Exception {
         Product product = productRepository.save(buildProduct("Saia Jeans", "IWR-101", new BigDecimal("99.90"), 1, true));
 
@@ -130,6 +201,35 @@ class SaleControllerIntegrationTest {
 
         Product unchangedProduct = productRepository.findById(product.getId()).orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(1, unchangedProduct.getStockQuantity());
+        org.junit.jupiter.api.Assertions.assertEquals(0, stockMovementRepository.count());
+    }
+
+    @Test
+    void shouldRejectSaleWhenProductIsInactive() throws Exception {
+        Product product = productRepository.save(buildProduct("Blusa Inativa", "IWR-101-INACTIVE", new BigDecimal("99.90"), 2, false));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "PIX",
+                  "discountAmount": 0
+                }
+                """.formatted(product.getId());
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Product 'IWR-101-INACTIVE' is inactive and cannot be sold."));
+
+        Product unchangedProduct = productRepository.findById(product.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(2, unchangedProduct.getStockQuantity());
         org.junit.jupiter.api.Assertions.assertEquals(0, stockMovementRepository.count());
     }
 
@@ -337,6 +437,7 @@ class SaleControllerIntegrationTest {
                     if (!html.contains("Recibo nao fiscal")
                             || !html.contains("Lenco Seda")
                             || !html.contains("PIX")
+                            || !html.contains("Vendedor")
                             || !html.contains("Administrador")) {
                         throw new AssertionError("Expected a sale receipt HTML response.");
                     }

@@ -28,7 +28,7 @@ export type SaleItem = {
 export type Sale = {
   id: number
   status: SaleStatus
-  operator: AuthUser
+  operator: AuthUser | null
   paymentMethod: PaymentMethod
   subtotalAmount: number
   discountAmount: number

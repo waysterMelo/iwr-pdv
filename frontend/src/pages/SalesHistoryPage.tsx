@@ -4,6 +4,10 @@ import type { Sale } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 
+function getSellerName(sale: Sale) {
+  return sale.operator?.displayName?.trim() || 'Vendedor nao identificado'
+}
+
 export function SalesHistoryPage() {
   const [sales, setSales] = useState<Sale[]>([])
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
@@ -210,7 +214,7 @@ export function SalesHistoryPage() {
                   <div className="cart-item-main">
                     <span>Pagamento</span>
                     <strong>{selectedSale.paymentMethod}</strong>
-                    <small>Operador: {selectedSale.operator.displayName}</small>
+                    <small>Vendedor: {getSellerName(selectedSale)}</small>
                   </div>
                   <div className="cart-price">
                     <span>Desconto</span>

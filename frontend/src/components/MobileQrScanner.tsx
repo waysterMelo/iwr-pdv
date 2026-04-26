@@ -4,7 +4,7 @@ import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
 type MobileQrScannerProps = {
   active: boolean
   onClose: () => void
-  onRead: (code: string) => Promise<void> | void
+  onRead: (code: string) => Promise<boolean> | boolean
 }
 
 const duplicateReadWindowMs = 1800
@@ -14,13 +14,19 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
   const controlsRef = useRef<IScannerControls | null>(null)
   const inFlightRef = useRef(false)
   const lastReadRef = useRef({ code: '', time: 0 })
+  const onCloseRef = useRef(onClose)
   const onReadRef = useRef(onRead)
   const [scannerStatus, setScannerStatus] = useState('Aguardando permissao da camera...')
   const [scannerError, setScannerError] = useState<string | null>(null)
+  const [hasSuccessfulRead, setHasSuccessfulRead] = useState(false)
 
   useEffect(() => {
     onReadRef.current = onRead
   }, [onRead])
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   function stopScanner() {
     controlsRef.current?.stop()
@@ -61,6 +67,7 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
 
       try {
         setScannerError(null)
+        setHasSuccessfulRead(false)
         setScannerStatus('Camera ativa')
 
         controlsRef.current = await codeReader.decodeFromConstraints(
@@ -87,10 +94,18 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
 
             inFlightRef.current = true
             lastReadRef.current = { code, time: now }
-            setScannerStatus(`Codigo lido: ${code}`)
+            setScannerStatus('QR Code lido. Atualizando carrinho...')
 
             try {
-              await onReadRef.current(code)
+              const added = await onReadRef.current(code)
+
+              if (added) {
+                setHasSuccessfulRead(true)
+                stopScanner()
+                window.setTimeout(() => onCloseRef.current(), 450)
+              } else {
+                setScannerStatus('Produto nao adicionado. Tente novamente.')
+              }
             } finally {
               window.setTimeout(() => {
                 inFlightRef.current = false
@@ -125,9 +140,10 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
         </button>
       </header>
 
-      <div className="mobile-camera-frame">
+      <div className={`mobile-camera-frame ${hasSuccessfulRead ? 'mobile-camera-frame--success' : ''}`}>
         <video ref={videoRef} muted playsInline aria-label="Camera para leitura de QR Code" />
         <span className="mobile-scan-target" aria-hidden="true" />
+        {hasSuccessfulRead ? <span className="mobile-scan-success" aria-hidden="true">OK</span> : null}
       </div>
 
       {scannerError ? (

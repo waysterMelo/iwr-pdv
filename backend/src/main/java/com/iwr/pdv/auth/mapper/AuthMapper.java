@@ -1,6 +1,7 @@
 package com.iwr.pdv.auth.mapper;
 
 import com.iwr.pdv.auth.api.dto.UserResponse;
+import com.iwr.pdv.auth.api.dto.UserManagementResponse;
 import com.iwr.pdv.auth.domain.AppUser;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,18 @@ public class AuthMapper {
                 user.getUsername(),
                 user.getDisplayName(),
                 user.getRole()
+        );
+    }
+
+    public UserManagementResponse toManagementResponse(AppUser user) {
+        return new UserManagementResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getRole(),
+                user.getActive(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
         );
     }
 }

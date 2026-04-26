@@ -14,18 +14,22 @@ export type CartItem = {
 
 export type FeedbackType = 'success' | 'error'
 
+type UseSalesCartOptions = {
+  initialPaymentMethod?: PaymentMethod
+}
+
 export function getCartItemTotal(item: CartItem) {
   return item.product.price * item.quantity
 }
 
-export function useSalesCart() {
+export function useSalesCart(options: UseSalesCartOptions = {}) {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<FeedbackType>('success')
   const [isSearching, setIsSearching] = useState(false)
   const [isClosingSale, setIsClosingSale] = useState(false)
   const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(options.initialPaymentMethod ?? 'CASH')
   const [discountAmount, setDiscountAmount] = useState('0.00')
   const [amountReceived, setAmountReceived] = useState('')
   const [lastSale, setLastSale] = useState<Sale | null>(null)
@@ -102,12 +106,6 @@ export function useSalesCart() {
 
     try {
       const product = await findProductByCode(normalizedCode)
-
-      if (!product) {
-        showMessage(`Produto com codigo ${normalizedCode.toUpperCase()} nao encontrado.`, 'error')
-        return false
-      }
-
       return addProductToCart(product)
     } catch (error) {
       showMessage(getErrorMessage(error, 'Nao foi possivel buscar o produto.'), 'error')

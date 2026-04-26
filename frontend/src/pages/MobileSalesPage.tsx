@@ -11,7 +11,7 @@ type MobileSalesPageProps = {
 export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
   const [manualCode, setManualCode] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
-  const checkout = useSalesCart()
+  const checkout = useSalesCart({ initialPaymentMethod: 'PIX' })
 
   async function handleManualSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -24,7 +24,7 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
   }
 
   async function handleScannedCode(code: string) {
-    await checkout.addProductCodeToCart(code)
+    return checkout.addProductCodeToCart(code)
   }
 
   async function handleFinalizeSale() {

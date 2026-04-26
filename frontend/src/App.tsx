@@ -6,12 +6,13 @@ import { MobileSalesPage } from './pages/MobileSalesPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
 import { SalesHistoryPage } from './pages/SalesHistoryPage'
+import { UserManagementPage } from './pages/UserManagementPage'
 import { getCurrentUser, logout } from './services/authService'
 import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'products' | 'history'
+type AppView = 'checkout' | 'cash-register' | 'products' | 'history' | 'users'
 type MobileView = 'home' | 'sale'
 
 function App() {
@@ -20,15 +21,18 @@ function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [isSessionChecking, setIsSessionChecking] = useState(() => Boolean(getAuthToken()))
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const isMobileLayout = useMediaQuery('(max-width: 720px)')
-  const menuItems: Array<{ id: AppView; label: string; eyebrow: string }> = [
+  const isMobileLayout = useMediaQuery('(max-width: 900px), (pointer: coarse) and (max-width: 1100px)')
+  const allMenuItems: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
     { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
-    { id: 'history', label: 'Historico', eyebrow: 'Consultas' },
-    { id: 'products', label: 'Produtos', eyebrow: 'Estoque' },
+    { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
+    { id: 'products', label: 'Produtos', eyebrow: 'Estoque', adminOnly: true },
+    { id: 'users', label: 'Usuarios', eyebrow: 'Acessos', adminOnly: true },
   ]
+  const menuItems = allMenuItems.filter((item) => currentUser?.role === 'ADMIN' || !item.adminOnly)
+  const visibleView = menuItems.some((item) => item.id === currentView) ? currentView : 'checkout'
 
-  const currentItem = menuItems.find((item) => item.id === currentView) ?? menuItems[0]
+  const currentItem = menuItems.find((item) => item.id === visibleView) ?? menuItems[0]
   const operatorInitial = currentUser?.displayName.trim().charAt(0).toUpperCase() || 'I'
 
   useEffect(() => {
@@ -103,7 +107,7 @@ function App() {
             </header>
 
             <section className="mobile-home-hero">
-              <span className="eyebrow">Operador</span>
+              <span className="eyebrow">Vendedor</span>
               <h1>{currentUser.displayName}</h1>
               <p>Venda por camera com carrinho simplificado e fechamento direto no caixa aberto.</p>
             </section>
@@ -130,7 +134,7 @@ function App() {
         <nav className="side-navigation" aria-label="Navegacao principal">
           {menuItems.map((item) => (
             <button
-              className={currentView === item.id ? 'side-nav-button side-nav-button--active' : 'side-nav-button'}
+              className={visibleView === item.id ? 'side-nav-button side-nav-button--active' : 'side-nav-button'}
               type="button"
               key={item.id}
               onClick={() => setCurrentView(item.id)}
@@ -145,7 +149,7 @@ function App() {
           <div className="operator-avatar">{operatorInitial}</div>
           <div className="operator-details">
             <strong>{currentUser.displayName}</strong>
-            <span>{currentUser.role === 'ADMIN' ? 'Administrador' : 'Operador'}</span>
+            <span>{visibleView === 'checkout' || currentUser.role === 'OPERATOR' ? 'Vendedor' : 'Administrador'}</span>
           </div>
           <button
             className="logout-button"
@@ -167,7 +171,7 @@ function App() {
         <div className="mobile-navigation" aria-label="Navegacao compacta">
           {menuItems.map((item) => (
             <button
-              className={currentView === item.id ? 'nav-button nav-button--active' : 'nav-button'}
+              className={visibleView === item.id ? 'nav-button nav-button--active' : 'nav-button'}
               type="button"
               key={item.id}
               onClick={() => setCurrentView(item.id)}
@@ -177,10 +181,11 @@ function App() {
           ))}
         </div>
 
-        {currentView === 'checkout' ? <SalesCheckoutPage /> : null}
-        {currentView === 'cash-register' ? <CashRegisterPage /> : null}
-        {currentView === 'history' ? <SalesHistoryPage /> : null}
-        {currentView === 'products' ? <ProductManagementPage /> : null}
+        {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
+        {visibleView === 'cash-register' ? <CashRegisterPage /> : null}
+        {visibleView === 'history' ? <SalesHistoryPage /> : null}
+        {visibleView === 'products' ? <ProductManagementPage /> : null}
+        {visibleView === 'users' ? <UserManagementPage /> : null}
       </section>
     </div>
   )

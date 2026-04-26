@@ -51,8 +51,8 @@ export async function getProductPage(filters: ProductPageFilters, page: number, 
 }
 
 export async function findProductByCode(code: string) {
-  const products = await getProducts(code)
-  return products.find((product) => product.code.toUpperCase() === code.trim().toUpperCase()) ?? null
+  const searchParams = new URLSearchParams({ code: code.trim() })
+  return get<Product>(`/api/sales/product-by-code?${searchParams.toString()}`)
 }
 
 export async function createProduct(payload: ProductPayload) {

@@ -353,7 +353,7 @@ public class SaleServiceImpl implements SaleService {
                     <section class="content">
                       <div class="meta-grid">
                         <div class="meta-card"><span class="label">Data</span><strong>%s</strong></div>
-                        <div class="meta-card"><span class="label">Operador</span><strong>%s</strong></div>
+                        <div class="meta-card"><span class="label">Vendedor</span><strong>%s</strong></div>
                         <div class="meta-card"><span class="label">Status</span><strong>%s</strong></div>
                         <div class="meta-card"><span class="label">Pagamento</span><strong>%s</strong></div>
                       </div>
@@ -379,7 +379,7 @@ public class SaleServiceImpl implements SaleService {
                 sale.getId(),
                 sale.getId(),
                 formatDateTime(sale.getSoldAt()),
-                escape(sale.getOperator().getDisplayName()),
+                escape(displayName(sale.getOperator())),
                 statusLabel(sale.getStatus()),
                 paymentLabel(sale.getPaymentMethod()),
                 itemsHtml,
@@ -483,6 +483,14 @@ public class SaleServiceImpl implements SaleService {
 
     private String statusLabel(SaleStatus status) {
         return status == SaleStatus.CANCELLED ? "Cancelada" : "Concluida";
+    }
+
+    private String displayName(AppUser operator) {
+        if (operator == null || operator.getDisplayName() == null || operator.getDisplayName().isBlank()) {
+            return "Vendedor";
+        }
+
+        return operator.getDisplayName();
     }
 
     private String escape(String value) {

@@ -4,6 +4,7 @@ import com.iwr.pdv.auth.exception.AuthenticationFailedException;
 import com.iwr.pdv.common.api.ErrorResponse;
 import com.iwr.pdv.common.api.ValidationErrorResponse;
 import com.iwr.pdv.common.api.ValidationErrorResponse.FieldViolation;
+import com.iwr.pdv.common.exception.AccessDeniedException;
 import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceConflictException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
@@ -84,6 +85,22 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException exception,
+            HttpServletRequest request
+    ) {
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                OffsetDateTime.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
