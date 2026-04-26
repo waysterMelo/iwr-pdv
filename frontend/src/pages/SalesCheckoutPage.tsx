@@ -1,201 +1,55 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { getCurrentCashRegister } from '../services/cashRegisterService'
-import { findProductByCode } from '../services/productService'
-import { closeSale, getSaleReceiptUrl } from '../services/saleService'
-import type { CashRegister } from '../types/cashRegister'
-import type { Product } from '../types/product'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
+import { getSaleReceiptUrl } from '../services/saleService'
 import type { PaymentMethod, Sale } from '../types/sale'
-import { getErrorMessage } from '../utils/errors'
 import { formatCurrency } from '../utils/formatters'
-
-type CartItem = {
-  product: Product
-  quantity: number
-}
-
-function getCartItemTotal(item: CartItem) {
-  return item.product.price * item.quantity
-}
 
 export function SalesCheckoutPage() {
   const [scanCode, setScanCode] = useState('')
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [message, setMessage] = useState<string | null>(null)
-  const [messageType, setMessageType] = useState<'success' | 'error'>('success')
-  const [isSearching, setIsSearching] = useState(false)
-  const [isClosingSale, setIsClosingSale] = useState(false)
-  const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH')
-  const [discountAmount, setDiscountAmount] = useState('0.00')
-  const [amountReceived, setAmountReceived] = useState('')
-  const [lastSale, setLastSale] = useState<Sale | null>(null)
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null)
   const scannerInputRef = useRef<HTMLInputElement>(null)
   const receiptFrameRef = useRef<HTMLIFrameElement>(null)
-
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-  const subtotalAmount = useMemo(
-    () => cartItems.reduce((sum, item) => sum + getCartItemTotal(item), 0),
-    [cartItems],
-  )
-  const parsedDiscountAmount = Number(discountAmount) || 0
-  const totalAmount = Math.max(subtotalAmount - parsedDiscountAmount, 0)
-  const parsedAmountReceived = Number(amountReceived) || 0
-  const changeAmount = paymentMethod === 'CASH' ? Math.max(parsedAmountReceived - totalAmount, 0) : 0
+  const checkout = useSalesCart()
 
   useEffect(() => {
     scannerInputRef.current?.focus()
-    void refreshCashRegister()
   }, [])
-
-  async function refreshCashRegister() {
-    try {
-      setCashRegister(await getCurrentCashRegister())
-    } catch {
-      setCashRegister(null)
-    }
-  }
-
-  function showMessage(nextMessage: string, nextType: 'success' | 'error') {
-    setMessage(nextMessage)
-    setMessageType(nextType)
-  }
-
-  function addProductToCart(product: Product) {
-    if (!product.active) {
-      showMessage('Produto inativo. Reative no cadastro antes de vender.', 'error')
-      return
-    }
-
-    if (product.stockQuantity <= 0) {
-      showMessage('Produto sem estoque disponivel.', 'error')
-      return
-    }
-
-    setCartItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.product.id === product.id)
-
-      if (!existingItem) {
-        showMessage(`${product.name} adicionado ao carrinho.`, 'success')
-        return [...currentItems, { product, quantity: 1 }]
-      }
-
-      if (existingItem.quantity >= product.stockQuantity) {
-        showMessage('Quantidade no carrinho atingiu o estoque disponivel.', 'error')
-        return currentItems
-      }
-
-      showMessage(`${product.name} atualizado no carrinho.`, 'success')
-      return currentItems.map((item) =>
-        item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
-      )
-    })
-  }
 
   async function handleScannerSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const code = scanCode.trim()
+    const added = await checkout.addProductCodeToCart(scanCode)
 
-    if (!code) {
-      showMessage('Informe ou leia um codigo para adicionar ao carrinho.', 'error')
-      return
-    }
-
-    setIsSearching(true)
-
-    try {
-      const product = await findProductByCode(code)
-
-      if (!product) {
-        showMessage(`Produto com codigo ${code.toUpperCase()} nao encontrado.`, 'error')
-        return
-      }
-
-      addProductToCart(product)
+    if (added) {
       setScanCode('')
-    } catch (error) {
-      showMessage(getErrorMessage(error, 'Nao foi possivel buscar o produto.'), 'error')
-    } finally {
-      setIsSearching(false)
-      scannerInputRef.current?.focus()
     }
-  }
 
-  function updateQuantity(productId: number, nextQuantity: number) {
-    setCartItems((currentItems) =>
-      currentItems.flatMap((item) => {
-        if (item.product.id !== productId) {
-          return [item]
-        }
-
-        if (nextQuantity <= 0) {
-          return []
-        }
-
-        return [{ ...item, quantity: Math.min(nextQuantity, item.product.stockQuantity) }]
-      }),
-    )
+    scannerInputRef.current?.focus()
   }
 
   function clearCart() {
-    setCartItems([])
-    showMessage('Carrinho limpo. Pronto para uma nova venda.', 'success')
+    checkout.clearCart()
     scannerInputRef.current?.focus()
   }
 
   async function handleCloseSale() {
-    if (cartItems.length === 0) {
-      showMessage('Adicione pelo menos um item antes de finalizar a venda.', 'error')
+    if (checkout.cartItems.length === 0) {
+      checkout.showMessage('Adicione pelo menos um item antes de finalizar a venda.', 'error')
       return
     }
 
-    if (!cashRegister) {
-      showMessage('Abra o caixa antes de finalizar vendas.', 'error')
-      return
-    }
-
-    if (parsedDiscountAmount > subtotalAmount) {
-      showMessage('O desconto nao pode ser maior que o subtotal.', 'error')
-      return
-    }
-
-    if (paymentMethod === 'CASH' && parsedAmountReceived < totalAmount) {
-      showMessage('O valor recebido em dinheiro deve cobrir o total da venda.', 'error')
-      return
-    }
-
-    const confirmed = window.confirm(`Finalizar venda de ${formatCurrency(totalAmount)}?`)
+    const confirmed = window.confirm(`Finalizar venda de ${formatCurrency(checkout.totalAmount)}?`)
     if (!confirmed) {
       return
     }
 
-    setIsClosingSale(true)
+    const sale = await checkout.finalizeSale()
 
-    try {
-      const sale = await closeSale({
-        items: cartItems.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-        })),
-        paymentMethod,
-        discountAmount: parsedDiscountAmount,
-        amountReceived: paymentMethod === 'CASH' ? parsedAmountReceived : undefined,
-      })
-
-      setCartItems([])
-      setDiscountAmount('0.00')
-      setAmountReceived('')
-      setLastSale(sale)
+    if (sale) {
       setReceiptSale(sale)
-      await refreshCashRegister()
-      showMessage(`Venda #${sale.id} finalizada com sucesso.`, 'success')
-    } catch (error) {
-      showMessage(getErrorMessage(error, 'Nao foi possivel finalizar a venda.'), 'error')
-    } finally {
-      setIsClosingSale(false)
-      scannerInputRef.current?.focus()
     }
+
+    scannerInputRef.current?.focus()
   }
 
   return (
@@ -212,9 +66,10 @@ export function SalesCheckoutPage() {
           </div>
           <div className="checkout-summary">
             <span>Total da venda</span>
-            <strong>{formatCurrency(totalAmount)}</strong>
+            <strong>{formatCurrency(checkout.totalAmount)}</strong>
             <small>
-              {cashRegister ? `Caixa #${cashRegister.id} aberto` : 'Abra o caixa antes de vender'} - {totalItems} item(ns)
+              {checkout.cashRegister ? `Caixa #${checkout.cashRegister.id} aberto` : 'Abra o caixa antes de vender'} -{' '}
+              {checkout.totalItems} item(ns)
             </small>
           </div>
         </section>
@@ -231,19 +86,19 @@ export function SalesCheckoutPage() {
                 placeholder="IWR-000001"
                 autoComplete="off"
               />
-              <button className="action-button" type="submit" disabled={isSearching}>
-                {isSearching ? 'Buscando...' : 'Adicionar'}
+              <button className="action-button" type="submit" disabled={checkout.isSearching}>
+                {checkout.isSearching ? 'Buscando...' : 'Adicionar'}
               </button>
             </div>
           </form>
 
-          {message ? (
+          {checkout.message ? (
             <div
               className={`feedback-message ${
-                messageType === 'success' ? 'feedback-message--success' : 'feedback-message--error'
+                checkout.messageType === 'success' ? 'feedback-message--success' : 'feedback-message--error'
               }`}
             >
-              {message}
+              {checkout.message}
             </div>
           ) : null}
         </section>
@@ -260,8 +115,8 @@ export function SalesCheckoutPage() {
               <label htmlFor="paymentMethod">Forma de pagamento</label>
               <select
                 id="paymentMethod"
-                value={paymentMethod}
-                onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
+                value={checkout.paymentMethod}
+                onChange={(event) => checkout.setPaymentMethod(event.target.value as PaymentMethod)}
               >
                 <option value="CASH">Dinheiro</option>
                 <option value="PIX">Pix</option>
@@ -274,25 +129,25 @@ export function SalesCheckoutPage() {
               <input
                 id="discountAmount"
                 inputMode="decimal"
-                value={discountAmount}
-                onChange={(event) => setDiscountAmount(event.target.value)}
+                value={checkout.discountAmount}
+                onChange={(event) => checkout.setDiscountAmount(event.target.value)}
               />
             </div>
-            {paymentMethod === 'CASH' ? (
+            {checkout.paymentMethod === 'CASH' ? (
               <div className="field-group">
                 <label htmlFor="amountReceived">Valor recebido</label>
                 <input
                   id="amountReceived"
                   inputMode="decimal"
-                  value={amountReceived}
-                  onChange={(event) => setAmountReceived(event.target.value)}
+                  value={checkout.amountReceived}
+                  onChange={(event) => checkout.setAmountReceived(event.target.value)}
                   placeholder="0.00"
                 />
               </div>
             ) : null}
             <div className="field-group">
               <label>Troco</label>
-              <strong className="payment-total">{formatCurrency(changeAmount)}</strong>
+              <strong className="payment-total">{formatCurrency(checkout.changeAmount)}</strong>
             </div>
           </div>
         </section>
@@ -303,16 +158,21 @@ export function SalesCheckoutPage() {
               <h2>Carrinho da venda</h2>
               <p>Revise quantidades antes de finalizar a venda.</p>
             </div>
-            <button className="secondary-button" type="button" onClick={clearCart} disabled={cartItems.length === 0}>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={clearCart}
+              disabled={checkout.cartItems.length === 0}
+            >
               Limpar carrinho
             </button>
           </header>
 
-          {cartItems.length === 0 ? (
+          {checkout.cartItems.length === 0 ? (
             <div className="product-empty">Nenhum item no carrinho. Leia uma etiqueta para comecar.</div>
           ) : (
             <div className="cart-list">
-              {cartItems.map((item) => (
+              {checkout.cartItems.map((item) => (
                 <article className="cart-item" key={item.product.id}>
                   <div className="cart-item-main">
                     <span>{item.product.code}</span>
@@ -323,7 +183,7 @@ export function SalesCheckoutPage() {
                     <button
                       className="icon-button"
                       type="button"
-                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                      onClick={() => checkout.updateQuantity(item.product.id, item.quantity - 1)}
                       aria-label={`Reduzir quantidade de ${item.product.name}`}
                     >
                       -
@@ -332,12 +192,12 @@ export function SalesCheckoutPage() {
                       aria-label={`Quantidade de ${item.product.name}`}
                       value={item.quantity}
                       inputMode="numeric"
-                      onChange={(event) => updateQuantity(item.product.id, Number(event.target.value))}
+                      onChange={(event) => checkout.updateQuantity(item.product.id, Number(event.target.value))}
                     />
                     <button
                       className="icon-button"
                       type="button"
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                      onClick={() => checkout.updateQuantity(item.product.id, item.quantity + 1)}
                       aria-label={`Aumentar quantidade de ${item.product.name}`}
                     >
                       +
@@ -355,20 +215,23 @@ export function SalesCheckoutPage() {
 
         <section className="checkout-footer-panel">
           <div>
-            <span>Subtotal {formatCurrency(subtotalAmount)} - desconto {formatCurrency(parsedDiscountAmount)}</span>
-            <strong>{formatCurrency(totalAmount)}</strong>
+            <span>
+              Subtotal {formatCurrency(checkout.subtotalAmount)} - desconto{' '}
+              {formatCurrency(checkout.parsedDiscountAmount)}
+            </span>
+            <strong>{formatCurrency(checkout.totalAmount)}</strong>
           </div>
           <button
             className="action-button"
             type="button"
-            disabled={cartItems.length === 0 || isClosingSale || !cashRegister}
+            disabled={checkout.cartItems.length === 0 || checkout.isClosingSale || !checkout.cashRegister}
             onClick={() => void handleCloseSale()}
           >
-            {isClosingSale ? 'Finalizando...' : 'Finalizar venda'}
+            {checkout.isClosingSale ? 'Finalizando...' : 'Finalizar venda'}
           </button>
-          {lastSale ? (
-            <button className="icon-link" type="button" onClick={() => setReceiptSale(lastSale)}>
-              Recibo #{lastSale.id}
+          {checkout.lastSale ? (
+            <button className="icon-link" type="button" onClick={() => setReceiptSale(checkout.lastSale)}>
+              Recibo #{checkout.lastSale.id}
             </button>
           ) : null}
         </section>

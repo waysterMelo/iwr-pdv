@@ -50,6 +50,12 @@ docker compose up -d --build
 
 Antes de entregar ao cliente, defina `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_PASSWORD` e `DEFAULT_ADMIN_DISPLAY_NAME` no ambiente do backend.
 
+## Modo Smartphone
+
+O frontend detecta telas de ate 720px e troca automaticamente para o layout mobile. Nesse modo, a tela inicial mostra a acao de venda rapida e o fluxo de venda usa camera do celular com `@zxing/browser` para ler QR Code, alem de manter entrada manual do codigo.
+
+Para a camera funcionar em celular, o acesso precisa ocorrer em contexto seguro: HTTPS em homologacao/producao ou `localhost` em desenvolvimento. Em acesso por IP local com HTTP comum, navegadores mobile podem bloquear `getUserMedia` e impedir a abertura da camera.
+
 ## Entregas atuais
 
 - Sprint 0 concluida com fundacao tecnica, healthcheck e integracao inicial
@@ -60,6 +66,7 @@ Antes de entregar ao cliente, defina `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_PA
 - Sprint 5 concluida com fechamento de venda e baixa automatica de estoque
 - Sprint 6 concluida com historico de vendas e filtros basicos
 - Sprint 7 preparada em software com manual e checklist de implantacao
+- Sprint 8 concluida em software com modo smartphone, venda mobile, leitura por camera e fallback manual
 - login de acesso ao sistema com sessao protegida
 - pagamento por dinheiro, Pix, debito e credito
 - abertura, movimentacao e fechamento de caixa

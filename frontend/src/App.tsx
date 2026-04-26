@@ -2,20 +2,25 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 import { LoginPage } from './pages/LoginPage'
+import { MobileSalesPage } from './pages/MobileSalesPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
 import { SalesHistoryPage } from './pages/SalesHistoryPage'
 import { getCurrentUser, logout } from './services/authService'
 import { clearAuthToken, getAuthToken } from './services/httpClient'
+import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
 type AppView = 'checkout' | 'cash-register' | 'products' | 'history'
+type MobileView = 'home' | 'sale'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('checkout')
+  const [mobileView, setMobileView] = useState<MobileView>('home')
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [isSessionChecking, setIsSessionChecking] = useState(() => Boolean(getAuthToken()))
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const isMobileLayout = useMediaQuery('(max-width: 720px)')
   const menuItems: Array<{ id: AppView; label: string; eyebrow: string }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
     { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
@@ -55,6 +60,7 @@ function App() {
       setCurrentUser(null)
       setIsLoggingOut(false)
       setCurrentView('checkout')
+      setMobileView('home')
     }
   }
 
@@ -74,6 +80,43 @@ function App() {
 
   if (!currentUser) {
     return <LoginPage onAuthenticated={setCurrentUser} />
+  }
+
+  if (isMobileLayout) {
+    return (
+      <div className="mobile-layout">
+        {mobileView === 'home' ? (
+          <main className="mobile-home-shell">
+            <header className="mobile-brand-header">
+              <div>
+                <span className="brand-mark">IWR.</span>
+                <span className="brand-caption">PDV Mobile</span>
+              </div>
+              <button
+                className="mobile-link-button"
+                type="button"
+                onClick={() => void handleLogout()}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? 'Saindo...' : 'Sair'}
+              </button>
+            </header>
+
+            <section className="mobile-home-hero">
+              <span className="eyebrow">Operador</span>
+              <h1>{currentUser.displayName}</h1>
+              <p>Venda por camera com carrinho simplificado e fechamento direto no caixa aberto.</p>
+            </section>
+
+            <button className="mobile-sell-button" type="button" onClick={() => setMobileView('sale')}>
+              Vender
+            </button>
+          </main>
+        ) : (
+          <MobileSalesPage onBack={() => setMobileView('home')} />
+        )}
+      </div>
+    )
   }
 
   return (
