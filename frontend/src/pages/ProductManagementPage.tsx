@@ -8,6 +8,7 @@ import {
 import type { Product, ProductPage, ProductPageFilters, ProductPayload } from '../types/product'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatDateTime } from '../utils/formatters'
+import { CurrencyInput } from '../components/CurrencyInput'
 
 type ProductFormState = {
   name: string
@@ -360,12 +361,11 @@ export function ProductManagementPage() {
 
                 <div className="field-group">
                   <label htmlFor="price">Preco</label>
-                  <input
+                  <CurrencyInput
                     id="price"
-                    inputMode="decimal"
                     value={form.price}
-                    onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
-                    placeholder="79.90"
+                    onChange={(value) => setForm((current) => ({ ...current, price: value }))}
+                    placeholder="R$ 79,90"
                   />
                 </div>
 

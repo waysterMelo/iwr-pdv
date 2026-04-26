@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { CurrencyInput } from '../components/CurrencyInput'
 import {
   addCashMovement,
   closeCashRegister,
@@ -131,12 +132,11 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
           <form className="mobile-manual-form" onSubmit={handleOpen} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label htmlFor="mobileOpeningAmount">Saldo inicial (Dinheiro em caixa)</label>
-              <input
+              <CurrencyInput
                 id="mobileOpeningAmount"
-                inputMode="decimal"
                 value={openingAmount}
-                onChange={(event) => setOpeningAmount(event.target.value)}
-                style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }}
+                onChange={setOpeningAmount}
+                placeholder="0.00"
               />
             </div>
             <button className="mobile-primary-button" type="submit" disabled={isSubmitting}>
@@ -184,7 +184,7 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Valor</label>
-              <input inputMode="decimal" value={movementAmount} onChange={(e) => setMovementAmount(e.target.value)} placeholder="0.00" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }} />
+              <CurrencyInput value={movementAmount} onChange={setMovementAmount} placeholder="0.00" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Motivo</label>
@@ -202,7 +202,7 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
           <form onSubmit={handleClose} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Dinheiro Contado</label>
-              <input inputMode="decimal" value={declaredCashAmount} onChange={(e) => setDeclaredCashAmount(e.target.value)} placeholder="0.00" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }} />
+              <CurrencyInput value={declaredCashAmount} onChange={setDeclaredCashAmount} placeholder="0.00" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }} />
             </div>
             <button className="mobile-primary-button" style={{ backgroundColor: '#ef4444' }} type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Fechando...' : 'Confirmar Fechamento'}

@@ -8,6 +8,7 @@ import {
 import type { CashMovementType, CashRegister } from '../types/cashRegister'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
+import { CurrencyInput } from '../components/CurrencyInput'
 
 export function CashRegisterPage() {
   const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
@@ -145,12 +146,12 @@ export function CashRegisterPage() {
             </header>
             <form className="scanner-form" onSubmit={handleOpen}>
               <div className="field-group">
-                <label htmlFor="openingAmount">Saldo inicial</label>
-                <input
+                <label htmlFor="openingAmount">Saldo na gaveta (dinheiro)</label>
+                <CurrencyInput
                   id="openingAmount"
-                  inputMode="decimal"
                   value={openingAmount}
-                  onChange={(event) => setOpeningAmount(event.target.value)}
+                  onChange={setOpeningAmount}
+                  placeholder="R$ 0,00"
                 />
               </div>
               <button className="action-button" type="submit" disabled={isSubmitting}>
@@ -217,12 +218,11 @@ export function CashRegisterPage() {
                     </div>
                     <div className="field-group">
                       <label htmlFor="movementAmount">Valor</label>
-                      <input
+                      <CurrencyInput
                         id="movementAmount"
-                        inputMode="decimal"
                         value={movementAmount}
-                        onChange={(event) => setMovementAmount(event.target.value)}
-                        placeholder="0.00"
+                        onChange={setMovementAmount}
+                        placeholder="R$ 0,00"
                       />
                     </div>
                     <div className="field-group field-group--full">
@@ -251,12 +251,11 @@ export function CashRegisterPage() {
                 <form className="scanner-form" onSubmit={handleClose}>
                   <div className="field-group">
                     <label htmlFor="declaredCashAmount">Dinheiro contado</label>
-                    <input
+                    <CurrencyInput
                       id="declaredCashAmount"
-                      inputMode="decimal"
                       value={declaredCashAmount}
-                      onChange={(event) => setDeclaredCashAmount(event.target.value)}
-                      placeholder="0.00"
+                      onChange={setDeclaredCashAmount}
+                      placeholder="R$ 0,00"
                     />
                   </div>
                   <button className="action-button" type="submit" disabled={isSubmitting}>

@@ -3,6 +3,7 @@ import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import { getSaleReceiptUrl } from '../services/saleService'
 import type { PaymentMethod, Sale } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
+import { CurrencyInput } from '../components/CurrencyInput'
 
 export function SalesCheckoutPage() {
   const [scanCode, setScanCode] = useState('')
@@ -126,22 +127,20 @@ export function SalesCheckoutPage() {
             </div>
             <div className="field-group">
               <label htmlFor="discountAmount">Desconto R$</label>
-              <input
+              <CurrencyInput
                 id="discountAmount"
-                inputMode="decimal"
                 value={checkout.discountAmount}
-                onChange={(event) => checkout.setDiscountAmount(event.target.value)}
+                onChange={(value) => checkout.setDiscountAmount(value)}
               />
             </div>
             {checkout.paymentMethod === 'CASH' ? (
               <div className="field-group">
                 <label htmlFor="amountReceived">Valor recebido</label>
-                <input
+                <CurrencyInput
                   id="amountReceived"
-                  inputMode="decimal"
                   value={checkout.amountReceived}
-                  onChange={(event) => checkout.setAmountReceived(event.target.value)}
-                  placeholder="0.00"
+                  onChange={(value) => checkout.setAmountReceived(value)}
+                  placeholder="R$ 0,00"
                 />
               </div>
             ) : null}

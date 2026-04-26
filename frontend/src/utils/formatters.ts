@@ -19,3 +19,17 @@ export function formatDateTime(value: string) {
 export function formatNullableDateTime(value: string | null | undefined, fallback = '-') {
   return value ? formatDateTime(value) : fallback
 }
+
+export function formatCurrencyInput(value: string) {
+  const digits = value.replace(/\D/g, '')
+  if (!digits) return 'R$ 0,00'
+  const numberValue = Number(digits) / 100
+  return brlFormatter.format(numberValue)
+}
+
+export function parseCurrencyInput(value: string) {
+  const digits = value.replace(/\D/g, '')
+  if (!digits) return '0.00'
+  const numberValue = Number(digits) / 100
+  return numberValue.toFixed(2)
+}

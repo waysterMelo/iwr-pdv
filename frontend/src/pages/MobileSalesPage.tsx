@@ -3,6 +3,7 @@ import { MobileQrScanner } from '../components/MobileQrScanner'
 import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import type { PaymentMethod } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
+import { CurrencyInput } from '../components/CurrencyInput'
 
 type MobileSalesPageProps = {
   onBack: () => void
@@ -172,22 +173,20 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
 
             <div className="mobile-payment-grid">
               <label htmlFor="mobileDiscount">Desconto</label>
-              <input
+              <CurrencyInput
                 id="mobileDiscount"
-                inputMode="decimal"
                 value={checkout.discountAmount}
-                onChange={(event) => checkout.setDiscountAmount(event.target.value)}
+                onChange={checkout.setDiscountAmount}
               />
 
               {checkout.paymentMethod === 'CASH' ? (
                 <>
                   <label htmlFor="mobileAmountReceived">Recebido</label>
-                  <input
+                  <CurrencyInput
                     id="mobileAmountReceived"
-                    inputMode="decimal"
                     value={checkout.amountReceived}
-                    onChange={(event) => checkout.setAmountReceived(event.target.value)}
-                    placeholder="0.00"
+                    onChange={checkout.setAmountReceived}
+                    placeholder="R$ 0,00"
                   />
                   <span>Troco</span>
                   <strong>{formatCurrency(checkout.changeAmount)}</strong>
