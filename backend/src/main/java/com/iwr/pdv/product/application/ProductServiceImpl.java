@@ -7,6 +7,8 @@ import com.iwr.pdv.product.api.dto.ProductPageResponse;
 import com.iwr.pdv.product.api.dto.ProductRequest;
 import com.iwr.pdv.product.api.dto.ProductResponse;
 import com.iwr.pdv.product.domain.Product;
+import com.iwr.pdv.product.domain.ProductCategory;
+import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.product.domain.ProductSearchRepository;
 import com.iwr.pdv.product.mapper.ProductMapper;
@@ -37,6 +39,7 @@ public class ProductServiceImpl implements ProductService {
     );
 
     private final ProductRepository productRepository;
+    private final ProductCategoryRepository categoryRepository;
     private final ProductSearchRepository productSearchRepository;
     private final ProductMapper productMapper;
     private final ProductCodeGenerator productCodeGenerator;
@@ -46,6 +49,7 @@ public class ProductServiceImpl implements ProductService {
 
     public ProductServiceImpl(
             ProductRepository productRepository,
+            ProductCategoryRepository categoryRepository,
             ProductSearchRepository productSearchRepository,
             ProductMapper productMapper,
             ProductCodeGenerator productCodeGenerator,
@@ -54,6 +58,7 @@ public class ProductServiceImpl implements ProductService {
             Clock clock
     ) {
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
         this.productSearchRepository = productSearchRepository;
         this.productMapper = productMapper;
         this.productCodeGenerator = productCodeGenerator;
@@ -66,9 +71,10 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse create(ProductRequest request) {
         String productCode = resolveCodeForCreate(request);
+        ProductCategory category = findActiveCategory(request.categoryId());
 
         OffsetDateTime now = OffsetDateTime.now(clock);
-        Product product = productMapper.toEntity(request, productCode, now);
+        Product product = productMapper.toEntity(request, productCode, category, now);
         Product savedProduct = productRepository.save(product);
 
         return productMapper.toResponse(savedProduct);
@@ -91,6 +97,7 @@ public class ProductServiceImpl implements ProductService {
             String stockStatus,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Long categoryId,
             int lowStockThreshold,
             int page,
             int size,
@@ -110,6 +117,7 @@ public class ProductServiceImpl implements ProductService {
                 stockStatus,
                 minPrice,
                 maxPrice,
+                categoryId,
                 safeLowStockThreshold,
                 pageRequest
         );
@@ -149,8 +157,9 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse update(Long productId, ProductRequest request) {
         Product existingProduct = findProductById(productId);
         String productCode = resolveCodeForUpdate(request, existingProduct);
+        ProductCategory category = findActiveCategory(request.categoryId());
 
-        productMapper.updateEntity(existingProduct, request, productCode, OffsetDateTime.now(clock));
+        productMapper.updateEntity(existingProduct, request, productCode, category, OffsetDateTime.now(clock));
 
         return productMapper.toResponse(productRepository.save(existingProduct));
     }
@@ -182,6 +191,17 @@ public class ProductServiceImpl implements ProductService {
     private Product findProductById(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found for id " + productId + "."));
+    }
+
+    private ProductCategory findActiveCategory(Long categoryId) {
+        ProductCategory category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product category not found for id " + categoryId + "."));
+
+        if (!Boolean.TRUE.equals(category.getActive())) {
+            throw new ResourceNotFoundException("Product category not found for id " + categoryId + ".");
+        }
+
+        return category;
     }
 
     private void ensureCodeIsUnique(String code, Long currentProductId) {

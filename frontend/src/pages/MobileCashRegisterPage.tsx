@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useAppMessage } from '../hooks/useAppMessage'
 import { CurrencyInput } from '../components/CurrencyInput'
 import {
   addCashMovement,
@@ -15,6 +16,7 @@ type MobileCashRegisterPageProps = {
 }
 
 export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) {
+  const { notify } = useAppMessage()
   const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
   const [openingAmount, setOpeningAmount] = useState('0.00')
   const [movementType, setMovementType] = useState<CashMovementType>('CASH_IN')
@@ -27,6 +29,16 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [view, setView] = useState<'status' | 'movement' | 'close'>('status')
 
+  const showMessage = useCallback((nextMessage: string, nextType: 'success' | 'error') => {
+    setMessage(nextMessage)
+    setMessageType(nextType)
+    notify({
+      type: nextType,
+      title: nextType === 'success' ? 'Caixa atualizado' : 'Nao foi possivel atualizar o caixa',
+      message: nextMessage,
+    })
+  }, [notify])
+
   const loadCashRegister = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -36,7 +48,7 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [showMessage])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -44,11 +56,6 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
     }, 0)
     return () => window.clearTimeout(timeoutId)
   }, [loadCashRegister])
-
-  function showMessage(nextMessage: string, nextType: 'success' | 'error') {
-    setMessage(nextMessage)
-    setMessageType(nextType)
-  }
 
   async function handleOpen(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

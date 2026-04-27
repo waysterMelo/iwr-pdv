@@ -2,6 +2,10 @@ export type Product = {
   id: number
   name: string
   code: string
+  categoryId: number
+  categoryName: string
+  categoryIcon: string
+  batchId: number | null
   price: number
   stockQuantity: number
   active: boolean
@@ -12,8 +16,16 @@ export type Product = {
 export type ProductPayload = {
   name: string
   code: string
+  categoryId: number
   price: number
   stockQuantity: number
+  active: boolean
+}
+
+export type ProductCategory = {
+  id: number
+  name: string
+  icon: string
   active: boolean
 }
 
@@ -43,6 +55,7 @@ export type ProductPageFilters = {
   stockStatus: ProductStockStatus
   minPrice: string
   maxPrice: string
+  categoryId: string
   lowStockThreshold: string
   sort: ProductSortField
   direction: ProductSortDirection

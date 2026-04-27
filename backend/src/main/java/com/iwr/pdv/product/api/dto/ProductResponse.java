@@ -11,6 +11,14 @@ public record ProductResponse(
         String name,
         @Schema(description = "Unique product code", example = "IWR-001")
         String code,
+        @Schema(description = "Product category identifier", example = "1")
+        Long categoryId,
+        @Schema(description = "Product category name", example = "Vestidos")
+        String categoryName,
+        @Schema(description = "Product category icon key", example = "dress")
+        String categoryIcon,
+        @Schema(description = "Product batch identifier", example = "5")
+        Long batchId,
         @Schema(description = "Current price", example = "149.90")
         BigDecimal price,
         @Schema(description = "Current stock quantity", example = "8")

@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -22,6 +24,14 @@ public class Product {
 
     @Column(nullable = false, unique = true, length = 30)
     private String code;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private ProductCategory category;
+
+    @ManyToOne
+    @JoinColumn(name = "batch_id")
+    private ProductBatch batch;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
@@ -60,6 +70,22 @@ public class Product {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public ProductCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(ProductCategory category) {
+        this.category = category;
+    }
+
+    public ProductBatch getBatch() {
+        return batch;
+    }
+
+    public void setBatch(ProductBatch batch) {
+        this.batch = batch;
     }
 
     public BigDecimal getPrice() {

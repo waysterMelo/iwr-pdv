@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.iwr.pdv.auth.api.dto.LoginRequest;
 import com.iwr.pdv.auth.application.AuthService;
 import com.iwr.pdv.product.domain.Product;
+import com.iwr.pdv.product.domain.ProductCategory;
+import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductCodeControl;
 import com.iwr.pdv.product.domain.ProductCodeControlRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
@@ -36,6 +38,9 @@ class ProductControllerIntegrationTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private ProductCategoryRepository categoryRepository;
+
+    @Autowired
     private ProductCodeControlRepository productCodeControlRepository;
 
     @Autowired
@@ -58,11 +63,12 @@ class ProductControllerIntegrationTest {
                 {
                   "name": "Vestido Midi",
                   "code": "IWR-001",
+                  "categoryId": %d,
                   "price": 149.90,
                   "stockQuantity": 8,
                   "active": true
                 }
-                """;
+                """.formatted(categoryId());
 
         mockMvc.perform(post("/api/products")
                         .header("Authorization", authHeader)
@@ -87,11 +93,12 @@ class ProductControllerIntegrationTest {
                 {
                   "name": "",
                   "code": "IWR-002",
+                  "categoryId": %d,
                   "price": 0,
                   "stockQuantity": -1,
                   "active": true
                 }
-                """;
+                """.formatted(categoryId());
 
         mockMvc.perform(post("/api/products")
                         .header("Authorization", authHeader)
@@ -116,11 +123,12 @@ class ProductControllerIntegrationTest {
                 {
                   "name": "Camisa Polo Premium",
                   "code": "IWR-003",
+                  "categoryId": %d,
                   "price": 89.90,
                   "stockQuantity": 15,
                   "active": true
                 }
-                """;
+                """.formatted(categoryId());
 
         mockMvc.perform(put("/api/products/{productId}", savedProduct.getId())
                         .header("Authorization", authHeader)
@@ -232,11 +240,12 @@ class ProductControllerIntegrationTest {
                 {
                   "name": "Calca Alfaiataria Nova",
                   "code": "IWR-030",
+                  "categoryId": %d,
                   "price": 149.90,
                   "stockQuantity": 10,
                   "active": true
                 }
-                """;
+                """.formatted(categoryId());
 
         mockMvc.perform(post("/api/products")
                         .header("Authorization", authHeader)
@@ -252,11 +261,12 @@ class ProductControllerIntegrationTest {
                 {
                   "name": "Macacao Linho",
                   "code": "",
+                  "categoryId": %d,
                   "price": 189.90,
                   "stockQuantity": 6,
                   "active": true
                 }
-                """;
+                """.formatted(categoryId());
 
         mockMvc.perform(post("/api/products")
                         .header("Authorization", authHeader)
@@ -337,6 +347,7 @@ class ProductControllerIntegrationTest {
         Product product = new Product();
         product.setName(name);
         product.setCode(code);
+        product.setCategory(category());
         product.setPrice(price);
         product.setStockQuantity(stockQuantity);
         product.setActive(active);
@@ -344,6 +355,25 @@ class ProductControllerIntegrationTest {
         product.setUpdatedAt(OffsetDateTime.now());
 
         return product;
+    }
+
+    private Long categoryId() {
+        return category().getId();
+    }
+
+    private ProductCategory category() {
+        return categoryRepository.findByActiveTrueOrderByNameAsc()
+                .stream()
+                .findFirst()
+                .orElseGet(() -> {
+                    ProductCategory category = new ProductCategory();
+                    category.setName("Vestidos");
+                    category.setIcon("dress");
+                    category.setActive(true);
+                    category.setCreatedAt(OffsetDateTime.now());
+                    category.setUpdatedAt(OffsetDateTime.now());
+                    return categoryRepository.save(category);
+                });
     }
 
     private void resetProductCodeSequence() {

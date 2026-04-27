@@ -9,8 +9,10 @@ import type { CashMovementType, CashRegister } from '../types/cashRegister'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
+import { useAppMessage } from '../hooks/useAppMessage'
 
 export function CashRegisterPage() {
+  const { notify } = useAppMessage()
   const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
   const [openingAmount, setOpeningAmount] = useState('0.00')
   const [movementType, setMovementType] = useState<CashMovementType>('CASH_IN')
@@ -22,6 +24,16 @@ export function CashRegisterPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const showMessage = useCallback((nextMessage: string, nextType: 'success' | 'error') => {
+    setMessage(nextMessage)
+    setMessageType(nextType)
+    notify({
+      type: nextType,
+      title: nextType === 'success' ? 'Caixa atualizado' : 'Nao foi possivel atualizar o caixa',
+      message: nextMessage,
+    })
+  }, [notify])
+
   const loadCashRegister = useCallback(async () => {
     setIsLoading(true)
 
@@ -32,7 +44,7 @@ export function CashRegisterPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [showMessage])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -41,11 +53,6 @@ export function CashRegisterPage() {
 
     return () => window.clearTimeout(timeoutId)
   }, [loadCashRegister])
-
-  function showMessage(nextMessage: string, nextType: 'success' | 'error') {
-    setMessage(nextMessage)
-    setMessageType(nextType)
-  }
 
   async function handleOpen(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

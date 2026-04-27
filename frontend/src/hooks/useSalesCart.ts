@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAppMessage } from '../hooks/useAppMessage'
 import { getCurrentCashRegister } from '../services/cashRegisterService'
 import { findProductByCode } from '../services/productService'
 import { closeSale } from '../services/saleService'
@@ -23,6 +24,7 @@ export function getCartItemTotal(item: CartItem) {
 }
 
 export function useSalesCart(options: UseSalesCartOptions = {}) {
+  const { notify } = useAppMessage()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<FeedbackType>('success')
@@ -59,6 +61,11 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
   function showMessage(nextMessage: string, nextType: FeedbackType) {
     setMessage(nextMessage)
     setMessageType(nextType)
+    notify({
+      type: nextType,
+      title: nextType === 'success' ? 'Operacao concluida' : 'Nao foi possivel continuar',
+      message: nextMessage,
+    })
   }
 
   function addProductToCart(product: Product) {

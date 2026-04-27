@@ -1,563 +1,556 @@
-# PLANO MESTRE DE SPRINTS
-
-## Projeto: Sistema de Gestão de Loja com Etiquetas QR Code
-
-**Cliente:** IWR Modas
-**Responsável do projeto:** Wayster Cruz Di Melo
-**Diretriz central:** código limpo, padronizado, legível, escalável e de fácil manutenção.
-
----
-
-# 1. OBJETIVO DO PROJETO
-
-Desenvolver um sistema de loja com foco em:
-
-* cadastro de produtos
-* geração de código único por produto
-* geração de QR Code
-* impressão de etiquetas
-* leitura via scanner 2D
-* registro de vendas
-* baixa automática de estoque
-* histórico de vendas
-
----
-
-# 2. STACK DEFINIDA
-
-## Frontend
-
-* React
-* TypeScript
-* Vite
-
-## Backend
-
-* Spring Boot
-* Java 21
-
-## Banco de dados
-
-* PostgreSQL
-
-## Integrações
-
-* Impressora térmica de etiquetas Goldensky
-* Leitor 2D USB
-
----
-
-# 3. DIRETRIZES GERAIS DE ENGENHARIA
-
-Toda a equipe deve seguir obrigatoriamente os princípios abaixo:
-
-## Padrões de código
-
-* código simples e de fácil entendimento
-* nomes claros e sem abreviações desnecessárias
-* separação de responsabilidades
-* baixo acoplamento
-* alta coesão
-* evitar duplicação
-* evitar lógica de negócio em controller
-* evitar lógica complexa em JSX
-* evitar código “inteligente demais” que prejudique manutenção
-
-## Padrões de arquitetura
-
-### Backend
-
-* Controller-Service-Repository
-* DTO Pattern
-* Mapper Pattern
-* Global Exception Handler
-* Service Interface + Implementation
-* Transaction boundary em service
-
-### Frontend
-
-* separação entre pages, components e services
-* custom hooks quando necessário
-* chamadas HTTP centralizadas
-* tipagem forte com TypeScript
-* componentes reutilizáveis e pequenos
-
-## Regras de projeto
-
-* nomes técnicos e banco em inglês
-* interface pode exibir português
-* migrations obrigatórias
-* documentação mínima obrigatória
-* toda entrega deve ter critério de aceite claro
-* nenhuma sprint pode ser considerada concluída sem evidência funcional
-
----
-
-# 4. VISÃO GERAL DAS SPRINTS
-
-O projeto será dividido nas seguintes sprints:
-
-* Sprint 0 — Fundação técnica do projeto
-* Sprint 1 — Cadastro de produtos e fundação do domínio
-* Sprint 2 — Geração de código e QR Code
-* Sprint 3 — Impressão de etiquetas
-* Sprint 4 — Tela de venda e leitura por scanner
-* Sprint 5 — Finalização da venda e baixa de estoque
-* Sprint 6 — Histórico, ajustes operacionais e estabilização
-* Sprint 7 — Homologação, implantação e entrega
-
----
-
-# 5. DETALHAMENTO DAS SPRINTS
-
----
-
-## SPRINT 0 — FUNDAÇÃO TÉCNICA DO PROJETO
-
-### Objetivo
-
-Criar a base técnica correta do sistema, garantindo organização, padronização e estrutura escalável antes do início das regras de negócio.
-
-### Escopo
-
-* criação do frontend
-* criação do backend
-* conexão com PostgreSQL
-* migrations iniciais
-* organização de pastas
-* padronização arquitetural
-* tratamento global de erros
-* healthcheck
-* documentação mínima
-
-### Entregáveis
-
-* frontend criado e rodando
-* backend criado e rodando
-* banco configurado
-* migrations funcionando
-* endpoint `/health`
-* frontend consumindo `/health`
-* README backend
-* README frontend
-
-### Critérios de aceite
-
-* projetos compilando sem erro
-* banco conectado
-* migration executando corretamente
-* integração básica frontend/backend funcionando
-* arquitetura documentada
-
-### Fora do escopo
-
-* cadastro de produto
-* vendas
-* QR Code
-* impressão
-* estoque real
-
----
-
-## SPRINT 1 — CADASTRO DE PRODUTOS E FUNDAÇÃO DO DOMÍNIO
-
-### Objetivo
-
-Construir a primeira funcionalidade real do sistema: gestão de produtos.
-
-### Escopo
-
-* modelagem da entidade Product
-* CRUD completo de produtos
-* validações de cadastro
-* listagem de produtos
-* edição de produto
-* ativação/inativação
-* tela de cadastro
-* tela de listagem
-* busca básica por nome ou código
-
-### Campos mínimos do produto
-
-* id
-* name
-* code
-* price
-* stockQuantity
-* active
-* createdAt
-* updatedAt
-
-### Entregáveis
-
-* endpoints de produto
-* DTOs de request/response
-* mappers
-* services
-* repository
-* telas de cadastro e listagem
-* validações no frontend e backend
-
-### Critérios de aceite
-
-* produto cadastra corretamente
-* produto edita corretamente
-* listagem funciona
-* validações impedem dados inválidos
-* produto pode ser ativado/inativado
-* busca básica funcionando
-
-### Fora do escopo
-
-* QR Code
-* impressão
-* venda
-* baixa de estoque por venda
-
----
-
-## SPRINT 2 — GERAÇÃO DE CÓDIGO E QR CODE
-
-### Objetivo
-
-Adicionar a identificação única do produto e sua representação em QR Code.
-
-### Escopo
-
-* definição do padrão de código do produto
-* geração automática ou validada de código único
-* geração de QR Code pelo backend
-* endpoint para visualização/obtenção do QR Code
-* exibição do QR Code na tela de produto
-* validação de unicidade do código
-
-### Regra principal
-
-O QR Code deve conter apenas um identificador simples do produto, como:
-
-* `IWR-000001`
-
-### Entregáveis
-
-* regra de geração de código
-* garantia de unicidade
-* geração de QR Code
-* tela exibindo QR Code do produto
-* endpoint para obter QR Code
-
-### Critérios de aceite
-
-* todo produto possui código único
-* QR Code é gerado corretamente
-* leitura do QR retorna o valor esperado
-* código duplicado é bloqueado
-
-### Fora do escopo
-
-* impressão física
-* carrinho
-* venda
-* estoque por transação
-
----
-
-## SPRINT 3 — IMPRESSÃO DE ETIQUETAS
-
-### Objetivo
-
-Permitir imprimir etiquetas dos produtos com QR Code e dados básicos.
-
-### Escopo
-
-* definição de layout padrão da etiqueta
-* montagem da etiqueta
-* exibição prévia da etiqueta
-* fluxo de impressão
-* botão “imprimir etiqueta” no produto
-* testes com impressora Goldensky
-* ajustes de legibilidade
-
-### Conteúdo mínimo da etiqueta
-
-* nome do produto
-* preço
-* código do produto
-* QR Code
-
-### Entregáveis
-
-* layout de etiqueta padronizado
-* integração de impressão
-* botão de impressão
-* testes de legibilidade
-* documentação básica do fluxo de impressão
-
-### Critérios de aceite
-
-* etiqueta imprime corretamente
-* QR Code impresso é legível
-* nome e preço estão legíveis
-* operador consegue imprimir a partir da tela do produto
-
-### Fora do escopo
-
-* venda
-* carrinho
-* fechamento de venda
-
----
-
-## SPRINT 4 — TELA DE VENDA E LEITURA POR SCANNER
-
-### Objetivo
-
-Construir a operação de caixa com leitura do QR Code e montagem do carrinho.
-
-### Escopo
-
-* tela de PDV
-* campo de leitura com foco automático
-* leitura via scanner 2D
-* busca de produto por código
-* adição ao carrinho
-* soma de quantidade se produto repetido
-* subtotal e total
-
-### Fluxo esperado
-
-* scanner lê o QR
-* código entra no campo
-* sistema busca produto
-* produto vai para o carrinho
-
-### Entregáveis
-
-* tela de venda funcional
-* busca por código
-* carrinho com itens
-* cálculo de subtotal e total
-* mensagens de erro padronizadas
-
-### Critérios de aceite
-
-* leitura adiciona item corretamente
-* produto repetido soma quantidade
-* produto inexistente retorna erro amigável
-* produto inativo não entra no carrinho
-* tela mantém foco para leitura contínua
-
-### Fora do escopo
-
-* persistência definitiva da venda
-* baixa de estoque
-* histórico
-
----
-
-## SPRINT 5 — FINALIZAÇÃO DA VENDA E BAIXA DE ESTOQUE
-
-### Objetivo
-
-Persistir a venda e refletir corretamente no estoque.
-
-### Escopo
-
-* criação da entidade Sale
-* criação da entidade SaleItem
-* criação da entidade StockMovement
-* endpoint de fechamento de venda
-* persistência transacional
-* baixa automática de estoque
-* validação de estoque disponível
-* regras de consistência
-
-### Regras obrigatórias
-
-* venda deve ser transacional
-* se falhar estoque, falha toda a venda
-* movimentação de estoque deve ser registrada
-* produto sem estoque não pode ser vendido
-
-### Entregáveis
-
-* endpoints de venda
-* persistência de venda
-* persistência de itens
-* baixa de estoque
-* movimentação de estoque
-* feedback de sucesso/erro no frontend
-
-### Critérios de aceite
-
-* venda salva corretamente
-* estoque é reduzido corretamente
-* movimentação de estoque é criada
-* falhas impedem inconsistência
-* valor total fecha corretamente
-
-### Fora do escopo
-
-* relatório avançado
-* dashboard gerencial
-* integração fiscal
-
----
-
-## SPRINT 6 — HISTÓRICO, AJUSTES OPERACIONAIS E ESTABILIZAÇÃO
-
-### Objetivo
-
-Dar robustez operacional ao sistema e permitir consulta de vendas.
-
-### Escopo
-
-* tela de histórico de vendas
-* detalhes da venda
-* filtros básicos por período
-* ajustes finos de UX
-* mensagens operacionais
-* revisão de validações
-* revisão de erros
-* revisão de performance em fluxos principais
-
-### Entregáveis
-
-* listagem de vendas
-* detalhe da venda
-* filtros básicos
-* melhorias de usabilidade
-* correções de bugs
-* revisão técnica geral
-
-### Critérios de aceite
-
-* histórico consulta vendas reais
-* detalhe da venda exibe itens corretamente
-* sistema apresenta estabilidade de uso
-* bugs críticos das sprints anteriores resolvidos
-
-### Fora do escopo
-
-* BI avançado
-* financeiro
-* nota fiscal
-* multiempresa
-
----
-
-## SPRINT 7 — HOMOLOGAÇÃO, IMPLANTAÇÃO E ENTREGA
-
-### Objetivo
-
-Preparar o sistema para uso real pelo cliente.
-
-### Escopo
-
-* testes finais ponta a ponta
-* homologação com fluxo real
-* ajuste final de impressão
-* ajuste final de scanner
-* documentação operacional básica
-* empacotamento para uso local
-* suporte de implantação inicial
-
-### Entregáveis
-
-* fluxo completo validado
-* ambiente preparado
-* checklist de implantação
-* manual operacional básico
-* versão final para entrega
-
-### Critérios de aceite
-
-* cadastro funciona
-* QR Code funciona
-* impressão funciona
-* leitura funciona
-* venda funciona
-* estoque baixa corretamente
-* cliente consegue executar operação básica
-
----
-
-# 6. ORDEM OFICIAL DE DESENVOLVIMENTO
-
-A ordem obrigatória do projeto é:
-
-1. fundação técnica
-2. cadastro de produtos
-3. geração de código e QR
-4. impressão de etiquetas
-5. tela de venda
-6. persistência da venda
-7. baixa de estoque
-8. histórico e estabilização
-9. homologação e entrega
-
-A equipe não deve inverter essa ordem sem aprovação.
-
----
-
-# 7. REGRAS DE ENTREGA POR SPRINT
-
-Cada sprint deve obrigatoriamente retornar:
-
-* resumo técnico do que foi feito
-* funcionalidades implementadas
-* estrutura criada ou alterada
-* endpoints criados
-* telas criadas
-* evidências de funcionamento
-* pontos de atenção
-* débitos técnicos identificados
-* sugestões para sprint seguinte
-
----
-
-# 8. PADRÃO DE QUALIDADE OBRIGATÓRIO
-
-Nenhuma entrega será aceita se houver:
-
-* controller com regra de negócio
-* acesso direto indevido ao banco
-* ausência de DTO
-* ausência de validação
-* código confuso
-* duplicação desnecessária
-* falta de padrão entre módulos
-* nomes ruins
-* falta de tratamento de erro
-* frontend com lógica excessiva em componentes de tela
-
----
-
-# 9. DEFINIÇÃO DE SUCESSO DO PROJETO
-
-O projeto será considerado bem sucedido quando o cliente puder:
-
-* cadastrar um produto
-* gerar seu QR Code
-* imprimir a etiqueta
-* fixar no produto
-* ler no caixa com scanner
-* registrar a venda
-* baixar estoque automaticamente
-
----
-
-# 10. INSTRUÇÃO OFICIAL À EQUIPE
-
-Este documento é a referência oficial de execução do projeto.
-
-Toda decisão técnica deve respeitar:
-
-* clareza
-* padronização
-* manutenibilidade
-* escalabilidade
-* simplicidade
-
-Nenhuma sprint deve avançar sem validação da sprint anterior.
-
-A liderança técnica do projeto definirá as instruções detalhadas de cada sprint conforme a evolução do desenvolvimento.
+import React, { useMemo, useState } from "react";
+
+const Icon = ({ children, size = 18 }) => (
+  <span style={{ fontSize: size, lineHeight: 1 }} aria-hidden="true">{children}</span>
+);
+
+const ShoppingBag = (props) => <Icon {...props}>◈</Icon>;
+const Landmark = (props) => <Icon {...props}>◆</Icon>;
+const History = (props) => <Icon {...props}>◷</Icon>;
+const Package = (props) => <Icon {...props}>▣</Icon>;
+const Users = (props) => <Icon {...props}>♟</Icon>;
+const QrCode = (props) => <Icon {...props}>▦</Icon>;
+const Printer = (props) => <Icon {...props}>▤</Icon>;
+const ShieldCheck = (props) => <Icon {...props}>◇</Icon>;
+const ChevronDown = (props) => <Icon {...props}>⌄</Icon>;
+const LogOut = (props) => <Icon {...props}>↗</Icon>;
+const Sparkles = (props) => <Icon {...props}>✦</Icon>;
+const Crown = (props) => <Icon {...props}>♕</Icon>;
+const Plus = (props) => <Icon {...props}>＋</Icon>;
+const Filter = (props) => <Icon {...props}>⟡</Icon>;
+const ReceiptText = (props) => <Icon {...props}>▧</Icon>;
+const WalletCards = (props) => <Icon {...props}>▰</Icon>;
+const SearchIcon = (props) => <Icon {...props}>⌕</Icon>;
+const Arrow = (props) => <Icon {...props}>→</Icon>;
+const Check = (props) => <Icon {...props}>✓</Icon>;
+const Alert = (props) => <Icon {...props}>!</Icon>;
+
+const gold = "#C6A15B";
+
+const menu = [
+  { id: "vendas", group: "PDV", label: "Vendas", icon: ShoppingBag, hint: "Venda rápida" },
+  { id: "caixa", group: "Operação", label: "Caixa", icon: Landmark, hint: "Abertura e fechamento" },
+  { id: "historico", group: "Consultas", label: "Histórico", icon: History, hint: "Vendas concluídas" },
+  { id: "produtos", group: "Estoque", label: "Produtos", icon: Package, hint: "Cadastro e QR Code" },
+  { id: "usuarios", group: "Acessos", label: "Usuários", icon: Users, hint: "Permissões" },
+];
+
+const products = [
+  { name: "Produto Sprint 5 Debug", code: "IWR-000003", price: "R$ 39,90", stock: 0, total: "R$ 0,00", status: "Sem estoque", tone: "danger" },
+  { name: "Produto Sprint 5 Validação", code: "IWR-000002", price: "R$ 39,90", stock: 3, total: "R$ 119,70", status: "Estoque baixo", tone: "warning" },
+  { name: "Vestido Feminino", code: "IWF-002", price: "R$ 80,00", stock: 1, total: "R$ 80,00", status: "Estoque baixo", tone: "warning" },
+  { name: "Produto Homologação Software", code: "IWR-000001", price: "R$ 49,90", stock: 5, total: "R$ 249,50", status: "Ativo", tone: "success" },
+];
+
+const cartItems = [
+  { name: "Produto Sprint 5 Validação", code: "IWR-000002", qty: 2, unit: "R$ 39,90", total: "R$ 79,80" },
+];
+
+const sales = [
+  { id: "#2", value: "R$ 79,80", detail: "Concluída · PIX · 26/04/2026, 17:28", seller: "Maria" },
+  { id: "#1", value: "R$ 39,90", detail: "Concluída · Cash · 25/04/2026, 13:42", seller: "Administrador" },
+];
+
+function Badge({ children, tone = "gold", dot = false }) {
+  const tones = {
+    gold: "border-[#C6A15B]/45 bg-[#C6A15B]/12 text-[#F3DFA8]",
+    success: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
+    warning: "border-amber-400/30 bg-amber-400/10 text-amber-300",
+    danger: "border-red-400/30 bg-red-400/10 text-red-300",
+    dark: "border-white/10 bg-white/[0.045] text-white/72",
+  };
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${tones[tone]}`}>
+      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+      {children}
+    </span>
+  );
+}
+
+function Button({ children, variant = "primary", icon: BtnIcon, wide = false }) {
+  const styles = {
+    primary: "bg-[#C6A15B] text-[#080809] shadow-[0_18px_60px_rgba(198,161,91,0.28)] hover:-translate-y-0.5 hover:bg-[#E0C077] hover:shadow-[0_22px_75px_rgba(198,161,91,0.35)]",
+    dark: "bg-white text-black shadow-[0_18px_60px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:bg-[#E8E0D2]",
+    ghost: "border border-white/10 bg-white/[0.035] text-white hover:-translate-y-0.5 hover:border-[#C6A15B]/55 hover:bg-[#C6A15B]/10",
+    danger: "border border-red-400/30 bg-red-400/10 text-red-200 hover:-translate-y-0.5 hover:bg-red-400/20",
+    soft: "border border-[#C6A15B]/20 bg-[#C6A15B]/8 text-[#F3DFA8] hover:-translate-y-0.5 hover:bg-[#C6A15B]/15",
+  };
+  return (
+    <button className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] transition duration-200 ${wide ? "w-full" : ""} ${styles[variant]}`}>
+      {BtnIcon && <BtnIcon size={15} />}
+      {children}
+    </button>
+  );
+}
+
+function Field({ label, placeholder, wide, icon: FieldIcon, action, value }) {
+  const isSelect = ["status", "nível", "forma", "tipo", "estoque", "ordenar"].some((x) => label.toLowerCase().includes(x));
+  return (
+    <label className={wide ? "md:col-span-2" : ""}>
+      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.24em] text-white/45">{label}</span>
+      <div className="group flex h-13 min-h-[52px] items-center justify-between rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white/80 shadow-inner shadow-black/40 transition focus-within:border-[#C6A15B]/70 hover:border-white/20">
+        <div className="flex min-w-0 items-center gap-3">
+          {FieldIcon && <span className="text-[#C6A15B]"><FieldIcon size={16} /></span>}
+          <span className={value ? "truncate text-white" : "truncate text-white/50"}>{value || placeholder}</span>
+        </div>
+        {action ? <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C6A15B]">{action}</span> : isSelect ? <ChevronDown size={16} className="text-white/35" /> : null}
+      </div>
+    </label>
+  );
+}
+
+function Panel({ children, className = "", title, subtitle, action }) {
+  return (
+    <section className={`group relative overflow-hidden rounded-[30px] border border-white/10 bg-[#101012]/78 p-6 shadow-[0_30px_110px_rgba(0,0,0,0.43)] backdrop-blur-xl transition duration-300 hover:border-white/16 ${className}`}>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C6A15B]/70 to-transparent" />
+      <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-[#C6A15B]/10 blur-3xl transition group-hover:bg-[#C6A15B]/16" />
+      {(title || subtitle || action) && (
+        <div className="relative mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            {title && <h2 className="font-serif text-3xl tracking-[-0.045em] text-white">{title}</h2>}
+            {subtitle && <p className="mt-2 max-w-2xl text-sm leading-6 text-white/55">{subtitle}</p>}
+          </div>
+          {action}
+        </div>
+      )}
+      <div className="relative">{children}</div>
+    </section>
+  );
+}
+
+function Metric({ label, value, hint, tone = "default" }) {
+  const toneMap = {
+    default: "border-white/10 bg-white/[0.035]",
+    gold: "border-[#C6A15B]/25 bg-[#C6A15B]/8",
+    danger: "border-red-400/20 bg-red-400/8",
+    success: "border-emerald-400/20 bg-emerald-400/8",
+  };
+  return (
+    <div className={`relative overflow-hidden rounded-[24px] border p-5 ${toneMap[tone]}`}>
+      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-white/5 blur-2xl" />
+      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-white/45">{label}</div>
+      <div className="font-serif text-3xl tracking-[-0.05em] text-white md:text-4xl">{value}</div>
+      {hint && <div className="mt-3 text-xs text-white/42">{hint}</div>}
+    </div>
+  );
+}
+
+function Header({ eyebrow, title, subtitle, metricLabel, metricValue, status }) {
+  return (
+    <div className="mb-8 grid gap-6 border-b border-white/10 pb-8 lg:grid-cols-[1fr_360px] lg:items-end">
+      <div>
+        <div className="mb-4 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-[0.32em] text-[#C6A15B]">
+          <Sparkles size={14} /> {eyebrow}
+          {status && <Badge tone="success" dot>{status}</Badge>}
+        </div>
+        <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-[-0.065em] text-white md:text-7xl">{title}</h1>
+        <p className="mt-5 max-w-3xl text-base leading-7 text-white/58">{subtitle}</p>
+      </div>
+      {metricLabel && (
+        <div className="relative overflow-hidden rounded-[30px] border border-[#C6A15B]/24 bg-[#090909] p-7 shadow-[0_26px_90px_rgba(0,0,0,0.55)]">
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(198,161,91,0.16),transparent_45%),radial-gradient(circle_at_90%_10%,rgba(255,255,255,0.12),transparent_30%)]" />
+          <div className="relative text-[10px] font-black uppercase tracking-[0.25em] text-[#C6A15B]">{metricLabel}</div>
+          <div className="relative mt-4 font-serif text-5xl tracking-[-0.06em] text-white">{metricValue}</div>
+          <div className="relative mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-2/3 rounded-full bg-[#C6A15B]" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Sidebar({ current, setCurrent }) {
+  return (
+    <aside className="fixed inset-y-0 left-0 z-20 hidden w-[320px] border-r border-white/10 bg-[#070708]/94 p-6 backdrop-blur-2xl lg:block">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_5%,rgba(198,161,91,0.15),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.045),transparent)]" />
+      <div className="relative flex h-full flex-col">
+        <div className="mb-9 flex items-center gap-4 rounded-[26px] border border-white/10 bg-white/[0.035] p-4">
+          <div className="grid h-15 w-15 place-items-center rounded-2xl border border-[#C6A15B]/35 bg-[#C6A15B]/12 font-serif text-3xl italic text-[#F3DFA8]">I</div>
+          <div>
+            <div className="font-serif text-3xl italic leading-none text-white">IWR.</div>
+            <div className="mt-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#C6A15B]">Atelier PDV</div>
+          </div>
+        </div>
+
+        <div className="mb-5 rounded-[22px] border border-[#C6A15B]/20 bg-[#C6A15B]/8 p-4">
+          <div className="flex items-center gap-3">
+            <Crown size={20} />
+            <div>
+              <div className="text-sm font-bold text-white">Operação premium</div>
+              <div className="mt-1 text-xs text-white/45">Caixa aberto · Loja online</div>
+            </div>
+          </div>
+        </div>
+
+        <nav className="space-y-2">
+          {menu.map((item) => {
+            const NavIcon = item.icon;
+            const active = current === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrent(item.id)}
+                className={`group relative flex w-full items-center gap-4 rounded-[22px] px-4 py-4 text-left transition duration-200 ${active ? "bg-white text-black shadow-[0_20px_60px_rgba(255,255,255,0.12)]" : "text-white/66 hover:bg-white/[0.055] hover:text-white"}`}
+              >
+                {active && <div className="absolute -left-6 h-11 w-1 rounded-r-full bg-[#C6A15B]" />}
+                <span className={`grid h-11 w-11 place-items-center rounded-2xl border transition ${active ? "border-black/10 bg-black text-[#C6A15B]" : "border-white/10 bg-white/[0.045] text-[#C6A15B] group-hover:border-[#C6A15B]/35"}`}>
+                  <NavIcon size={18} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className={`block text-[9px] font-black uppercase tracking-[0.25em] ${active ? "text-black/50" : "text-white/35"}`}>{item.group}</span>
+                  <span className="mt-1 block text-sm font-black">{item.label}</span>
+                  <span className={`mt-0.5 block truncate text-xs ${active ? "text-black/45" : "text-white/30"}`}>{item.hint}</span>
+                </span>
+                {active && <Arrow size={16} />}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto rounded-[26px] border border-white/10 bg-white/[0.045] p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <Badge tone="success" dot>Online</Badge>
+            <span className="text-xs text-white/35">26/04 · 17:45</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-full bg-[#C6A15B] font-serif text-xl italic text-black">A</div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-bold text-white">Administrador</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C6A15B]">Administrador</div>
+            </div>
+            <button className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-white/55 transition hover:border-[#C6A15B]/40 hover:text-white">
+              <LogOut size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function MobileNav({ current, setCurrent }) {
+  return (
+    <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 gap-1 rounded-[24px] border border-white/10 bg-[#070708]/90 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.55)] backdrop-blur-xl lg:hidden">
+      {menu.map((item) => {
+        const NavIcon = item.icon;
+        const active = current === item.id;
+        return (
+          <button key={item.id} onClick={() => setCurrent(item.id)} className={`rounded-2xl px-2 py-3 text-center transition ${active ? "bg-[#C6A15B] text-black" : "text-white/55"}`}>
+            <div className="flex justify-center"><NavIcon size={17} /></div>
+            <div className="mt-1 text-[9px] font-black uppercase tracking-[0.08em]">{item.label}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function QuickActions({ actions }) {
+  return (
+    <div className="mb-6 flex flex-wrap gap-3">
+      {actions.map((action) => <Button key={action.label} variant={action.variant || "ghost"} icon={action.icon}>{action.label}</Button>)}
+    </div>
+  );
+}
+
+function Vendas() {
+  return (
+    <>
+      <Header eyebrow="PDV" title="Caixa com leitura por código" subtitle="Leia o QR Code ou digite o código do produto para montar a venda, finalizar no backend e baixar estoque automaticamente." metricLabel="Total da venda" metricValue="R$ 79,80" status="Caixa #2 aberto" />
+      <QuickActions actions={[{ label: "Nova venda", icon: Plus, variant: "primary" }, { label: "Imprimir última", icon: Printer }, { label: "Buscar produto", icon: SearchIcon }]} />
+      <div className="space-y-6">
+        <Panel>
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+            <Field label="Leitor de código" placeholder="Aponte o leitor ou digite o código" value="IWR-000002" icon={QrCode} action="Enter" />
+            <Button icon={Plus}>Adicionar</Button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Badge tone="success" dot>Produto localizado</Badge>
+            <Badge tone="dark">Estoque disponível: 3</Badge>
+            <Badge tone="gold">Última leitura há 3s</Badge>
+          </div>
+        </Panel>
+
+        <div className="grid gap-6 xl:grid-cols-[1fr_440px]">
+          <Panel title="Pagamento" subtitle="Revise subtotal, desconto e forma de pagamento antes de finalizar.">
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field label="Forma de pagamento" placeholder="Dinheiro" value="PIX" />
+              <Field label="Desconto R$" placeholder="R$ 0,00" />
+              <Field label="Valor recebido" placeholder="R$ 0,00" value="R$ 79,80" />
+              <Metric label="Troco" value="R$ 0,00" hint="Pagamento exato" tone="gold" />
+            </div>
+          </Panel>
+
+          <Panel title="Resumo da venda" subtitle="Conferência rápida antes do fechamento.">
+            <div className="space-y-3">
+              <Metric label="Subtotal" value="R$ 79,80" />
+              <Metric label="Desconto" value="R$ 0,00" />
+              <Metric label="Itens" value="2" hint="1 produto no carrinho" tone="gold" />
+            </div>
+          </Panel>
+        </div>
+
+        <Panel title="Carrinho da venda" subtitle="Revise quantidades antes de finalizar a venda." action={<Button variant="ghost">Limpar carrinho</Button>}>
+          <div className="space-y-3">
+            {cartItems.map((item) => (
+              <div key={item.code} className="grid gap-4 rounded-[24px] border border-white/10 bg-black/22 p-5 md:grid-cols-[1fr_auto_auto] md:items-center">
+                <div>
+                  <Badge tone="dark">{item.code}</Badge>
+                  <h3 className="mt-3 text-xl font-black text-white">{item.name}</h3>
+                  <p className="mt-1 text-sm text-white/45">{item.qty} unidades · {item.unit}</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-2">
+                  <button className="grid h-9 w-9 place-items-center rounded-xl bg-white/5 text-white">−</button>
+                  <span className="w-8 text-center font-black text-white">{item.qty}</span>
+                  <button className="grid h-9 w-9 place-items-center rounded-xl bg-[#C6A15B] text-black">+</button>
+                </div>
+                <div className="text-right font-serif text-3xl text-white">{item.total}</div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+
+        <div className="sticky bottom-6 z-10 flex flex-wrap items-center justify-between gap-4 rounded-[30px] border border-[#C6A15B]/24 bg-[#090909]/95 p-6 shadow-[0_26px_100px_rgba(0,0,0,0.62)] backdrop-blur-xl max-lg:bottom-24">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C6A15B]">Subtotal R$ 79,80 · Desconto R$ 0,00</div>
+            <div className="mt-2 font-serif text-4xl tracking-[-0.05em] text-white">R$ 79,80</div>
+          </div>
+          <Button variant="dark" icon={ReceiptText}>Finalizar venda</Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Caixa() {
+  return (
+    <>
+      <Header eyebrow="Caixa diário" title="Abertura e fechamento de caixa" subtitle="Abra o caixa antes de vender, registre sangrias ou suprimentos e feche comparando o dinheiro esperado com o valor contado." metricLabel="Status do caixa" metricValue="Aberto" status="Desde 17:45" />
+      <QuickActions actions={[{ label: "Registrar sangria", icon: WalletCards, variant: "soft" }, { label: "Imprimir resumo", icon: Printer }, { label: "Fechar caixa", icon: Landmark, variant: "primary" }]} />
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <Metric label="Total vendido" value="R$ 119,70" hint="2 vendas concluídas" tone="gold" />
+        <Metric label="Dinheiro esperado" value="R$ 100,00" hint="Inclui suprimentos" />
+        <Metric label="Saldo de movimentações" value="R$ 0,00" hint="Sem sangrias hoje" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[430px_1fr]">
+        <Panel title="Resumo por pagamento" subtitle="Totais considerados apenas para vendas concluídas.">
+          <div className="grid grid-cols-2 gap-3">
+            <Metric label="Dinheiro" value="R$ 39,90" />
+            <Metric label="Pix" value="R$ 79,80" tone="gold" />
+            <Metric label="Débito" value="R$ 0,00" />
+            <Metric label="Crédito" value="R$ 0,00" />
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <Field label="Tipo" placeholder="Suprimento" />
+            <Field label="Valor" placeholder="R$ 0,00" />
+            <Field label="Motivo" placeholder="Ex.: Sangria para cofre" wide />
+          </div>
+          <div className="mt-5"><Button variant="ghost" icon={WalletCards} wide>Registrar movimentação</Button></div>
+        </Panel>
+        <Panel title="Fechamento" subtitle="Conte o dinheiro físico e informe o valor declarado." action={<Badge tone="success" dot>Conferência aberta</Badge>}>
+          <div className="grid gap-5 md:grid-cols-[1fr_220px]">
+            <Field label="Dinheiro contado" placeholder="R$ 0,00" value="R$ 100,00" />
+            <Metric label="Diferença" value="R$ 0,00" tone="success" />
+          </div>
+          <div className="mt-5"><Button icon={Landmark}>Fechar caixa</Button></div>
+          <div className="mt-6 rounded-[24px] border border-dashed border-white/15 bg-black/20 p-8 text-white/45">Nenhuma sangria ou suprimento registrado hoje.</div>
+        </Panel>
+      </div>
+    </>
+  );
+}
+
+function Historico() {
+  const [selected, setSelected] = useState(0);
+  return (
+    <>
+      <Header eyebrow="Histórico" title="Histórico de vendas" subtitle="Consulte vendas reais, revise itens vendidos e acompanhe o total do período." metricLabel="Total listado" metricValue="R$ 119,70" status="2 vendas" />
+      <Panel className="mb-6" title="Filtros do período" subtitle="Use datas, método de pagamento e vendedor para auditoria rápida.">
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
+          <Field label="Início" placeholder="dd/mm/aaaa" />
+          <Field label="Fim" placeholder="dd/mm/aaaa" />
+          <Field label="Pagamento" placeholder="Todos" />
+          <Button icon={Filter}>Filtrar</Button>
+          <Button variant="ghost">Limpar</Button>
+        </div>
+      </Panel>
+      <div className="grid gap-6 lg:grid-cols-[430px_1fr]">
+        <Panel title="Vendas" subtitle="Selecione uma venda para ver os itens.">
+          <div className="space-y-4">
+            {sales.map((sale, index) => (
+              <button key={sale.id} onClick={() => setSelected(index)} className={`w-full rounded-[24px] border p-5 text-left transition hover:-translate-y-0.5 ${selected === index ? "border-[#C6A15B]/55 bg-[#C6A15B]/12 shadow-[0_20px_60px_rgba(198,161,91,0.12)]" : "border-white/10 bg-white/[0.035]"}`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C6A15B]">Venda {sale.id}</div>
+                    <div className="mt-3 font-serif text-3xl text-white">{sale.value}</div>
+                    <div className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">{sale.detail}</div>
+                  </div>
+                  {selected === index && <Badge tone="success" dot>Ativa</Badge>}
+                </div>
+              </button>
+            ))}
+          </div>
+        </Panel>
+        <Panel title="Detalhe da venda" subtitle={`Venda ${sales[selected].id} · Concluída · Vendedor: ${sales[selected].seller}`} action={<div className="flex gap-3"><Button variant="ghost" icon={Printer}>Imprimir</Button><Button variant="danger">Cancelar</Button></div>}>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Metric label="Pagamento" value={selected === 0 ? "PIX" : "Cash"} />
+            <Metric label="Desconto" value="R$ 0,00" />
+            <Metric label="Total" value={sales[selected].value} tone="gold" />
+          </div>
+          <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.035] p-5">
+            <Badge>IWR-000003</Badge>
+            <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+              <div><h3 className="text-xl font-bold text-white">Produto Sprint 5 Debug</h3><p className="mt-2 text-white/45">2 x R$ 39,90</p></div>
+              <div className="font-serif text-3xl text-white">R$ 79,80</div>
+            </div>
+          </div>
+        </Panel>
+      </div>
+    </>
+  );
+}
+
+function ProdutoCard({ p }) {
+  const stockTone = p.stock === 0 ? "danger" : p.stock <= 3 ? "warning" : "success";
+  return (
+    <div className="rounded-[28px] border border-white/10 bg-white/[0.035] p-5 transition hover:-translate-y-0.5 hover:border-[#C6A15B]/30">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h3 className="font-serif text-3xl tracking-[-0.045em] text-white">{p.name}</h3>
+          <div className="mt-2 flex flex-wrap gap-2"><Badge tone="dark">{p.code}</Badge><Badge tone={stockTone} dot>{p.status}</Badge></div>
+        </div>
+        <Badge tone="success">Ativo</Badge>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-4">
+        <Metric label="Preço" value={p.price} />
+        <Metric label="Estoque" value={String(p.stock)} tone={stockTone} />
+        <Metric label="Total estoque" value={p.total} />
+        <Metric label="Atualizado" value="26/04" />
+      </div>
+      <div className="mt-5 flex flex-wrap items-center gap-3 rounded-[24px] border border-white/10 bg-black/25 p-4">
+        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white text-black"><QrCode size={34} /></div>
+        <div className="mr-auto">
+          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">QR Code</div>
+          <div className="mt-1 font-bold text-white">{p.code}</div>
+        </div>
+        <Button variant="ghost">Copiar</Button><Button variant="ghost">Baixar</Button><Button variant="ghost">Editar</Button><Button icon={Printer}>Etiqueta</Button>
+      </div>
+    </div>
+  );
+}
+
+function Produtos() {
+  const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
+  return (
+    <>
+      <Header eyebrow="Estoque" title="Gestão completa de produtos" subtitle="Cadastre, filtre, ordene e acompanhe estoque com foco em operação de loja: produtos ativos, ruptura, estoque baixo, QR Code e etiquetas prontas para venda." metricLabel="Valor nesta página" metricValue="R$ 449,20" status="4 produtos" />
+      <QuickActions actions={[{ label: "Novo produto", icon: Plus, variant: "primary" }, { label: "Gerar etiquetas", icon: Printer }, { label: "Filtrar estoque", icon: Filter }]} />
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <Metric label="Itens na página" value="4" />
+        <Metric label="Estoque total" value={String(totalStock)} tone="gold" />
+        <Metric label="Estoque baixo" value="3" tone="danger" />
+        <Metric label="Sem estoque" value="1" tone="danger" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+        <Panel title="Novo produto" subtitle="Deixe o código vazio para gerar automaticamente no padrão da loja.">
+          <div className="grid gap-4">
+            <Field label="Nome" placeholder="Ex.: Vestido midi floral" />
+            <Field label="Código" placeholder="Opcional. Ex.: IWR-001" />
+            <Field label="Preço" placeholder="R$ 0,00" />
+            <Field label="Estoque" placeholder="0" />
+            <Field label="Status" placeholder="Ativo" />
+          </div>
+          <div className="mt-6 space-y-3"><Button icon={Plus} wide>Cadastrar produto</Button><Button variant="ghost" wide>Limpar formulário</Button></div>
+        </Panel>
+        <Panel title="Produtos cadastrados" subtitle="Use filtros combinados para encontrar produtos, controlar ruptura e imprimir etiquetas.">
+          <div className="grid gap-4 rounded-[26px] border border-white/10 bg-black/22 p-5 md:grid-cols-4">
+            <Field label="Busca" placeholder="Nome ou código" icon={SearchIcon} />
+            <Field label="Status" placeholder="Todos" />
+            <Field label="Estoque" placeholder="Todos" />
+            <Field label="Ordenar por" placeholder="Maior primeiro" />
+          </div>
+          <div className="mt-4 flex items-center justify-between text-xs text-white/45">
+            <span>4 produto(s) encontrados</span><span>Página 1 de 1</span>
+          </div>
+          <div className="mt-7 space-y-5">
+            {products.map((p) => <ProdutoCard key={p.code} p={p} />)}
+          </div>
+        </Panel>
+      </div>
+    </>
+  );
+}
+
+function Usuarios() {
+  return (
+    <>
+      <Header eyebrow="Acessos" title="Usuários e permissões" subtitle="Cadastre vendedores e administradores para controlar o acesso aos menus do PDV." metricLabel="Usuários" metricValue="2" status="Controle ativo" />
+      <div className="mb-6 grid gap-4 md:grid-cols-3"><Metric label="Usuários" value="2" /><Metric label="Admins" value="1" tone="gold" /><Metric label="Vendedores" value="1" /></div>
+      <div className="grid gap-6 lg:grid-cols-[430px_1fr]">
+        <Panel title="Novo usuário" subtitle="Somente administradores podem cadastrar ou alterar usuários.">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Nome" placeholder="Ex.: Maria Silva" />
+            <Field label="Usuário" placeholder="Ex.: maria" />
+            <Field label="Nível" placeholder="Vendedor" />
+            <Field label="Status" placeholder="Ativo" />
+            <Field label="Senha" placeholder="Mínimo 6 caracteres" wide />
+          </div>
+          <div className="mt-6 rounded-[22px] border border-[#C6A15B]/20 bg-[#C6A15B]/8 p-4 text-sm leading-6 text-white/60">
+            <span className="font-bold text-[#F3DFA8]">Regra de acesso:</span> vendedores acessam apenas Vendas e Caixa. Administradores acessam todos os módulos.
+          </div>
+          <div className="mt-6 space-y-3"><Button icon={ShieldCheck} wide>Cadastrar usuário</Button><Button variant="ghost" wide>Limpar formulário</Button></div>
+        </Panel>
+        <Panel title="Usuários cadastrados" subtitle="Visualize permissões, status e datas de atualização.">
+          <div className="space-y-5">
+            {[{ name: "Administrador", user: "admin", role: "Admin", date: "25/04/2026, 20:11" }, { name: "Maria", user: "maria", role: "Vendedor", date: "26/04/2026, 15:23" }].map((u) => (
+              <div key={u.user} className="rounded-[28px] border border-white/10 bg-white/[0.035] p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div><h3 className="font-serif text-3xl text-white">{u.name}</h3><div className="mt-2"><Badge tone="dark">{u.user}</Badge></div></div>
+                  <div className="flex gap-2"><Badge>{u.role}</Badge><Badge tone="success" dot>Ativo</Badge></div>
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-3"><Metric label="Nível" value={u.role} /><Metric label="Criado" value={u.date} /><Metric label="Atualizado" value={u.date} /></div>
+                <div className="mt-5 flex flex-wrap gap-3"><Button variant="ghost">Editar</Button><Button variant="soft">Permissões</Button></div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+    </>
+  );
+}
+
+function App() {
+  const [current, setCurrent] = useState("vendas");
+  const pages = useMemo(() => ({ vendas: <Vendas />, caixa: <Caixa />, historico: <Historico />, produtos: <Produtos />, usuarios: <Usuarios /> }), []);
+  const page = menu.find((x) => x.id === current);
+
+  return (
+    <div className="min-h-screen bg-[#0A0A0B] pb-28 text-white lg:pb-0">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_78%_4%,rgba(198,161,91,0.18),transparent_28%),radial-gradient(circle_at_45%_90%,rgba(255,255,255,0.06),transparent_28%),linear-gradient(135deg,#0A0A0B,#121214_45%,#070707)]" />
+      <div className="fixed inset-0 opacity-[0.055] [background-image:linear-gradient(rgba(255,255,255,.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:54px_54px]" />
+      <div className="fixed inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-[#0A0A0B] to-transparent" />
+      <Sidebar current={current} setCurrent={setCurrent} />
+      <MobileNav current={current} setCurrent={setCurrent} />
+      <main className="relative z-10 px-5 py-8 lg:ml-[320px] lg:px-12 xl:px-20">
+        <div className="mb-8 flex items-center justify-between lg:hidden">
+          <div><div className="font-serif text-3xl italic">IWR.</div><div className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C6A15B]">Atelier PDV</div></div>
+          <Badge>{page?.label}</Badge>
+        </div>
+        <div className="mb-8 hidden items-center justify-between gap-3 lg:flex">
+          <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 text-sm text-white/55">
+            <SearchIcon size={16} /> Buscar produto, venda ou usuário...
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C6A15B]">{page?.group}</span>
+            <span className="font-serif text-2xl text-white">{page?.label}</span>
+            <Crown size={18} color={gold} />
+          </div>
+        </div>
+        <div key={current}>{pages[current]}</div>
+      </main>
+    </div>
+  );
+}
+
+export default App;

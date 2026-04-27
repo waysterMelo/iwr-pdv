@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { MobileQrScanner } from '../components/MobileQrScanner'
+import { useAppMessage } from '../hooks/useAppMessage'
 import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import type { PaymentMethod } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
@@ -10,6 +11,7 @@ type MobileSalesPageProps = {
 }
 
 export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
+  const { confirm } = useAppMessage()
   const [manualCode, setManualCode] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
   const checkout = useSalesCart({ initialPaymentMethod: 'PIX' })
@@ -29,7 +31,13 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
   }
 
   async function handleFinalizeSale() {
-    const confirmed = window.confirm(`Finalizar venda de ${formatCurrency(checkout.totalAmount)}?`)
+    const confirmed = await confirm({
+      type: 'warning',
+      title: 'Finalizar venda?',
+      message: `Confirma o fechamento da venda no valor de ${formatCurrency(checkout.totalAmount)}?`,
+      confirmLabel: 'Finalizar',
+      cancelLabel: 'Revisar',
+    })
 
     if (!confirmed) {
       return

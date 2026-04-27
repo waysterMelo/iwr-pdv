@@ -15,6 +15,7 @@ public interface ProductSearchRepository {
             String stockStatus,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Long categoryId,
             int lowStockThreshold,
             Pageable pageable
     );

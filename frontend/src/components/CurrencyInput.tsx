@@ -1,4 +1,4 @@
-import { type ChangeEvent, useEffect, useState, type InputHTMLAttributes } from 'react'
+import { type ChangeEvent, type InputHTMLAttributes } from 'react'
 import { formatCurrencyInput, parseCurrencyInput } from '../utils/formatters'
 
 type CurrencyInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
@@ -7,20 +7,12 @@ type CurrencyInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 
 }
 
 export function CurrencyInput({ value, onChange, ...props }: CurrencyInputProps) {
-  const [displayValue, setDisplayValue] = useState(() => formatCurrencyInput(value || '0.00'))
-
-  useEffect(() => {
-    // If the external value resets (e.g., cleared after submit), we sync display.
-    // Also happens on initial mount or when programmatically changed.
-    setDisplayValue(formatCurrencyInput(value || '0.00'))
-  }, [value])
+  const displayValue = formatCurrencyInput(value || '0.00')
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const rawInput = event.target.value
-    const nextDisplay = formatCurrencyInput(rawInput)
     const nextValue = parseCurrencyInput(rawInput)
-    
-    setDisplayValue(nextDisplay)
+
     onChange(nextValue)
   }
 

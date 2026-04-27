@@ -13,6 +13,8 @@ import com.iwr.pdv.product.api.dto.ProductActivationRequest;
 import com.iwr.pdv.product.api.dto.ProductRequest;
 import com.iwr.pdv.product.api.dto.ProductResponse;
 import com.iwr.pdv.product.domain.Product;
+import com.iwr.pdv.product.domain.ProductCategory;
+import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.product.domain.ProductSearchRepository;
 import com.iwr.pdv.product.mapper.ProductMapper;
@@ -36,6 +38,9 @@ class ProductServiceImplTest {
     private ProductRepository productRepository;
 
     @Mock
+    private ProductCategoryRepository categoryRepository;
+
+    @Mock
     private ProductSearchRepository productSearchRepository;
 
     @Mock
@@ -54,6 +59,7 @@ class ProductServiceImplTest {
         Clock clock = Clock.fixed(Instant.parse("2026-04-22T00:00:00Z"), ZoneOffset.UTC);
         productService = new ProductServiceImpl(
                 productRepository,
+                categoryRepository,
                 productSearchRepository,
                 new ProductMapper(),
                 productCodeGenerator,
@@ -68,12 +74,14 @@ class ProductServiceImplTest {
         ProductRequest request = new ProductRequest(
                 "Camisa Polo",
                 "iwr-001",
+                1L,
                 new BigDecimal("79.90"),
                 12,
                 true
         );
 
         when(productRepository.findByCodeIgnoreCase("iwr-001")).thenReturn(Optional.empty());
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category()));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
             Product product = invocation.getArgument(0);
             product.setId(1L);
@@ -93,6 +101,7 @@ class ProductServiceImplTest {
         ProductRequest request = new ProductRequest(
                 "Vestido Midi",
                 "",
+                1L,
                 new BigDecimal("149.90"),
                 8,
                 true
@@ -100,6 +109,7 @@ class ProductServiceImplTest {
 
         when(productCodeGenerator.generateNextCode()).thenReturn("IWR-000001");
         when(productRepository.findByCodeIgnoreCase("IWR-000001")).thenReturn(Optional.empty());
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category()));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
             Product product = invocation.getArgument(0);
             product.setId(1L);
@@ -116,6 +126,7 @@ class ProductServiceImplTest {
         ProductRequest request = new ProductRequest(
                 "Vestido Midi",
                 "",
+                1L,
                 new BigDecimal("149.90"),
                 8,
                 true
@@ -128,6 +139,7 @@ class ProductServiceImplTest {
         when(productCodeGenerator.generateNextCode()).thenReturn("IWR-000001", "IWR-000002");
         when(productRepository.findByCodeIgnoreCase("IWR-000001")).thenReturn(Optional.of(existingProduct));
         when(productRepository.findByCodeIgnoreCase("IWR-000002")).thenReturn(Optional.empty());
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category()));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
             Product product = invocation.getArgument(0);
             product.setId(11L);
@@ -144,6 +156,7 @@ class ProductServiceImplTest {
         ProductRequest request = new ProductRequest(
                 "Camisa Polo",
                 "iwr-001",
+                1L,
                 new BigDecimal("79.90"),
                 12,
                 true
@@ -165,6 +178,7 @@ class ProductServiceImplTest {
         product.setId(2L);
         product.setName("Vestido Midi");
         product.setCode("IWR-010");
+        product.setCategory(category());
         product.setPrice(new BigDecimal("149.90"));
         product.setStockQuantity(8);
         product.setActive(true);
@@ -183,6 +197,7 @@ class ProductServiceImplTest {
         product.setId(7L);
         product.setName("Saia Jeans");
         product.setCode("IWR-020");
+        product.setCategory(category());
         product.setPrice(new BigDecimal("99.90"));
         product.setStockQuantity(3);
         product.setActive(true);
@@ -230,5 +245,14 @@ class ProductServiceImplTest {
         String label = productService.generateLabel(9L);
 
         assertEquals("<html>label</html>", label);
+    }
+
+    private ProductCategory category() {
+        ProductCategory category = new ProductCategory();
+        category.setId(1L);
+        category.setName("Vestidos");
+        category.setIcon("dress");
+        category.setActive(true);
+        return category;
     }
 }

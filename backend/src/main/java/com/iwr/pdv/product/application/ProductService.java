@@ -19,6 +19,7 @@ public interface ProductService {
             String stockStatus,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Long categoryId,
             int lowStockThreshold,
             int page,
             int size,

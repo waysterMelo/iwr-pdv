@@ -8,6 +8,7 @@ import {
 import type { ManagedUser, UserRole } from '../types/auth'
 import { getErrorMessage } from '../utils/errors'
 import { formatDateTime } from '../utils/formatters'
+import { useAppMessage } from '../hooks/useAppMessage'
 
 type UserFormState = {
   username: string
@@ -60,6 +61,7 @@ function validateForm(form: UserFormState, editingUserId: number | null) {
 }
 
 export function UserManagementPage() {
+  const { notify } = useAppMessage()
   const [users, setUsers] = useState<ManagedUser[]>([])
   const [form, setForm] = useState<UserFormState>(initialFormState)
   const [editingUserId, setEditingUserId] = useState<number | null>(null)
@@ -110,6 +112,11 @@ export function UserManagementPage() {
     const validationMessage = validateForm(form, editingUserId)
     if (validationMessage) {
       setErrorMessage(validationMessage)
+      notify({
+        type: 'warning',
+        title: 'Revise o usuario',
+        message: validationMessage,
+      })
       return
     }
 
@@ -126,6 +133,11 @@ export function UserManagementPage() {
           active: form.active === 'true',
         })
         setSuccessMessage('Usuario cadastrado com sucesso.')
+        notify({
+          type: 'success',
+          title: 'Usuario cadastrado',
+          message: 'Usuario cadastrado com sucesso.',
+        })
       } else {
         await updateUser(editingUserId, {
           username: form.username.trim(),
@@ -139,12 +151,23 @@ export function UserManagementPage() {
         }
 
         setSuccessMessage('Usuario atualizado com sucesso.')
+        notify({
+          type: 'success',
+          title: 'Usuario atualizado',
+          message: 'Usuario atualizado com sucesso.',
+        })
       }
 
       resetForm(false)
       await loadUsers()
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Nao foi possivel salvar usuario.'))
+      const message = getErrorMessage(error, 'Nao foi possivel salvar usuario.')
+      setErrorMessage(message)
+      notify({
+        type: 'error',
+        title: 'Erro ao salvar usuario',
+        message,
+      })
     } finally {
       setIsSaving(false)
     }

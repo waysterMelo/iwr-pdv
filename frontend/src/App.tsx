@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { CashRegisterPage } from './pages/CashRegisterPage'
+import { CatalogingPage } from './pages/CatalogingPage'
 import { LoginPage } from './pages/LoginPage'
 import { MobileSalesPage } from './pages/MobileSalesPage'
 import { MobileCashRegisterPage } from './pages/MobileCashRegisterPage'
+import { ProductEditPage } from './pages/ProductEditPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
 import { SalesHistoryPage } from './pages/SalesHistoryPage'
@@ -13,12 +15,23 @@ import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'products' | 'history' | 'users'
+type AppView = 'checkout' | 'cash-register' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
+
+const menuIcons: Record<AppView, string> = {
+  checkout: 'PD',
+  'cash-register': 'CX',
+  history: 'HI',
+  products: 'ES',
+  'product-edit': 'ED',
+  cataloging: 'LT',
+  users: 'US',
+}
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('checkout')
   const [mobileView, setMobileView] = useState<MobileView>('home')
+  const [editingProductId, setEditingProductId] = useState<number | null>(null)
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [isSessionChecking, setIsSessionChecking] = useState(() => Boolean(getAuthToken()))
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -28,12 +41,17 @@ function App() {
     { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
     { id: 'products', label: 'Produtos', eyebrow: 'Estoque', adminOnly: true },
+    { id: 'cataloging', label: 'Catalogacao', eyebrow: 'Lotes', adminOnly: true },
     { id: 'users', label: 'Usuarios', eyebrow: 'Acessos', adminOnly: true },
   ]
   const menuItems = allMenuItems.filter((item) => currentUser?.role === 'ADMIN' || !item.adminOnly)
-  const visibleView = menuItems.some((item) => item.id === currentView) ? currentView : 'checkout'
+  const canEditProduct = currentUser?.role === 'ADMIN' && currentView === 'product-edit' && editingProductId !== null
+  const visibleView = menuItems.some((item) => item.id === currentView) || canEditProduct ? currentView : 'checkout'
 
-  const currentItem = menuItems.find((item) => item.id === visibleView) ?? menuItems[0]
+  const currentItem =
+    visibleView === 'product-edit'
+      ? { id: 'product-edit' as const, label: 'Editar produto', eyebrow: 'Estoque' }
+      : menuItems.find((item) => item.id === visibleView) ?? menuItems[0]
   const operatorInitial = currentUser?.displayName.trim().charAt(0).toUpperCase() || 'I'
 
   useEffect(() => {
@@ -66,6 +84,7 @@ function App() {
       setIsLoggingOut(false)
       setCurrentView('checkout')
       setMobileView('home')
+      setEditingProductId(null)
     }
   }
 
@@ -147,8 +166,11 @@ function App() {
               key={item.id}
               onClick={() => setCurrentView(item.id)}
             >
-              <span>{item.eyebrow}</span>
-              <strong>{item.label}</strong>
+              <span className="side-nav-icon">{menuIcons[item.id]}</span>
+              <span className="side-nav-copy">
+                <span>{item.eyebrow}</span>
+                <strong>{item.label}</strong>
+              </span>
             </button>
           ))}
         </nav>
@@ -172,8 +194,11 @@ function App() {
 
       <section className="workspace">
         <header className="workspace-header">
-          <span>{currentItem.eyebrow}</span>
-          <strong>{currentItem.label}</strong>
+          <div className="workspace-search">Buscar produto, venda ou usuario...</div>
+          <div className="workspace-current">
+            <span>{currentItem.eyebrow}</span>
+            <strong>{currentItem.label}</strong>
+          </div>
         </header>
 
         <div className="mobile-navigation" aria-label="Navegacao compacta">
@@ -192,7 +217,28 @@ function App() {
         {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
         {visibleView === 'cash-register' ? <CashRegisterPage /> : null}
         {visibleView === 'history' ? <SalesHistoryPage /> : null}
-        {visibleView === 'products' ? <ProductManagementPage /> : null}
+        {visibleView === 'products' ? (
+          <ProductManagementPage
+            onEditProduct={(productId) => {
+              setEditingProductId(productId)
+              setCurrentView('product-edit')
+            }}
+          />
+        ) : null}
+        {visibleView === 'product-edit' && editingProductId !== null ? (
+          <ProductEditPage
+            productId={editingProductId}
+            onBack={() => {
+              setEditingProductId(null)
+              setCurrentView('products')
+            }}
+            onSaved={() => {
+              setEditingProductId(null)
+              setCurrentView('products')
+            }}
+          />
+        ) : null}
+        {visibleView === 'cataloging' ? <CatalogingPage /> : null}
         {visibleView === 'users' ? <UserManagementPage /> : null}
       </section>
     </div>

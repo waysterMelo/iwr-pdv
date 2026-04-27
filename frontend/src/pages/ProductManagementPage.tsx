@@ -1,18 +1,20 @@
 import { useDeferredValue, useEffect, useState, type FormEvent } from 'react'
 import {
   createProduct,
+  getProductCategories,
   getProductPage,
-  updateProduct,
   updateProductActivation,
 } from '../services/productService'
-import type { Product, ProductPage, ProductPageFilters, ProductPayload } from '../types/product'
+import type { Product, ProductCategory, ProductPage, ProductPageFilters, ProductPayload } from '../types/product'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatDateTime } from '../utils/formatters'
+import { useAppMessage } from '../hooks/useAppMessage'
 import { CurrencyInput } from '../components/CurrencyInput'
 
 type ProductFormState = {
   name: string
   code: string
+  categoryId: string
   price: string
   stockQuantity: string
   active: 'true' | 'false'
@@ -21,6 +23,7 @@ type ProductFormState = {
 const initialFormState: ProductFormState = {
   name: '',
   code: '',
+  categoryId: '',
   price: '',
   stockQuantity: '',
   active: 'true',
@@ -32,6 +35,7 @@ const initialFilters: ProductPageFilters = {
   stockStatus: 'ALL',
   minPrice: '',
   maxPrice: '',
+  categoryId: '',
   lowStockThreshold: '5',
   sort: 'createdAt',
   direction: 'desc',
@@ -42,25 +46,20 @@ function toPayload(form: ProductFormState): ProductPayload {
   return {
     name: form.name.trim(),
     code: form.code.trim().toUpperCase(),
+    categoryId: Number(form.categoryId),
     price: Number(form.price),
     stockQuantity: Number(form.stockQuantity),
     active: form.active === 'true',
   }
 }
 
-function toFormState(product: Product): ProductFormState {
-  return {
-    name: product.name,
-    code: product.code,
-    price: product.price.toFixed(2),
-    stockQuantity: String(product.stockQuantity),
-    active: String(product.active) as 'true' | 'false',
-  }
-}
-
 function validateForm(form: ProductFormState) {
   if (!form.name.trim()) {
     return 'Informe o nome do produto.'
+  }
+
+  if (!form.categoryId) {
+    return 'Escolha a categoria do produto.'
   }
 
   if (Number.isNaN(Number(form.price)) || Number(form.price) <= 0) {
@@ -84,6 +83,20 @@ function getQrDownloadName(product: Product) {
 
 function getLabelUrl(productId: number) {
   return `/api/products/${productId}/label`
+}
+
+function getCategoryIcon(icon: string) {
+  const icons: Record<string, string> = {
+    dress: 'VD',
+    shirt: 'BL',
+    pants: 'CA',
+    skirt: 'SA',
+    bag: 'BO',
+    sparkles: 'AC',
+    tag: 'SC',
+  }
+
+  return icons[icon] ?? 'CT'
 }
 
 function getStockStatusLabel(product: Product, lowStockThreshold: number) {
@@ -122,13 +135,18 @@ function buildEmptyProductPage(size: number): ProductPage {
   }
 }
 
-export function ProductManagementPage() {
+type ProductManagementPageProps = {
+  onEditProduct: (productId: number) => void
+}
+
+export function ProductManagementPage({ onEditProduct }: ProductManagementPageProps) {
+  const { notify } = useAppMessage()
   const [productPage, setProductPage] = useState<ProductPage>(() => buildEmptyProductPage(initialFilters.size))
   const [filters, setFilters] = useState<ProductPageFilters>(initialFilters)
   const deferredFilters = useDeferredValue(filters)
+  const [categories, setCategories] = useState<ProductCategory[]>([])
   const [page, setPage] = useState(0)
   const [form, setForm] = useState<ProductFormState>(initialFormState)
-  const [editingProductId, setEditingProductId] = useState<number | null>(null)
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null)
   const [formSuccessMessage, setFormSuccessMessage] = useState<string | null>(null)
   const [listErrorMessage, setListErrorMessage] = useState<string | null>(null)
@@ -150,6 +168,7 @@ export function ProductManagementPage() {
     (sum, product) => sum + product.price * product.stockQuantity,
     0,
   )
+  const selectedCategory = categories.find((category) => String(category.id) === filters.categoryId) ?? null
 
   async function loadProducts(nextFilters: ProductPageFilters, nextPage: number, signal?: AbortSignal) {
     setIsProductsLoading(true)
@@ -188,6 +207,28 @@ export function ProductManagementPage() {
     }
   }, [deferredFilters, page])
 
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadCategories() {
+      try {
+        const response = await getProductCategories(controller.signal)
+        setCategories(response)
+        setListErrorMessage(null)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return
+        }
+
+        setListErrorMessage(getErrorMessage(error, 'Nao foi possivel carregar as categorias.'))
+      }
+    }
+
+    void loadCategories()
+
+    return () => controller.abort()
+  }, [])
+
   function updateFilter<Key extends keyof ProductPageFilters>(key: Key, value: ProductPageFilters[Key]) {
     setPage(0)
     setFilters((current) => ({ ...current, [key]: value }))
@@ -200,19 +241,10 @@ export function ProductManagementPage() {
 
   function resetForm(clearMessages = true) {
     setForm(initialFormState)
-    setEditingProductId(null)
     if (clearMessages) {
       setFormErrorMessage(null)
       setFormSuccessMessage(null)
     }
-  }
-
-  function handleEdit(product: Product) {
-    setEditingProductId(product.id)
-    setForm(toFormState(product))
-    setFormErrorMessage(null)
-    setFormSuccessMessage(null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -223,6 +255,11 @@ export function ProductManagementPage() {
 
     if (validationMessage) {
       setFormErrorMessage(validationMessage)
+      notify({
+        type: 'warning',
+        title: 'Revise o produto',
+        message: validationMessage,
+      })
       return
     }
 
@@ -232,20 +269,25 @@ export function ProductManagementPage() {
     try {
       const payload = toPayload(form)
 
-      if (editingProductId === null) {
-        await createProduct(payload)
-        resetForm(false)
-        setFormSuccessMessage('Produto cadastrado com sucesso.')
-      } else {
-        await updateProduct(editingProductId, payload)
-        resetForm(false)
-        setFormSuccessMessage('Produto atualizado com sucesso.')
-      }
+      await createProduct(payload)
+      resetForm(false)
+      setFormSuccessMessage('Produto cadastrado com sucesso.')
+      notify({
+        type: 'success',
+        title: 'Produto cadastrado',
+        message: 'Produto cadastrado com sucesso.',
+      })
 
       setFormErrorMessage(null)
       await loadProducts(filters, page)
     } catch (error) {
-      setFormErrorMessage(getErrorMessage(error))
+      const message = getErrorMessage(error)
+      setFormErrorMessage(message)
+      notify({
+        type: 'error',
+        title: 'Erro ao salvar produto',
+        message,
+      })
     } finally {
       setIsSaving(false)
     }
@@ -258,7 +300,13 @@ export function ProductManagementPage() {
       await updateProductActivation(product.id, { active: !product.active })
       await loadProducts(filters, page)
     } catch (error) {
-      setListErrorMessage(getErrorMessage(error))
+      const message = getErrorMessage(error)
+      setListErrorMessage(message)
+      notify({
+        type: 'error',
+        title: 'Erro ao atualizar produto',
+        message,
+      })
     } finally {
       setBusyProductId(null)
     }
@@ -268,9 +316,19 @@ export function ProductManagementPage() {
     try {
       await navigator.clipboard.writeText(product.code)
       setCopiedProductId(product.id)
+      notify({
+        type: 'success',
+        title: 'Codigo copiado',
+        message: `Codigo ${product.code} copiado para a area de transferencia.`,
+      })
       window.setTimeout(() => setCopiedProductId(null), 1800)
     } catch {
       setListErrorMessage('Nao foi possivel copiar o codigo do produto.')
+      notify({
+        type: 'error',
+        title: 'Erro ao copiar',
+        message: 'Nao foi possivel copiar o codigo do produto.',
+      })
     }
   }
 
@@ -327,11 +385,49 @@ export function ProductManagementPage() {
           </div>
         </section>
 
+        <section className="category-panel" aria-label="Categorias de produtos">
+          <header className="section-header">
+            <div>
+              <h2>Categorias</h2>
+              <p>Escolha uma categoria para carregar apenas os produtos daquele grupo.</p>
+            </div>
+          </header>
+
+          <div className="category-card-grid">
+            <button
+              className={!filters.categoryId ? 'category-card category-card--active' : 'category-card'}
+              type="button"
+              onClick={() => updateFilter('categoryId', '')}
+            >
+              <span className="category-icon">TD</span>
+              <strong>Todas</strong>
+              <small>{productPage.totalElements} produto(s)</small>
+            </button>
+
+            {categories.map((category) => (
+              <button
+                className={
+                  filters.categoryId === String(category.id)
+                    ? 'category-card category-card--active'
+                    : 'category-card'
+                }
+                type="button"
+                key={category.id}
+                onClick={() => updateFilter('categoryId', String(category.id))}
+              >
+                <span className="category-icon">{getCategoryIcon(category.icon)}</span>
+                <strong>{category.name}</strong>
+                <small>{filters.categoryId === String(category.id) ? 'Filtro ativo' : 'Ver produtos'}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <div className="content-grid">
           <section className="product-form-panel">
             <header className="section-header">
               <div>
-                <h2>{editingProductId === null ? 'Novo produto' : 'Editar produto'}</h2>
+                <h2>Novo produto</h2>
                 <p>Deixe o codigo vazio para gerar automaticamente no padrao da loja.</p>
               </div>
             </header>
@@ -357,6 +453,22 @@ export function ProductManagementPage() {
                     placeholder="Opcional. Ex.: IWR-000001"
                   />
                   <small className="field-hint">Se ficar vazio, o sistema gera automaticamente.</small>
+                </div>
+
+                <div className="field-group">
+                  <label htmlFor="categoryId">Categoria</label>
+                  <select
+                    id="categoryId"
+                    value={form.categoryId}
+                    onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
+                  >
+                    <option value="">Escolha a categoria</option>
+                    {categories.map((category) => (
+                      <option value={category.id} key={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="field-group">
@@ -412,9 +524,7 @@ export function ProductManagementPage() {
                 <button className="action-button" type="submit" disabled={isSaving}>
                   {isSaving
                     ? 'Salvando...'
-                    : editingProductId === null
-                      ? 'Cadastrar produto'
-                      : 'Salvar alteracoes'}
+                    : 'Cadastrar produto'}
                 </button>
                 <button
                   className="secondary-button"
@@ -446,6 +556,22 @@ export function ProductManagementPage() {
                   onChange={(event) => updateFilter('search', event.target.value)}
                   placeholder="Nome ou codigo"
                 />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="categoryFilter">Categoria</label>
+                <select
+                  id="categoryFilter"
+                  value={filters.categoryId}
+                  onChange={(event) => updateFilter('categoryId', event.target.value)}
+                >
+                  <option value="">Todas</option>
+                  {categories.map((category) => (
+                    <option value={category.id} key={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="field-group">
@@ -560,7 +686,9 @@ export function ProductManagementPage() {
               <span>
                 {isProductsLoading
                   ? 'Atualizando listagem...'
-                  : `${productPage.totalElements} produto(s) encontrados`}
+                  : `${productPage.totalElements} produto(s) encontrados${
+                      selectedCategory ? ` em ${selectedCategory.name}` : ''
+                    }`}
               </span>
               <strong>
                 Pagina {productPage.totalPages === 0 ? 0 : productPage.page + 1} de {productPage.totalPages}
@@ -583,6 +711,9 @@ export function ProductManagementPage() {
                       <div>
                         <h3>{product.name}</h3>
                         <span className="product-card-code">{product.code}</span>
+                        <span className="product-category-chip">
+                          {getCategoryIcon(product.categoryIcon)} {product.categoryName}
+                        </span>
                       </div>
                       <div className="product-card-badges">
                         <span className={getStockStatusClassName(product, lowStockThreshold)}>
@@ -664,7 +795,7 @@ export function ProductManagementPage() {
                     </div>
 
                     <div className="product-card-actions">
-                      <button className="secondary-button" type="button" onClick={() => handleEdit(product)}>
+                      <button className="secondary-button" type="button" onClick={() => onEditProduct(product.id)}>
                         Editar
                       </button>
                       <button

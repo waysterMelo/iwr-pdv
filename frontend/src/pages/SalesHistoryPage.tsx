@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { cancelSale, getSaleReceiptUrl, getSales } from '../services/saleService'
+import { useAppMessage } from '../hooks/useAppMessage'
 import type { Sale } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
@@ -9,6 +10,7 @@ function getSellerName(sale: Sale) {
 }
 
 export function SalesHistoryPage() {
+  const { confirm, notify } = useAppMessage()
   const [sales, setSales] = useState<Sale[]>([])
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [startDate, setStartDate] = useState('')
@@ -66,7 +68,13 @@ export function SalesHistoryPage() {
       return
     }
 
-    const confirmed = window.confirm('Cancelar esta venda e devolver os itens ao estoque?')
+    const confirmed = await confirm({
+      type: 'warning',
+      title: 'Cancelar venda?',
+      message: 'Cancelar esta venda e devolver os itens ao estoque?',
+      confirmLabel: 'Cancelar venda',
+      cancelLabel: 'Voltar',
+    })
     if (!confirmed) {
       return
     }
@@ -78,8 +86,19 @@ export function SalesHistoryPage() {
       setSelectedSale(cancelledSale)
       await loadSales(startDate, endDate)
       setErrorMessage(null)
+      notify({
+        type: 'success',
+        title: 'Venda cancelada',
+        message: `Venda #${selectedSale.id} cancelada e estoque devolvido.`,
+      })
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Nao foi possivel cancelar a venda.'))
+      const message = getErrorMessage(error, 'Nao foi possivel cancelar a venda.')
+      setErrorMessage(message)
+      notify({
+        type: 'error',
+        title: 'Erro ao cancelar venda',
+        message,
+      })
     } finally {
       setIsCancelling(false)
     }

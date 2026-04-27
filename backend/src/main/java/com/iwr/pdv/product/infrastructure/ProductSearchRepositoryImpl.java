@@ -59,6 +59,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
             String stockStatus,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Long categoryId,
             int lowStockThreshold,
             Pageable pageable
     ) {
@@ -73,6 +74,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
                 stockStatus,
                 minPrice,
                 maxPrice,
+                categoryId,
                 lowStockThreshold
         );
 
@@ -91,6 +93,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
                 stockStatus,
                 minPrice,
                 maxPrice,
+                categoryId,
                 lowStockThreshold
         );
 
@@ -104,6 +107,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
             String stockStatus,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Long categoryId,
             int lowStockThreshold
     ) {
         CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
@@ -116,6 +120,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
                 stockStatus,
                 minPrice,
                 maxPrice,
+                categoryId,
                 lowStockThreshold
         );
 
@@ -133,6 +138,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
             String stockStatus,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Long categoryId,
             int lowStockThreshold
     ) {
         List<Predicate> predicates = new ArrayList<>();
@@ -155,6 +161,10 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
 
         if (maxPrice != null) {
             predicates.add(criteriaBuilder.lessThanOrEqualTo(product.get("price"), maxPrice));
+        }
+
+        if (categoryId != null) {
+            predicates.add(criteriaBuilder.equal(product.get("category").get("id"), categoryId));
         }
 
         if (StringUtils.hasText(stockStatus)) {

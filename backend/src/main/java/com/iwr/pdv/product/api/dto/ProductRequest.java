@@ -25,6 +25,13 @@ public record ProductRequest(
         String code,
 
         @Schema(
+                description = "Product category identifier",
+                example = "1"
+        )
+        @NotNull(message = "The product category is required.")
+        Long categoryId,
+
+        @Schema(
                 description = "Current sale price",
                 example = "149.90"
         )

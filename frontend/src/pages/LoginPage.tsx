@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useAppMessage } from '../hooks/useAppMessage'
 import { login } from '../services/authService'
 import type { AuthUser } from '../types/auth'
 import { getErrorMessage } from '../utils/errors'
@@ -8,6 +9,7 @@ type LoginPageProps = {
 }
 
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
+  const { notify } = useAppMessage()
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -17,7 +19,13 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     event.preventDefault()
 
     if (!username.trim() || !password) {
-      setErrorMessage('Informe usuario e senha para entrar.')
+      const message = 'Informe usuario e senha para entrar.'
+      setErrorMessage(message)
+      notify({
+        type: 'warning',
+        title: 'Dados obrigatorios',
+        message,
+      })
       return
     }
 
@@ -28,7 +36,13 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       const response = await login(username.trim(), password)
       onAuthenticated(response.user)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Nao foi possivel entrar no sistema.'))
+      const message = getErrorMessage(error, 'Nao foi possivel entrar no sistema.')
+      setErrorMessage(message)
+      notify({
+        type: 'error',
+        title: 'Erro ao entrar',
+        message,
+      })
     } finally {
       setIsSubmitting(false)
     }

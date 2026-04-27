@@ -10,6 +10,8 @@ import com.iwr.pdv.auth.application.AuthService;
 import com.iwr.pdv.cash.domain.CashMovementRepository;
 import com.iwr.pdv.cash.domain.CashRegisterRepository;
 import com.iwr.pdv.product.domain.Product;
+import com.iwr.pdv.product.domain.ProductCategory;
+import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
 import com.iwr.pdv.sale.domain.StockMovementRepository;
@@ -34,6 +36,9 @@ class SaleControllerIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ProductCategoryRepository categoryRepository;
 
     @Autowired
     private SaleRepository saleRepository;
@@ -110,11 +115,12 @@ class SaleControllerIntegrationTest {
                 {
                   "name": "Produto Mobile Real",
                   "code": "IWR-MOBILE-001",
+                  "categoryId": %d,
                   "price": 55.00,
                   "stockQuantity": 3,
                   "active": true
                 }
-                """;
+                """.formatted(categoryId());
 
         mockMvc.perform(post("/api/products")
                         .header("Authorization", authHeader)
@@ -462,6 +468,7 @@ class SaleControllerIntegrationTest {
         Product product = new Product();
         product.setName(name);
         product.setCode(code);
+        product.setCategory(category());
         product.setPrice(price);
         product.setStockQuantity(stockQuantity);
         product.setActive(active);
@@ -469,5 +476,24 @@ class SaleControllerIntegrationTest {
         product.setUpdatedAt(OffsetDateTime.now());
 
         return product;
+    }
+
+    private Long categoryId() {
+        return category().getId();
+    }
+
+    private ProductCategory category() {
+        return categoryRepository.findByActiveTrueOrderByNameAsc()
+                .stream()
+                .findFirst()
+                .orElseGet(() -> {
+                    ProductCategory category = new ProductCategory();
+                    category.setName("Vestidos");
+                    category.setIcon("dress");
+                    category.setActive(true);
+                    category.setCreatedAt(OffsetDateTime.now());
+                    category.setUpdatedAt(OffsetDateTime.now());
+                    return categoryRepository.save(category);
+                });
     }
 }

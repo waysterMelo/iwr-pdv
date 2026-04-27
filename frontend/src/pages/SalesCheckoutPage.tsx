@@ -4,8 +4,10 @@ import { getSaleReceiptUrl } from '../services/saleService'
 import type { PaymentMethod, Sale } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
+import { useAppMessage } from '../hooks/useAppMessage'
 
 export function SalesCheckoutPage() {
+  const { confirm } = useAppMessage()
   const [scanCode, setScanCode] = useState('')
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null)
   const scannerInputRef = useRef<HTMLInputElement>(null)
@@ -39,7 +41,13 @@ export function SalesCheckoutPage() {
       return
     }
 
-    const confirmed = window.confirm(`Finalizar venda de ${formatCurrency(checkout.totalAmount)}?`)
+    const confirmed = await confirm({
+      type: 'warning',
+      title: 'Finalizar venda?',
+      message: `Confirma o fechamento da venda no valor de ${formatCurrency(checkout.totalAmount)}?`,
+      confirmLabel: 'Finalizar',
+      cancelLabel: 'Revisar',
+    })
     if (!confirmed) {
       return
     }

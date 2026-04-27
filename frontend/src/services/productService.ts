@@ -1,6 +1,7 @@
 import type {
   Product,
   ProductActivationPayload,
+  ProductCategory,
   ProductPage,
   ProductPageFilters,
   ProductPayload,
@@ -41,6 +42,10 @@ export async function getProductPage(filters: ProductPageFilters, page: number, 
     searchParams.set('maxPrice', filters.maxPrice.trim())
   }
 
+  if (filters.categoryId) {
+    searchParams.set('categoryId', filters.categoryId)
+  }
+
   searchParams.set('lowStockThreshold', filters.lowStockThreshold.trim() || '5')
   searchParams.set('page', String(page))
   searchParams.set('size', String(filters.size))
@@ -48,6 +53,14 @@ export async function getProductPage(filters: ProductPageFilters, page: number, 
   searchParams.set('direction', filters.direction)
 
   return get<ProductPage>(`/api/products/page?${searchParams.toString()}`, { signal })
+}
+
+export async function getProductCategories(signal?: AbortSignal) {
+  return get<ProductCategory[]>('/api/product-categories', { signal })
+}
+
+export async function getProductById(productId: number, signal?: AbortSignal) {
+  return get<Product>(`/api/products/${productId}`, { signal })
 }
 
 export async function findProductByCode(code: string) {
