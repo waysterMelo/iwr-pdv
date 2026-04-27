@@ -9,6 +9,8 @@ import type { ManagedUser, UserRole } from '../types/auth'
 import { getErrorMessage } from '../utils/errors'
 import { formatDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { Metric } from '../components/Metric'
+import { PageHeader } from '../components/PageHeader'
 
 type UserFormState = {
   username: string
@@ -176,29 +178,20 @@ export function UserManagementPage() {
   return (
     <main className="app-shell">
       <div className="app-container">
-        <section className="hero-panel">
-          <header className="hero-header">
-            <div className="hero-copy">
-              <span className="eyebrow">Acessos</span>
-              <h1>Usuarios e permissoes</h1>
-              <p>Cadastre vendedores e administradores para controlar o acesso aos menus do PDV.</p>
-            </div>
-            <div className="hero-highlight">
-              <div className="metric-pill">
-                <strong>{users.length}</strong>
-                <span>usuarios</span>
-              </div>
-              <div className="metric-pill">
-                <strong>{users.filter((user) => user.role === 'ADMIN').length}</strong>
-                <span>admins</span>
-              </div>
-              <div className="metric-pill">
-                <strong>{users.filter((user) => user.role === 'OPERATOR').length}</strong>
-                <span>vendedores</span>
-              </div>
-            </div>
-          </header>
-        </section>
+        <PageHeader
+          eyebrow="Acessos"
+          title="Usuarios e permissoes"
+          subtitle="Cadastre vendedores e administradores para controlar o acesso aos menus do PDV."
+          metricLabel="Usuarios"
+          metricValue={String(users.length)}
+          status="Controle ativo"
+        />
+
+        <div className="metric-grid metric-grid--3">
+          <Metric label="Usuarios" value={String(users.length)} />
+          <Metric label="Admins" value={String(users.filter((u) => u.role === 'ADMIN').length)} tone="gold" />
+          <Metric label="Vendedores" value={String(users.filter((u) => u.role === 'OPERATOR').length)} />
+        </div>
 
         <div className="content-grid">
           <section className="product-form-panel">

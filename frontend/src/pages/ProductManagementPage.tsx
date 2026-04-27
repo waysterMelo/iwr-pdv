@@ -10,6 +10,8 @@ import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { CurrencyInput } from '../components/CurrencyInput'
+import { Metric } from '../components/Metric'
+import { PageHeader } from '../components/PageHeader'
 
 type ProductFormState = {
   name: string
@@ -159,7 +161,6 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
 
   const products = productPage.content
   const lowStockThreshold = Number(filters.lowStockThreshold) || 5
-  const activeProducts = products.filter((product) => product.active).length
   const lowStockProducts = products.filter(
     (product) => product.stockQuantity > 0 && product.stockQuantity <= lowStockThreshold,
   ).length
@@ -342,48 +343,21 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
   return (
     <main className="app-shell">
       <div className="app-container">
-        <section className="hero-panel">
-          <header className="hero-header">
-            <div className="hero-copy">
-              <span className="eyebrow">Estoque</span>
-              <h1>Gestao completa de produtos</h1>
-              <p>
-                Cadastre, filtre, ordene e acompanhe estoque com foco em operacao de loja:
-                produtos ativos, ruptura, estoque baixo, QR Code e etiquetas prontas para venda.
-              </p>
-            </div>
+        <PageHeader
+          eyebrow="Estoque"
+          title="Gestao completa de produtos"
+          subtitle="Cadastre, filtre, ordene e acompanhe estoque com foco em operacao de loja: produtos ativos, ruptura, estoque baixo, QR Code e etiquetas prontas para venda."
+          metricLabel="Valor nesta pagina"
+          metricValue={formatCurrency(inventoryValue)}
+          status={`${productPage.totalElements} produto(s)`}
+        />
 
-            <div className="hero-highlight">
-              <div className="metric-pill">
-                <strong>{productPage.totalElements}</strong>
-                <span>produtos filtrados</span>
-              </div>
-              <div className="metric-pill">
-                <strong>{activeProducts}</strong>
-                <span>ativos nesta pagina</span>
-              </div>
-              <div className="metric-pill">
-                <strong>{formatCurrency(inventoryValue)}</strong>
-                <span>valor nesta pagina</span>
-              </div>
-            </div>
-          </header>
-
-          <div className="stats-grid">
-            <article className="stat-card">
-              <strong>{products.length}</strong>
-              <span>itens na pagina</span>
-            </article>
-            <article className="stat-card">
-              <strong>{lowStockProducts}</strong>
-              <span>estoque baixo</span>
-            </article>
-            <article className="stat-card">
-              <strong>{outOfStockProducts}</strong>
-              <span>sem estoque</span>
-            </article>
-          </div>
-        </section>
+        <div className="metric-grid metric-grid--4">
+          <Metric label="Itens na pagina" value={String(products.length)} />
+          <Metric label="Estoque total" value={String(products.reduce((sum, p) => sum + p.stockQuantity, 0))} tone="gold" />
+          <Metric label="Estoque baixo" value={String(lowStockProducts)} tone={lowStockProducts > 0 ? 'warning' : 'default'} />
+          <Metric label="Sem estoque" value={String(outOfStockProducts)} tone={outOfStockProducts > 0 ? 'danger' : 'default'} />
+        </div>
 
         <section className="category-panel" aria-label="Categorias de produtos">
           <header className="section-header">

@@ -1,17 +1,62 @@
+/* ═══════════════════════════════════════════════════════════
+   IWR Atelier PDV — Design System Premium
+   Fundação: Reset, Tokens, Tipografia, Background
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Design Tokens ─────────────────────────────────────── */
+
 :root {
-  font-family: "Inter", "Segoe UI", sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #111827;
-  background: #f9fafb;
+  /* Cores principais */
+  --color-bg: #0A0A0B;
+  --color-bg-deep: #070708;
+  --color-surface: #101012;
+  --color-surface-2: #111113;
+  --color-gold: #C6A15B;
+  --color-gold-light: #F3DFA8;
+  --color-gold-hover: #E0C077;
+  --color-white: #FFFFFF;
+
+  /* Texto */
+  --text-primary: rgba(255, 255, 255, 1);
+  --text-secondary: rgba(255, 255, 255, 0.58);
+  --text-muted: rgba(255, 255, 255, 0.35);
+
+  /* Bordas */
+  --border-soft: rgba(255, 255, 255, 0.10);
+  --border-gold: rgba(198, 161, 91, 0.35);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Raios */
+  --radius-card: 30px;
+  --radius-inner: 24px;
+  --radius-button: 16px;
+  --radius-input: 16px;
+  --radius-pill: 999px;
+
+  /* Sombras */
+  --shadow-card: 0 30px 110px rgba(0, 0, 0, 0.43);
+  --shadow-gold: 0 18px 60px rgba(198, 161, 91, 0.28);
+  --shadow-gold-hover: 0 22px 75px rgba(198, 161, 91, 0.35);
+  --shadow-bar: 0 26px 100px rgba(0, 0, 0, 0.62);
+
+  /* Cores de estado */
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+
+  /* Sidebar */
+  --sidebar-width: 320px;
+
+  /* Tipografia */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', 'Segoe UI', sans-serif;
 }
+
+/* ─── Reset global ──────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
+  scrollbar-color: rgba(198, 161, 91, 0.55) rgba(255, 255, 255, 0.05);
 }
 
 html {
@@ -22,6 +67,32 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
+  background:
+    radial-gradient(circle at 78% 4%, rgba(198, 161, 91, 0.18), transparent 28%),
+    radial-gradient(circle at 45% 90%, rgba(255, 255, 255, 0.06), transparent 28%),
+    linear-gradient(135deg, #0A0A0B, #121214 45%, #070707);
+}
+
+/* Grid sutil de fundo */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.055;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.8) 1px, transparent 1px);
+  background-size: 54px 54px;
+  pointer-events: none;
 }
 
 button,
@@ -38,4 +109,12 @@ a {
 
 #root {
   min-height: 100vh;
+}
+
+/* ─── Tipografia base ───────────────────────────────────── */
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.045em;
 }

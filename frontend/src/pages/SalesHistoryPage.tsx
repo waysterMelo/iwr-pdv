@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { cancelSale, getSaleReceiptUrl, getSales } from '../services/saleService'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { PageHeader } from '../components/PageHeader'
 import type { Sale } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
@@ -107,20 +108,14 @@ export function SalesHistoryPage() {
   return (
     <main className="app-shell">
       <div className="app-container history-container">
-        <section className="checkout-hero-panel">
-          <div>
-            <span className="eyebrow">Historico</span>
-            <h1>Historico de vendas</h1>
-            <p>
-              Consulte vendas reais, revise itens vendidos e acompanhe o total do periodo.
-            </p>
-          </div>
-          <div className="checkout-summary">
-            <span>Total listado</span>
-            <strong>{formatCurrency(totalAmount)}</strong>
-            <small>{sales.length} venda(s) encontradas</small>
-          </div>
-        </section>
+        <PageHeader
+          eyebrow="Historico"
+          title="Historico de vendas"
+          subtitle="Consulte vendas reais, revise itens vendidos e acompanhe o total do periodo."
+          metricLabel="Total listado"
+          metricValue={formatCurrency(totalAmount)}
+          status={`${sales.length} venda(s)`}
+        />
 
         <section className="scanner-panel">
           <form className="history-filter-form" onSubmit={handleFilterSubmit}>

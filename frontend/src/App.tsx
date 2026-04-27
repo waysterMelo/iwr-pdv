@@ -53,6 +53,7 @@ function App() {
       ? { id: 'product-edit' as const, label: 'Editar produto', eyebrow: 'Estoque' }
       : menuItems.find((item) => item.id === visibleView) ?? menuItems[0]
   const operatorInitial = currentUser?.displayName.trim().charAt(0).toUpperCase() || 'I'
+  const isOperationLayout = visibleView === 'checkout' || visibleView === 'cash-register'
 
   useEffect(() => {
     if (!getAuthToken()) {
@@ -132,8 +133,8 @@ function App() {
               <p>Venda por camera com carrinho simplificado e fechamento direto no caixa aberto.</p>
             </section>
 
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <button className="mobile-sell-button" type="button" onClick={() => setMobileView('cash-register')} style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}>
+            <div className="mobile-home-actions">
+              <button className="mobile-sell-button mobile-sell-button--secondary" type="button" onClick={() => setMobileView('cash-register')}>
                 Meu Caixa
               </button>
               <button className="mobile-sell-button" type="button" onClick={() => setMobileView('sale')}>
@@ -151,12 +152,25 @@ function App() {
   }
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${isOperationLayout ? 'app-layout--operation' : 'app-layout--compact'}`}>
       <aside className="app-sidebar">
         <div className="brand-block">
-          <span className="brand-mark">IWR.</span>
-          <span className="brand-caption">Atelier PDV</span>
+          {isOperationLayout ? <div className="brand-logo-letter">I</div> : null}
+          <div className="brand-text-group">
+            <span className="brand-mark">IWR.</span>
+            <span className="brand-caption">ATELIER PDV</span>
+          </div>
         </div>
+
+        {isOperationLayout ? (
+          <div className="premium-status-card">
+            <div className="premium-status-card__icon" aria-hidden="true" />
+            <div>
+              <strong>Operacao premium</strong>
+              <span>Caixa aberto - Loja online</span>
+            </div>
+          </div>
+        ) : null}
 
         <nav className="side-navigation" aria-label="Navegacao principal">
           {menuItems.map((item) => (
@@ -166,7 +180,17 @@ function App() {
               key={item.id}
               onClick={() => setCurrentView(item.id)}
             >
-              <span className="side-nav-icon">{menuIcons[item.id]}</span>
+              <span
+                className={`side-nav-icon ${
+                  isOperationLayout && (item.id === 'checkout' || item.id === 'cash-register')
+                    ? 'side-nav-icon--operation-symbol'
+                    : ''
+                }`}
+              >
+                {isOperationLayout && (item.id === 'checkout' || item.id === 'cash-register')
+                  ? null
+                  : menuIcons[item.id]}
+              </span>
               <span className="side-nav-copy">
                 <span>{item.eyebrow}</span>
                 <strong>{item.label}</strong>
