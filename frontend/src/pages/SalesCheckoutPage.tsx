@@ -5,6 +5,7 @@ import type { PaymentMethod, Sale } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
 import { useAppMessage } from '../hooks/useAppMessage'
+import './SalesCheckoutPage.css'
 
 export function SalesCheckoutPage() {
   const { confirm } = useAppMessage()
@@ -62,11 +63,11 @@ export function SalesCheckoutPage() {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell checkout-page">
       <div className="app-container checkout-container">
         <section className="checkout-hero-panel">
           <div>
-            <span className="eyebrow">Caixa</span>
+            <span className="checkout-kicker">PDV · Venda rápida</span>
             <h1>Caixa com leitura por codigo</h1>
             <p>
               Leia o QR Code ou digite o codigo do produto para montar a venda, finalizar
@@ -76,14 +77,16 @@ export function SalesCheckoutPage() {
           <div className="checkout-summary">
             <span>Total da venda</span>
             <strong>{formatCurrency(checkout.totalAmount)}</strong>
-            <small>
-              {checkout.cashRegister ? `Caixa #${checkout.cashRegister.id} aberto` : 'Abra o caixa antes de vender'} -{' '}
-              {checkout.totalItems} item(ns)
-            </small>
+            <div className="checkout-status-row">
+              <span className={checkout.cashRegister ? 'checkout-badge checkout-badge--success' : 'checkout-badge checkout-badge--warning'}>
+                {checkout.cashRegister ? `Caixa #${checkout.cashRegister.id} aberto` : 'Abra o caixa'}
+              </span>
+              <span className="checkout-badge checkout-badge--muted">{checkout.totalItems} item(ns)</span>
+            </div>
           </div>
         </section>
 
-        <section className="scanner-panel">
+        <section className="scanner-panel checkout-scanner-panel">
           <form className="scanner-form" onSubmit={handleScannerSubmit}>
             <label htmlFor="scannerCode">Leitor de codigo</label>
             <div className="scanner-row">
@@ -112,14 +115,14 @@ export function SalesCheckoutPage() {
           ) : null}
         </section>
 
-        <section className="scanner-panel">
+        <section className="scanner-panel checkout-payment-panel">
           <header className="section-header">
             <div>
               <h2>Pagamento</h2>
               <p>Revise subtotal, desconto e forma de pagamento antes de finalizar.</p>
             </div>
           </header>
-          <div className="form-grid">
+          <div className="form-grid checkout-payment-grid">
             <div className="field-group">
               <label htmlFor="paymentMethod">Forma de pagamento</label>
               <select
