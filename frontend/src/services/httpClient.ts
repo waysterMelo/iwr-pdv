@@ -22,8 +22,18 @@ export class HttpRequestError extends Error {
   }
 }
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-const apiBaseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl
+function resolveApiBaseUrl() {
+  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+  const normalizedBaseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl
+
+  if (typeof window !== 'undefined' && normalizedBaseUrl.includes('://backend')) {
+    return ''
+  }
+
+  return normalizedBaseUrl
+}
+
+const apiBaseUrl = resolveApiBaseUrl()
 const authTokenStorageKey = 'iwr-pdv-auth-token'
 let authToken = window.localStorage.getItem(authTokenStorageKey)
 
