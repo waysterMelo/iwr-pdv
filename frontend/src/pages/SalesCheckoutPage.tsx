@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { BadgeDollarSign, Package, Percent, ReceiptText } from 'lucide-react'
 import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import { getSaleReceiptUrl } from '../services/saleService'
 import type { PaymentMethod, Sale } from '../types/sale'
@@ -190,15 +191,15 @@ export function SalesCheckoutPage() {
 
             <div className="sales-summary-totals">
               <div>
-                <span>Itens</span>
+                <span><Package size={14} strokeWidth={2.3} aria-hidden="true" />Itens</span>
                 <strong>{checkout.totalItems}</strong>
               </div>
               <div>
-                <span>Desconto</span>
+                <span><Percent size={14} strokeWidth={2.3} aria-hidden="true" />Desconto</span>
                 <strong>{formatCurrency(checkout.parsedDiscountAmount)}</strong>
               </div>
               <div>
-                <span>Total</span>
+                <span><BadgeDollarSign size={14} strokeWidth={2.3} aria-hidden="true" />Total</span>
                 <strong>{formatCurrency(checkout.totalAmount)}</strong>
               </div>
             </div>
@@ -239,7 +240,7 @@ export function SalesCheckoutPage() {
                       </button>
                     </div>
                     <div className="cart-price">
-                      <span>{formatCurrency(item.product.price)}</span>
+                      <span><ReceiptText size={14} strokeWidth={2.3} aria-hidden="true" />{formatCurrency(item.product.price)}</span>
                       <strong>{formatCurrency(getCartItemTotal(item))}</strong>
                     </div>
                   </article>

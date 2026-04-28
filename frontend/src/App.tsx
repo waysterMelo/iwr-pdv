@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import { Boxes, CreditCard, History, Package, Pencil, ReceiptText, Users } from 'lucide-react'
 import './App.css'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 import { CatalogingPage } from './pages/CatalogingPage'
@@ -18,14 +20,14 @@ import type { AuthUser } from './types/auth'
 type AppView = 'checkout' | 'cash-register' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
 
-const menuIcons: Record<AppView, string> = {
-  checkout: 'PD',
-  'cash-register': 'CX',
-  history: 'HI',
-  products: 'ES',
-  'product-edit': 'ED',
-  cataloging: 'LT',
-  users: 'US',
+const menuIcons: Record<AppView, LucideIcon> = {
+  checkout: CreditCard,
+  'cash-register': ReceiptText,
+  history: History,
+  products: Package,
+  'product-edit': Pencil,
+  cataloging: Boxes,
+  users: Users,
 }
 
 function App() {
@@ -53,7 +55,7 @@ function App() {
       ? { id: 'product-edit' as const, label: 'Editar produto', eyebrow: 'Estoque' }
       : menuItems.find((item) => item.id === visibleView) ?? menuItems[0]
   const operatorInitial = currentUser?.displayName.trim().charAt(0).toUpperCase() || 'I'
-  const isOperationLayout = visibleView === 'checkout' || visibleView === 'cash-register'
+  const isOperationLayout = true
 
   useEffect(() => {
     if (!getAuthToken()) {
@@ -174,28 +176,26 @@ function App() {
 
         <nav className="side-navigation" aria-label="Navegacao principal">
           {menuItems.map((item) => (
+            (() => {
+              const MenuIcon = menuIcons[item.id]
+
+              return (
             <button
               className={visibleView === item.id ? 'side-nav-button side-nav-button--active' : 'side-nav-button'}
               type="button"
               key={item.id}
               onClick={() => setCurrentView(item.id)}
             >
-              <span
-                className={`side-nav-icon ${
-                  isOperationLayout && (item.id === 'checkout' || item.id === 'cash-register')
-                    ? 'side-nav-icon--operation-symbol'
-                    : ''
-                }`}
-              >
-                {isOperationLayout && (item.id === 'checkout' || item.id === 'cash-register')
-                  ? null
-                  : menuIcons[item.id]}
+              <span className="side-nav-icon">
+                <MenuIcon size={20} strokeWidth={2.2} aria-hidden="true" />
               </span>
               <span className="side-nav-copy">
                 <span>{item.eyebrow}</span>
                 <strong>{item.label}</strong>
               </span>
             </button>
+              )
+            })()
           ))}
         </nav>
 

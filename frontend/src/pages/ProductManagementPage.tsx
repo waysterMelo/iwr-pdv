@@ -1,4 +1,20 @@
 import { useDeferredValue, useEffect, useState, type FormEvent } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  AlertTriangle,
+  BadgeDollarSign,
+  Boxes,
+  CircleSlash,
+  Clock3,
+  Grid3X3,
+  Package,
+  PackageCheck,
+  QrCode,
+  Shirt,
+  ShoppingBag,
+  Sparkles,
+  Tag,
+} from 'lucide-react'
 import {
   createProduct,
   getProductCategories,
@@ -87,18 +103,18 @@ function getLabelUrl(productId: number) {
   return `/api/products/${productId}/label`
 }
 
-function getCategoryIcon(icon: string) {
-  const icons: Record<string, string> = {
-    dress: 'VD',
-    shirt: 'BL',
-    pants: 'CA',
-    skirt: 'SA',
-    bag: 'BO',
-    sparkles: 'AC',
-    tag: 'SC',
+function getCategoryIcon(icon: string): LucideIcon {
+  const icons: Record<string, LucideIcon> = {
+    dress: Sparkles,
+    shirt: Shirt,
+    pants: Package,
+    skirt: Sparkles,
+    bag: ShoppingBag,
+    sparkles: Sparkles,
+    tag: Tag,
   }
 
-  return icons[icon] ?? 'CT'
+  return icons[icon] ?? Grid3X3
 }
 
 function getStockStatusLabel(product: Product, lowStockThreshold: number) {
@@ -353,10 +369,10 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
         />
 
         <div className="metric-grid metric-grid--4">
-          <Metric label="Itens na pagina" value={String(products.length)} />
-          <Metric label="Estoque total" value={String(products.reduce((sum, p) => sum + p.stockQuantity, 0))} tone="gold" />
-          <Metric label="Estoque baixo" value={String(lowStockProducts)} tone={lowStockProducts > 0 ? 'warning' : 'default'} />
-          <Metric label="Sem estoque" value={String(outOfStockProducts)} tone={outOfStockProducts > 0 ? 'danger' : 'default'} />
+          <Metric label="Itens na pagina" value={String(products.length)} icon={Package} />
+          <Metric label="Estoque total" value={String(products.reduce((sum, p) => sum + p.stockQuantity, 0))} tone="gold" icon={Boxes} />
+          <Metric label="Estoque baixo" value={String(lowStockProducts)} tone={lowStockProducts > 0 ? 'warning' : 'default'} icon={AlertTriangle} />
+          <Metric label="Sem estoque" value={String(outOfStockProducts)} tone={outOfStockProducts > 0 ? 'danger' : 'default'} icon={CircleSlash} />
         </div>
 
         <section className="category-panel" aria-label="Categorias de produtos">
@@ -373,12 +389,18 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
               type="button"
               onClick={() => updateFilter('categoryId', '')}
             >
-              <span className="category-icon">TD</span>
+              <span className="category-icon">
+                <Grid3X3 size={20} strokeWidth={2.2} aria-hidden="true" />
+              </span>
               <strong>Todas</strong>
               <small>{productPage.totalElements} produto(s)</small>
             </button>
 
             {categories.map((category) => (
+              (() => {
+                const CategoryIcon = getCategoryIcon(category.icon)
+
+                return (
               <button
                 className={
                   filters.categoryId === String(category.id)
@@ -389,17 +411,21 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                 key={category.id}
                 onClick={() => updateFilter('categoryId', String(category.id))}
               >
-                <span className="category-icon">{getCategoryIcon(category.icon)}</span>
+                <span className="category-icon">
+                  <CategoryIcon size={20} strokeWidth={2.2} aria-hidden="true" />
+                </span>
                 <strong>{category.name}</strong>
                 <small>{filters.categoryId === String(category.id) ? 'Filtro ativo' : 'Ver produtos'}</small>
               </button>
+                )
+              })()
             ))}
           </div>
         </section>
 
         <div className="content-grid">
-          <section className="product-form-panel">
-            <header className="section-header">
+          <section className="product-form-panel product-form-panel--new-product">
+            <header className="section-header product-form-header">
               <div>
                 <h2>Novo produto</h2>
                 <p>Deixe o codigo vazio para gerar automaticamente no padrao da loja.</p>
@@ -408,7 +434,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
 
             <form className="product-form" onSubmit={handleSubmit}>
               <div className="form-grid">
-                <div className="field-group field-group--full">
+                <div className="field-group field-group--full product-field product-field--name">
                   <label htmlFor="name">Nome</label>
                   <input
                     id="name"
@@ -418,7 +444,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   />
                 </div>
 
-                <div className="field-group">
+                <div className="field-group product-field product-field--code">
                   <label htmlFor="code">Codigo</label>
                   <input
                     id="code"
@@ -429,7 +455,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   <small className="field-hint">Se ficar vazio, o sistema gera automaticamente.</small>
                 </div>
 
-                <div className="field-group">
+                <div className="field-group product-field product-field--category">
                   <label htmlFor="categoryId">Categoria</label>
                   <select
                     id="categoryId"
@@ -445,7 +471,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   </select>
                 </div>
 
-                <div className="field-group">
+                <div className="field-group product-field product-field--price">
                   <label htmlFor="price">Preco</label>
                   <CurrencyInput
                     id="price"
@@ -455,7 +481,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   />
                 </div>
 
-                <div className="field-group">
+                <div className="field-group product-field product-field--stock">
                   <label htmlFor="stockQuantity">Estoque</label>
                   <input
                     id="stockQuantity"
@@ -468,7 +494,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   />
                 </div>
 
-                <div className="field-group">
+                <div className="field-group product-field product-field--status">
                   <label htmlFor="active">Status</label>
                   <select
                     id="active"
@@ -494,7 +520,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                 <div className="feedback-message feedback-message--success">{formSuccessMessage}</div>
               ) : null}
 
-              <div className="form-actions">
+              <div className="form-actions product-form-actions">
                 <button className="action-button" type="submit" disabled={isSaving}>
                   {isSaving
                     ? 'Salvando...'
@@ -679,14 +705,22 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
               ) : products.length === 0 ? (
                 <div className="product-empty">Nenhum produto encontrado para os filtros atuais.</div>
               ) : (
-                products.map((product) => (
-                  <article className="product-card" key={product.id}>
+                products.map((product) => {
+                  const themeColors = ['var(--color-gold)', 'var(--color-gold-soft)', 'var(--color-muted)', 'var(--color-green)']
+                  const cardColor = themeColors[product.id % themeColors.length]
+                  
+                  return (
+                  <article className="product-card" style={{ borderLeft: `4px solid ${cardColor}` }} key={product.id}>
                     <div className="product-card-header">
                       <div>
                         <h3>{product.name}</h3>
                         <span className="product-card-code">{product.code}</span>
                         <span className="product-category-chip">
-                          {getCategoryIcon(product.categoryIcon)} {product.categoryName}
+                          {(() => {
+                            const CategoryIcon = getCategoryIcon(product.categoryIcon)
+                            return <CategoryIcon size={14} strokeWidth={2.3} aria-hidden="true" />
+                          })()}
+                          {product.categoryName}
                         </span>
                       </div>
                       <div className="product-card-badges">
@@ -705,19 +739,19 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
 
                     <div className="product-card-grid">
                       <div>
-                        <span>Preco</span>
+                        <span><BadgeDollarSign size={14} strokeWidth={2.3} aria-hidden="true" />Preco</span>
                         <strong>{formatCurrency(product.price)}</strong>
                       </div>
                       <div>
-                        <span>Estoque</span>
+                        <span><PackageCheck size={14} strokeWidth={2.3} aria-hidden="true" />Estoque</span>
                         <strong>{product.stockQuantity}</strong>
                       </div>
                       <div>
-                        <span>Total estoque</span>
+                        <span><Boxes size={14} strokeWidth={2.3} aria-hidden="true" />Total estoque</span>
                         <strong>{formatCurrency(product.price * product.stockQuantity)}</strong>
                       </div>
                       <div>
-                        <span>Atualizado</span>
+                        <span><Clock3 size={14} strokeWidth={2.3} aria-hidden="true" />Atualizado</span>
                         <strong>{formatDateTime(product.updatedAt)}</strong>
                       </div>
                     </div>
@@ -742,7 +776,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                       </button>
                       <div className="product-qr-content">
                         <div className="product-qr-copy">
-                          <span>QR Code</span>
+                          <span><QrCode size={14} strokeWidth={2.3} aria-hidden="true" />QR Code</span>
                           <strong>{product.code}</strong>
                         </div>
                         <div className="product-qr-actions">
@@ -793,7 +827,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                       </button>
                     </div>
                   </article>
-                ))
+                )})
               )}
             </div>
 

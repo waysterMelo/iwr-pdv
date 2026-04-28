@@ -14,7 +14,7 @@ export function PageHeader({ eyebrow, title, subtitle, metricLabel, metricValue,
     <section className="page-header">
       <div className="page-header__copy">
         <div className="page-header__eyebrow">
-          <span className="page-header__sparkle">✦</span>
+          <span className="page-header__sparkle">+</span>
           {eyebrow}
           {status ? <span className="page-header__status">{status}</span> : null}
         </div>

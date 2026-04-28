@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Banknote, CreditCard, Landmark, ReceiptText, TrendingUp, Wallet } from 'lucide-react'
 import {
   addCashMovement,
   closeCashRegister,
@@ -188,9 +189,9 @@ export function CashRegisterPage() {
         ) : (
           <>
             <div className="metric-grid metric-grid--3">
-              <Metric label="Total vendido" value={formatCurrency(cashRegister.totalSalesAmount)} hint={`${Object.values(totals).filter(v => v > 0).length} forma(s) de pagamento`} tone="gold" />
-              <Metric label="Dinheiro esperado" value={formatCurrency(cashRegister.expectedCashAmount)} hint="Inclui suprimentos" />
-              <Metric label="Saldo de movimentacoes" value={formatCurrency(cashRegister.cashInAmount - cashRegister.cashOutAmount)} hint={`${cashRegister.movements.length} movimentacao(es)`} />
+              <Metric label="Total vendido" value={formatCurrency(cashRegister.totalSalesAmount)} hint={`${Object.values(totals).filter(v => v > 0).length} forma(s) de pagamento`} tone="gold" icon={ReceiptText} />
+              <Metric label="Dinheiro esperado" value={formatCurrency(cashRegister.expectedCashAmount)} hint="Inclui suprimentos" icon={Wallet} />
+              <Metric label="Saldo de movimentacoes" value={formatCurrency(cashRegister.cashInAmount - cashRegister.cashOutAmount)} hint={`${cashRegister.movements.length} movimentacao(es)`} icon={TrendingUp} />
             </div>
 
             <div className="history-grid">
@@ -203,19 +204,19 @@ export function CashRegisterPage() {
                 </header>
                 <div className="product-card-grid">
                   <div>
-                    <span>Dinheiro</span>
+                    <span><Banknote size={14} strokeWidth={2.3} aria-hidden="true" />Dinheiro</span>
                     <strong>{formatCurrency(totals.CASH)}</strong>
                   </div>
                   <div>
-                    <span>Pix</span>
+                    <span><Landmark size={14} strokeWidth={2.3} aria-hidden="true" />Pix</span>
                     <strong>{formatCurrency(totals.PIX)}</strong>
                   </div>
                   <div>
-                    <span>Debito</span>
+                    <span><CreditCard size={14} strokeWidth={2.3} aria-hidden="true" />Debito</span>
                     <strong>{formatCurrency(totals.DEBIT_CARD)}</strong>
                   </div>
                   <div>
-                    <span>Credito</span>
+                    <span><CreditCard size={14} strokeWidth={2.3} aria-hidden="true" />Credito</span>
                     <strong>{formatCurrency(totals.CREDIT_CARD)}</strong>
                   </div>
                 </div>
