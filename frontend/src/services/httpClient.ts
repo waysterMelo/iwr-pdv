@@ -26,7 +26,17 @@ function resolveApiBaseUrl() {
   const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   const normalizedBaseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl
 
-  if (typeof window !== 'undefined' && normalizedBaseUrl.includes('://backend')) {
+  if (typeof window === 'undefined') {
+    return normalizedBaseUrl
+  }
+
+  const isLocalVite = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+
+  if (isLocalVite) {
+    return ''
+  }
+
+  if (normalizedBaseUrl.includes('://backend')) {
     return ''
   }
 
