@@ -1,0 +1,127 @@
+/* Correcoes finais de responsividade do carrinho da tela Vendas.
+   Este arquivo deve ser importado depois de SalesCheckoutPage.css. */
+
+.checkout-page .cart-list {
+  gap: 14px;
+}
+
+.checkout-page .cart-item {
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+}
+
+.checkout-page .cart-item-main {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.checkout-page .cart-item-main span {
+  width: fit-content;
+  max-width: 100%;
+  color: var(--checkout-faint) !important;
+  font-size: 0.7rem !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+.checkout-page .cart-item-main strong {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  color: var(--checkout-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: clamp(1rem, 2.4vw, 1.18rem) !important;
+  font-weight: 900 !important;
+  line-height: 1.28 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: uppercase !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+  white-space: normal !important;
+}
+
+.checkout-page .cart-item-main small {
+  max-width: 100%;
+  color: var(--checkout-faint) !important;
+  font-size: 0.72rem !important;
+  line-height: 1.45 !important;
+  white-space: normal !important;
+}
+
+.checkout-page .cart-quantity {
+  justify-self: start !important;
+  width: min(100%, 180px) !important;
+  grid-template-columns: 42px minmax(56px, 1fr) 42px !important;
+}
+
+.checkout-page .cart-quantity input {
+  width: 100% !important;
+}
+
+.checkout-page .cart-price {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: end !important;
+  justify-items: stretch !important;
+  gap: 12px !important;
+  padding-top: 14px !important;
+  border-top: 1px solid var(--checkout-border) !important;
+}
+
+.checkout-page .cart-price span {
+  align-self: center;
+  color: var(--checkout-faint) !important;
+  font-size: 0.72rem !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+
+.checkout-page .cart-price strong {
+  color: var(--checkout-text) !important;
+  font-size: clamp(1.55rem, 5vw, 2rem) !important;
+  line-height: 1 !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+@media (min-width: 760px) {
+  .checkout-page .cart-item {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      'info quantity'
+      'price price' !important;
+  }
+
+  .checkout-page .cart-item-main {
+    grid-area: info;
+  }
+
+  .checkout-page .cart-quantity {
+    grid-area: quantity;
+    align-self: center;
+  }
+
+  .checkout-page .cart-price {
+    grid-area: price;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-page .cart-item-main strong {
+    font-size: 1rem !important;
+  }
+
+  .checkout-page .cart-price {
+    grid-template-columns: 1fr !important;
+  }
+
+  .checkout-page .cart-price strong {
+    text-align: left !important;
+  }
+}
