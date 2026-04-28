@@ -6,6 +6,7 @@ import { formatCurrency } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
 import { useAppMessage } from '../hooks/useAppMessage'
 import './SalesCheckoutPage.css'
+import './SalesCheckoutResponsiveFix.css'
 
 export function SalesCheckoutPage() {
   const { confirm } = useAppMessage()
