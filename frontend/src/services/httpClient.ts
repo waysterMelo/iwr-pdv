@@ -37,7 +37,13 @@ function resolveApiBaseUrl() {
     return normalizedBaseUrl
   }
 
-  if (normalizedBaseUrl.includes('://backend')) {
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  const isDockerHostname = normalizedBaseUrl.includes('://backend')
+  const isTunnelUrl = normalizedBaseUrl.includes('trycloudflare.com')
+
+  // Se a aplicacao esta aberta em localhost, nunca chame URL de tunnel ou hostname interno.
+  // Use caminho relativo para o proxy/reverse proxy local.
+  if (isLocalhost || isDockerHostname || isTunnelUrl) {
     return ''
   }
 
