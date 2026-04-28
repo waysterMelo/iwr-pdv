@@ -42,11 +42,63 @@ $env:DEFAULT_ADMIN_DISPLAY_NAME='Administrador'
 docker compose up -d --build
 ```
 
-## Como subir em desenvolvimento sem Docker
+## Como subir em desenvolvimento local sem Docker
 
-1. Inicie apenas o PostgreSQL com `docker compose up -d postgres`.
-2. Suba o backend com `backend\mvnw.cmd spring-boot:run`.
-3. Suba o frontend com `npm install` e `npm run dev` dentro de `frontend`.
+Este modo roda tudo no `localhost` e evita URLs antigas de tunnel/Cloudflare.
+
+### 1. PostgreSQL local
+
+Tenha um PostgreSQL rodando localmente na porta `5432` com estes dados:
+
+- Banco: `iwr_pdv`
+- Usuario: `postgres`
+- Senha: `postgres`
+
+Se ainda nao tiver o banco criado, crie com:
+
+```sql
+CREATE DATABASE iwr_pdv;
+```
+
+### 2. Backend local
+
+No PowerShell ou CMD:
+
+```powershell
+cd backend
+$env:DB_HOST='localhost'
+$env:DB_PORT='5432'
+$env:DB_NAME='iwr_pdv'
+$env:DB_USERNAME='postgres'
+$env:DB_PASSWORD='postgres'
+$env:DEFAULT_ADMIN_USERNAME='admin'
+$env:DEFAULT_ADMIN_PASSWORD='admin123'
+$env:DEFAULT_ADMIN_DISPLAY_NAME='Administrador'
+.\mvnw.cmd spring-boot:run
+```
+
+O backend deve responder em:
+
+- `http://localhost:8080/health`
+- `http://localhost:8080/swagger-ui.html`
+
+### 3. Frontend local
+
+Em outro terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Acesse:
+
+- `http://localhost:5173`
+
+O arquivo `frontend/.env.development` deixa `VITE_API_BASE_URL` vazio. Assim o frontend usa `/api` e o proxy do Vite encaminha para `http://localhost:8080`.
+
+Se o navegador ainda tentar chamar Cloudflare ou outro endereco antigo, limpe os dados do site no DevTools ou abra em aba anonima.
 
 Antes de entregar ao cliente, defina `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_PASSWORD` e `DEFAULT_ADMIN_DISPLAY_NAME` no ambiente do backend.
 
