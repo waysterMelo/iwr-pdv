@@ -368,12 +368,17 @@
 }
 
 .checkout-page .cart-item {
-  grid-template-columns: minmax(220px, 1fr) minmax(150px, auto) minmax(140px, auto);
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, auto) minmax(140px, auto);
+  align-items: center;
   border: 1px solid var(--checkout-border);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.025);
   padding: 18px;
   color: var(--checkout-text);
+}
+
+.checkout-page .cart-item-main {
+  gap: 8px;
 }
 
 .checkout-page .cart-item-main span,
@@ -383,12 +388,23 @@
 }
 
 .checkout-page .cart-item-main strong {
+  max-width: 100%;
   color: var(--checkout-text);
-  font-size: 1rem;
+  font-size: clamp(1rem, 1.8vw, 1.16rem);
+  line-height: 1.25;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.checkout-page .cart-item-main small {
+  line-height: 1.45;
 }
 
 .checkout-page .cart-quantity {
-  grid-template-columns: 38px 64px 38px;
+  grid-template-columns: 38px 56px 38px;
+  justify-content: center;
+  width: max-content;
 }
 
 .checkout-page .cart-quantity .icon-button {
@@ -397,7 +413,7 @@
 }
 
 .checkout-page .cart-quantity input {
-  width: 64px;
+  width: 56px;
   min-height: 38px;
   text-align: center;
   padding: 0;
@@ -462,13 +478,15 @@
   }
 
   .checkout-page .cart-item {
-    grid-template-columns: minmax(0, 1fr) minmax(146px, auto);
+    grid-template-columns: minmax(0, 1fr) minmax(138px, auto);
+    align-items: start;
   }
 
   .checkout-page .cart-price {
     grid-column: 1 / -1;
     justify-items: start;
-    padding-top: 10px;
+    width: 100%;
+    padding-top: 12px;
     border-top: 1px solid var(--checkout-border);
   }
 }
@@ -492,6 +510,28 @@
   .checkout-page .checkout-footer-panel .action-button,
   .checkout-page .checkout-footer-panel .icon-link {
     width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .checkout-page .cart-item {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .checkout-page .cart-item-main strong {
+    font-size: 1.08rem;
+  }
+
+  .checkout-page .cart-quantity {
+    justify-content: start;
+  }
+
+  .checkout-page .cart-price {
+    grid-column: auto;
+    justify-items: start;
+    padding-top: 14px;
+    border-top: 1px solid var(--checkout-border);
   }
 }
 
@@ -533,7 +573,8 @@
   }
 
   .checkout-page .cart-quantity {
-    width: fit-content;
+    width: 100%;
+    grid-template-columns: 42px minmax(56px, 1fr) 42px;
   }
 
   .checkout-page .cart-price {
