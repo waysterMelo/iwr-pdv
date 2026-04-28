@@ -26,14 +26,15 @@ function resolveApiBaseUrl() {
   const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   const normalizedBaseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl
 
-  if (typeof window === 'undefined') {
-    return normalizedBaseUrl
+  // Durante `npm run dev`, sempre use o proxy do Vite:
+  // /api -> http://localhost:8080
+  // Isso evita que .env.local ou variaveis antigas apontem para Cloudflare/Docker.
+  if (import.meta.env.DEV) {
+    return ''
   }
 
-  const isLocalVite = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-
-  if (isLocalVite) {
-    return ''
+  if (typeof window === 'undefined') {
+    return normalizedBaseUrl
   }
 
   if (normalizedBaseUrl.includes('://backend')) {
