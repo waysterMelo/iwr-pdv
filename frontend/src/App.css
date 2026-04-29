@@ -4306,6 +4306,56 @@ h3 {
   min-height: 48px;
 }
 
+.app-layout,
+.mobile-home-shell,
+.login-shell {
+  background:
+    linear-gradient(135deg, rgba(5, 5, 6, 0.84), rgba(5, 5, 6, 0.72) 46%, rgba(5, 5, 6, 0.92)),
+    radial-gradient(circle at 78% 0%, rgba(198, 161, 91, 0.22), transparent 34%),
+    url('./assets/generated/app-bg-premium.png') center / cover fixed no-repeat,
+    #070708;
+}
+
+.app-layout::before,
+.mobile-home-shell::before,
+.login-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 6, 0.74), transparent 32%, rgba(5, 5, 6, 0.45)),
+    radial-gradient(circle at 14% 14%, rgba(198, 161, 91, 0.14), transparent 30%);
+  pointer-events: none;
+}
+
+.app-sidebar,
+.workspace,
+.mobile-home-shell > *,
+.login-card {
+  position: relative;
+  z-index: 1;
+}
+
+.side-nav-icon {
+  overflow: hidden;
+  padding: 3px;
+  border: 1px solid rgba(198, 161, 91, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.side-nav-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+  object-fit: cover;
+}
+
+.side-nav-button--active .side-nav-icon {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
 @media (max-width: 1180px) {
   .app-layout--operation,
   .app-layout--compact {

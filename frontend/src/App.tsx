@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { LucideIcon } from 'lucide-react'
-import { Boxes, CreditCard, History, Package, Pencil, ReceiptText, Users } from 'lucide-react'
 import './App.css'
+import navCashRegister from './assets/generated/nav-cash-register.png'
+import navCataloging from './assets/generated/nav-cataloging.png'
+import navHistory from './assets/generated/nav-history.png'
+import navProducts from './assets/generated/nav-products.png'
+import navSales from './assets/generated/nav-sales.png'
+import navUsers from './assets/generated/nav-users.png'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 import { CatalogingPage } from './pages/CatalogingPage'
 import { LoginPage } from './pages/LoginPage'
@@ -20,14 +24,14 @@ import type { AuthUser } from './types/auth'
 type AppView = 'checkout' | 'cash-register' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
 
-const menuIcons: Record<AppView, LucideIcon> = {
-  checkout: CreditCard,
-  'cash-register': ReceiptText,
-  history: History,
-  products: Package,
-  'product-edit': Pencil,
-  cataloging: Boxes,
-  users: Users,
+const menuImages: Record<AppView, string> = {
+  checkout: navSales,
+  'cash-register': navCashRegister,
+  history: navHistory,
+  products: navProducts,
+  'product-edit': navProducts,
+  cataloging: navCataloging,
+  users: navUsers,
 }
 
 function App() {
@@ -177,7 +181,7 @@ function App() {
         <nav className="side-navigation" aria-label="Navegacao principal">
           {menuItems.map((item) => (
             (() => {
-              const MenuIcon = menuIcons[item.id]
+              const menuImage = menuImages[item.id]
 
               return (
             <button
@@ -187,7 +191,7 @@ function App() {
               onClick={() => setCurrentView(item.id)}
             >
               <span className="side-nav-icon">
-                <MenuIcon size={20} strokeWidth={2.2} aria-hidden="true" />
+                <img src={menuImage} alt="" aria-hidden="true" />
               </span>
               <span className="side-nav-copy">
                 <span>{item.eyebrow}</span>
