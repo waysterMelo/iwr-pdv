@@ -73,12 +73,13 @@ public class PromissoryNoteController {
             @RequestParam(required = false) PromissoryNoteStatus status,
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false, defaultValue = "false") boolean dueToday
     ) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=notas-promissorias.csv")
                 .contentType(MediaType.parseMediaType("text/csv; charset=utf-8"))
-                .body("\uFEFF" + promissoryNoteService.exportCsv(status, customerId, startDate, endDate));
+                .body("\uFEFF" + promissoryNoteService.exportCsv(status, customerId, startDate, endDate, dueToday));
     }
 
     @GetMapping(value = "/{noteId}/print", produces = MediaType.TEXT_HTML_VALUE)

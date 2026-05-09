@@ -138,8 +138,17 @@ public class SaleServiceImpl implements SaleService {
 
         OffsetDateTime now = OffsetDateTime.now(clock);
         List<PromissoryNote> promissoryNotes = promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(saleId);
-        if (promissoryNotes.stream().anyMatch(note -> note.getStatus() == PromissoryNoteStatus.PAID)) {
-            throw new BusinessRuleException("Sale has paid promissory notes and cannot be cancelled without a receivable reversal.");
+        for (PromissoryNote note : promissoryNotes) {
+            if (note.getStatus() == PromissoryNoteStatus.PAID) {
+                cashRegisterService.registerReceivableReversal(
+                        note.getAmount(),
+                        note.getPaymentMethod(),
+                        "Estorno de promissoria #" + note.getId() + " - cancelamento de venda",
+                        operator,
+                        "PROMISSORY_NOTE",
+                        note.getId()
+                );
+            }
         }
 
         sale.setStatus(SaleStatus.CANCELLED);

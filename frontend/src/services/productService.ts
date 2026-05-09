@@ -82,3 +82,11 @@ export async function updateProductActivation(
 ) {
   return patch<Product>(`/api/products/${productId}/activation`, payload)
 }
+
+export function getBulkLabelsUrl(productIds: number[]) {
+  const params = new URLSearchParams()
+  for (const id of productIds) {
+    params.append('productIds', String(id))
+  }
+  return `/api/products/labels?${params.toString()}`
+}

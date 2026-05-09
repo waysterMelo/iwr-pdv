@@ -38,4 +38,6 @@ public interface ProductService {
     byte[] generateQrCode(Long productId);
 
     String generateLabel(Long productId);
+
+    String generateLabels(java.util.List<Long> productIds);
 }

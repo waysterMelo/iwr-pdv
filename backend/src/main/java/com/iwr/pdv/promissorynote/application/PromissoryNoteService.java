@@ -17,7 +17,7 @@ public interface PromissoryNoteService {
 
     PromissoryNoteResponse pay(Long noteId, PromissoryNotePaymentRequest request, AppUser operator);
 
-    String exportCsv(PromissoryNoteStatus status, Long customerId, LocalDate startDate, LocalDate endDate);
+    String exportCsv(PromissoryNoteStatus status, Long customerId, LocalDate startDate, LocalDate endDate, boolean dueToday);
 
     String generatePrintableNote(Long noteId);
 }

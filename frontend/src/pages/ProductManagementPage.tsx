@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import {
   createProduct,
+  getBulkLabelsUrl,
   getProductCategories,
   getProductPage,
   updateProductActivation,
@@ -174,6 +175,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
   const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
   const [selectedLabelProduct, setSelectedLabelProduct] = useState<Product | null>(null)
   const [copiedProductId, setCopiedProductId] = useState<number | null>(null)
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set())
 
   const products = productPage.content
   const lowStockThreshold = Number(filters.lowStockThreshold) || 5
@@ -690,9 +692,35 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                       selectedCategory ? ` em ${selectedCategory.name}` : ''
                     }`}
               </span>
-              <strong>
-                Pagina {productPage.totalPages === 0 ? 0 : productPage.page + 1} de {productPage.totalPages}
-              </strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {selectedProductIds.size > 0 ? (
+                  <>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-gold)' }}>
+                      {selectedProductIds.size} selecionado(s)
+                    </span>
+                    <a
+                      className="action-button"
+                      href={getBulkLabelsUrl(Array.from(selectedProductIds))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'none', fontSize: '0.85rem', padding: '6px 14px' }}
+                    >
+                      Imprimir etiquetas
+                    </a>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => setSelectedProductIds(new Set())}
+                      style={{ fontSize: '0.85rem', padding: '6px 14px' }}
+                    >
+                      Limpar selecao
+                    </button>
+                  </>
+                ) : null}
+                <strong>
+                  Pagina {productPage.totalPages === 0 ? 0 : productPage.page + 1} de {productPage.totalPages}
+                </strong>
+              </div>
             </div>
 
             {listErrorMessage ? (
@@ -712,6 +740,25 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   return (
                   <article className="product-card" style={{ borderLeft: `4px solid ${cardColor}` }} key={product.id}>
                     <div className="product-card-header">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedProductIds.has(product.id)}
+                          onChange={(event) => {
+                            setSelectedProductIds((current) => {
+                              const next = new Set(current)
+                              if (event.target.checked) {
+                                next.add(product.id)
+                              } else {
+                                next.delete(product.id)
+                              }
+                              return next
+                            })
+                          }}
+                          aria-label={`Selecionar ${product.name}`}
+                          style={{ width: '16px', height: '16px', accentColor: 'var(--color-gold)' }}
+                        />
+                      </label>
                       <div>
                         <h3>{product.name}</h3>
                         <span className="product-card-code">{product.code}</span>

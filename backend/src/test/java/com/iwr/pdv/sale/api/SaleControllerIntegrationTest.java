@@ -280,7 +280,7 @@ class SaleControllerIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        Long saleId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(saleJson).get("id").asLong();
 
         mockMvc.perform(get("/api/sales")
                         .header("Authorization", authHeader))
@@ -520,7 +520,7 @@ class SaleControllerIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        Long saleId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(saleJson).get("id").asLong();
 
         mockMvc.perform(post("/api/sales/{saleId}/cancel", saleId)
                         .header("Authorization", authHeader)
@@ -549,7 +549,7 @@ class SaleControllerIntegrationTest {
     }
 
     @Test
-    void shouldRejectSaleCancellationWhenPromissoryNoteWasPaid() throws Exception {
+    void shouldCancelSaleAndReversePaidPromissoryNotes() throws Exception {
         Customer customer = customerRepository.save(buildCustomer("Cliente Nota Paga"));
         Product product = productRepository.save(buildProduct("Calca Reta", "IWR-NP-004", new BigDecimal("90.00"), 3, true));
 
@@ -579,7 +579,7 @@ class SaleControllerIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        Long saleId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(saleJson).get("id").asLong();
         PromissoryNote note = promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(saleId)
                 .stream()
                 .findFirst()
@@ -595,9 +595,14 @@ class SaleControllerIntegrationTest {
         mockMvc.perform(post("/api/sales/{saleId}/cancel", saleId)
                         .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"reason\":\"Tentativa apos baixa\"}"))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.message").value("Sale has paid promissory notes and cannot be cancelled without a receivable reversal."));
+                        .content("{\"reason\":\"Estorno apos baixa\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+
+        mockMvc.perform(get("/api/cash-register/current")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cashOutAmount").value(90.00));
     }
 
     @Test
@@ -650,7 +655,7 @@ class SaleControllerIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        Long saleId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(saleJson).get("id").asLong();
 
         mockMvc.perform(post("/api/sales/{saleId}/cancel", saleId)
                         .header("Authorization", authHeader)
@@ -697,7 +702,7 @@ class SaleControllerIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        Long saleId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(saleJson).get("id").asLong();
 
         mockMvc.perform(get("/api/sales/{saleId}/receipt", saleId)
                         .header("Authorization", authHeader))

@@ -223,6 +223,25 @@ public class ProductController {
                 .body(productService.generateLabel(productId));
     }
 
+    @GetMapping(value = "/labels", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(summary = "Generate printable labels for multiple products")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Printable HTML labels generated successfully",
+                    content = @Content(mediaType = MediaType.TEXT_HTML_VALUE)
+            )
+    })
+    public ResponseEntity<String> generateLabels(
+            @RequestParam List<Long> productIds,
+            HttpServletRequest servletRequest
+    ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(productService.generateLabels(productIds));
+    }
+
     private AppUser currentUser(HttpServletRequest request) {
         return (AppUser) request.getAttribute("authenticatedUser");
     }

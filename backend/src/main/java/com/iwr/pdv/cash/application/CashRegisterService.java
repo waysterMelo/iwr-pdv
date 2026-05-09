@@ -31,5 +31,14 @@ public interface CashRegisterService {
             Long referenceId
     );
 
+    CashRegister registerReceivableReversal(
+            BigDecimal amount,
+            PaymentMethod paymentMethod,
+            String reason,
+            AppUser operator,
+            String referenceType,
+            Long referenceId
+    );
+
     CashRegisterResponse toResponse(CashRegister cashRegister);
 }

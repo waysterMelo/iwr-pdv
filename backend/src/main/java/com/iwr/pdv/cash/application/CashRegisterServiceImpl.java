@@ -155,6 +155,33 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     @Override
+    @Transactional
+    public CashRegister registerReceivableReversal(
+            BigDecimal amount,
+            PaymentMethod paymentMethod,
+            String reason,
+            AppUser operator,
+            String referenceType,
+            Long referenceId
+    ) {
+        CashRegister cashRegister = requireOpenRegister();
+
+        CashMovement movement = new CashMovement();
+        movement.setCashRegister(cashRegister);
+        movement.setMovementType(CashMovementType.CASH_OUT);
+        movement.setAmount(amount);
+        movement.setReason(reason);
+        movement.setPaymentMethod(paymentMethod);
+        movement.setReferenceType(referenceType);
+        movement.setReferenceId(referenceId);
+        movement.setOperator(operator);
+        movement.setCreatedAt(OffsetDateTime.now(clock));
+        cashMovementRepository.save(movement);
+
+        return cashRegister;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public CashRegisterResponse toResponse(CashRegister cashRegister) {
         CashTotals totals = calculateTotals(cashRegister);
@@ -185,8 +212,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 if (movement.getPaymentMethod() == null || movement.getPaymentMethod() == PaymentMethod.CASH) {
                     cashInAmount = cashInAmount.add(movement.getAmount());
                 }
-            } else {
-                cashOutAmount = cashOutAmount.add(movement.getAmount());
+            } else if (movement.getMovementType() == CashMovementType.CASH_OUT) {
+                if (movement.getPaymentMethod() == null || movement.getPaymentMethod() == PaymentMethod.CASH) {
+                    cashOutAmount = cashOutAmount.add(movement.getAmount());
+                }
             }
         }
 

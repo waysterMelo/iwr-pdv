@@ -17,8 +17,6 @@ public record ProductResponse(
         String categoryName,
         @Schema(description = "Product category icon key", example = "dress")
         String categoryIcon,
-        @Schema(description = "Product batch identifier", example = "5")
-        Long batchId,
         @Schema(description = "Current price", example = "149.90")
         BigDecimal price,
         @Schema(description = "Current stock quantity", example = "8")

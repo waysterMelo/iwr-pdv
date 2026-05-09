@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import navCashRegister from './assets/generated/nav-cash-register.png'
-import navCataloging from './assets/generated/nav-cataloging.png'
+
 import navHistory from './assets/generated/nav-history.png'
 import navProducts from './assets/generated/nav-products.png'
 import navSales from './assets/generated/nav-sales.png'
 import navUsers from './assets/generated/nav-users.png'
 import { CashRegisterPage } from './pages/CashRegisterPage'
-import { CatalogingPage } from './pages/CatalogingPage'
+
 import { CustomerManagementPage } from './pages/CustomerManagementPage'
 import { LoginPage } from './pages/LoginPage'
 import { LoyaltyPage } from './pages/LoyaltyPage'
@@ -24,7 +24,7 @@ import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
+type AppView = 'checkout' | 'cash-register' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
 
 const menuImages: Record<AppView, string> = {
@@ -36,7 +36,7 @@ const menuImages: Record<AppView, string> = {
   history: navHistory,
   products: navProducts,
   'product-edit': navProducts,
-  cataloging: navCataloging,
+
   users: navUsers,
 }
 
@@ -56,7 +56,7 @@ function App() {
     { id: 'customers', label: 'Clientes', eyebrow: 'Cadastro' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
     { id: 'products', label: 'Produtos', eyebrow: 'Estoque', adminOnly: true },
-    { id: 'cataloging', label: 'Catalogacao', eyebrow: 'Lotes', adminOnly: true },
+
     { id: 'users', label: 'Usuarios', eyebrow: 'Acessos', adminOnly: true },
   ]
   const menuItems = allMenuItems.filter((item) => currentUser?.role === 'ADMIN' || !item.adminOnly)
@@ -278,7 +278,7 @@ function App() {
             }}
           />
         ) : null}
-        {visibleView === 'cataloging' ? <CatalogingPage /> : null}
+
         {visibleView === 'users' ? <UserManagementPage /> : null}
       </section>
     </div>

@@ -29,10 +29,6 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private ProductCategory category;
 
-    @ManyToOne
-    @JoinColumn(name = "batch_id")
-    private ProductBatch batch;
-
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
@@ -78,14 +74,6 @@ public class Product {
 
     public void setCategory(ProductCategory category) {
         this.category = category;
-    }
-
-    public ProductBatch getBatch() {
-        return batch;
-    }
-
-    public void setBatch(ProductBatch batch) {
-        this.batch = batch;
     }
 
     public BigDecimal getPrice() {

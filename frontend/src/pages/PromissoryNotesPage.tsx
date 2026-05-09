@@ -119,6 +119,18 @@ export function PromissoryNotesPage() {
     return () => window.clearTimeout(timeoutId)
   }, [loadDueToday])
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (listMode === 'due-today') {
+        void loadDueToday()
+      } else {
+        void loadNotes(filters)
+      }
+    }, 60_000)
+
+    return () => window.clearInterval(intervalId)
+  }, [listMode, loadDueToday, loadNotes, filters])
+
   function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextFilters: PromissoryNoteFilters = {
@@ -262,7 +274,7 @@ export function PromissoryNotesPage() {
             </div>
             <button className="action-button" type="submit" disabled={isLoading}>Filtrar</button>
             <button className="secondary-button" type="button" onClick={clearFilters} disabled={isLoading}>Limpar</button>
-            <a className="icon-link" href={getPromissoryNotesExportUrl(filters)} target="_blank" rel="noreferrer">
+            <a className="icon-link" href={getPromissoryNotesExportUrl(filters, listMode === 'due-today')} target="_blank" rel="noreferrer">
               <FileDown size={14} strokeWidth={2.3} aria-hidden="true" />CSV
             </a>
           </form>

@@ -5,7 +5,6 @@ export type Product = {
   categoryId: number
   categoryName: string
   categoryIcon: string
-  batchId: number | null
   price: number
   stockQuantity: number
   active: boolean

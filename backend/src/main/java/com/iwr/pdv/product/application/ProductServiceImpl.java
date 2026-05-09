@@ -188,6 +188,83 @@ public class ProductServiceImpl implements ProductService {
         return productLabelService.generateLabel(product);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String generateLabels(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            throw new com.iwr.pdv.common.exception.BusinessRuleException("Select at least one product to print labels.");
+        }
+
+        List<Product> products = productIds.stream()
+                .map(this::findProductById)
+                .toList();
+
+        StringBuilder labelsHtml = new StringBuilder();
+        for (Product product : products) {
+            int quantity = Math.max(product.getStockQuantity(), 1);
+            for (int i = 0; i < quantity; i++) {
+                labelsHtml.append(productLabelService.generateLabel(product));
+            }
+        }
+
+        return """
+                <!doctype html>
+                <html lang="pt-BR">
+                <head>
+                  <meta charset="utf-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1">
+                  <title>Etiquetas de Produtos</title>
+                  <style>
+                    @page { size: 50mm 30mm; margin: 0; }
+                    * { box-sizing: border-box; }
+                    body {
+                      margin: 0;
+                      background: #f3f4f6;
+                      color: #111827;
+                      font-family: Arial, sans-serif;
+                    }
+                    .sheet {
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 6mm;
+                      padding: 8mm;
+                    }
+                    .toolbar {
+                      position: sticky;
+                      top: 0;
+                      display: flex;
+                      justify-content: space-between;
+                      gap: 16px;
+                      padding: 12px 16px;
+                      background: #111827;
+                      color: #fff;
+                    }
+                    button {
+                      border: 1px solid #fff;
+                      background: #fff;
+                      color: #111827;
+                      padding: 8px 12px;
+                      font-weight: 800;
+                      cursor: pointer;
+                    }
+                    @media print {
+                      body { background: #fff; }
+                      .toolbar { display: none; }
+                      .sheet { display: block; padding: 0; }
+                    }
+                  </style>
+                </head>
+                <body>
+                  <header class="toolbar">
+                    <strong>%d produto(s) selecionados</strong>
+                    <button onclick="window.print()">Imprimir etiquetas</button>
+                  </header>
+                  <main class="sheet">%s</main>
+                </body>
+                </html>
+                """.formatted(products.size(), labelsHtml);
+    }
+
     private Product findProductById(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found for id " + productId + "."));

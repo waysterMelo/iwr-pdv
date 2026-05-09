@@ -48,7 +48,6 @@ public class ProductMapper {
                 product.getCategory().getId(),
                 product.getCategory().getName(),
                 product.getCategory().getIcon(),
-                product.getBatch() == null ? null : product.getBatch().getId(),
                 product.getPrice(),
                 product.getStockQuantity(),
                 product.getActive(),

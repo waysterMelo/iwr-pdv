@@ -29,6 +29,8 @@ export function getPromissoryNotePrintUrl(noteId: number) {
   return `/api/promissory-notes/${noteId}/print`
 }
 
-export function getPromissoryNotesExportUrl(filters: PromissoryNoteFilters = {}) {
-  return `/api/promissory-notes/export.csv${toQuery(filters)}`
+export function getPromissoryNotesExportUrl(filters: PromissoryNoteFilters = {}, dueToday = false) {
+  const query = toQuery(filters)
+  const separator = query ? '&' : '?'
+  return `/api/promissory-notes/export.csv${query}${dueToday ? `${separator}dueToday=true` : ''}`
 }

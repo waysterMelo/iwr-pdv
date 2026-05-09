@@ -134,8 +134,8 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
 
     @Override
     @Transactional
-    public String exportCsv(PromissoryNoteStatus status, Long customerId, LocalDate startDate, LocalDate endDate) {
-        List<PromissoryNoteResponse> notes = list(status, customerId, startDate, endDate);
+    public String exportCsv(PromissoryNoteStatus status, Long customerId, LocalDate startDate, LocalDate endDate, boolean dueToday) {
+        List<PromissoryNoteResponse> notes = dueToday ? listDueToday() : list(status, customerId, startDate, endDate);
         StringBuilder csv = new StringBuilder("Cliente;CPF;Venda;Parcela;Valor;Vencimento;Status;Pagamento\n");
         for (PromissoryNoteResponse note : notes) {
             csv.append(csvCell(note.customer().name())).append(';')
