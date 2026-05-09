@@ -6,6 +6,7 @@ import { getCustomers } from '../services/customerService'
 import {
   getPromissoryNotePrintUrl,
   getPromissoryNotes,
+  getPromissoryNotesDueToday,
   getPromissoryNotesExportUrl,
   payPromissoryNote,
 } from '../services/promissoryNoteService'
@@ -20,6 +21,7 @@ const statusLabels: Record<PromissoryNoteStatus, string> = {
   PENDING: 'Pendente',
   PAID: 'Pago',
   OVERDUE: 'Vencido',
+  CANCELLED: 'Cancelado',
 }
 
 const paymentLabels: Record<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>, string> = {
@@ -33,6 +35,12 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(`${value}T00:00:00`))
 }
 
+function getLocalToday() {
+  const now = new Date()
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+  return localDate.toISOString().slice(0, 10)
+}
+
 export function PromissoryNotesPage() {
   const { confirm, notify } = useAppMessage()
   const [notes, setNotes] = useState<PromissoryNote[]>([])
@@ -40,6 +48,7 @@ export function PromissoryNotesPage() {
   const [selectedNote, setSelectedNote] = useState<PromissoryNote | null>(null)
   const [filters, setFilters] = useState<PromissoryNoteFilters>({})
   const [draftFilters, setDraftFilters] = useState({ status: '', customerId: '', startDate: '', endDate: '' })
+  const [listMode, setListMode] = useState<'due-today' | 'custom'>('due-today')
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>>('CASH')
   const [isLoading, setIsLoading] = useState(true)
@@ -61,13 +70,30 @@ export function PromissoryNotesPage() {
 
   const metrics = useMemo(() => {
     const openNotes = notes.filter((note) => note.status !== 'PAID')
+    const today = getLocalToday()
     return {
       openAmount: openNotes.reduce((sum, note) => sum + note.amount, 0),
       overdueAmount: notes.filter((note) => note.status === 'OVERDUE').reduce((sum, note) => sum + note.amount, 0),
+      dueTodayAmount: openNotes.filter((note) => note.dueDate === today).reduce((sum, note) => sum + note.amount, 0),
       paidAmount: notes.filter((note) => note.status === 'PAID').reduce((sum, note) => sum + note.amount, 0),
       openCount: openNotes.length,
     }
   }, [notes])
+
+  const loadDueToday = useCallback(async () => {
+    setIsLoading(true)
+
+    try {
+      const response = await getPromissoryNotesDueToday()
+      setNotes(response)
+      setSelectedNote((current) => response.find((note) => note.id === current?.id) ?? response[0] ?? null)
+      setErrorMessage(null)
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Nao foi possivel carregar notas para cobranca.'))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   const loadNotes = useCallback(async (nextFilters: PromissoryNoteFilters = {}) => {
     setIsLoading(true)
@@ -86,12 +112,12 @@ export function PromissoryNotesPage() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      void loadNotes({})
+      void loadDueToday()
       getCustomers().then(setCustomers).catch(() => setCustomers([]))
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [loadNotes])
+  }, [loadDueToday])
 
   function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -102,6 +128,7 @@ export function PromissoryNotesPage() {
       endDate: draftFilters.endDate || undefined,
     }
     setFilters(nextFilters)
+    setListMode('custom')
     void loadNotes(nextFilters)
   }
 
@@ -109,7 +136,15 @@ export function PromissoryNotesPage() {
     const nextFilters = {}
     setDraftFilters({ status: '', customerId: '', startDate: '', endDate: '' })
     setFilters(nextFilters)
+    setListMode('custom')
     void loadNotes(nextFilters)
+  }
+
+  function showDueToday() {
+    setDraftFilters({ status: '', customerId: '', startDate: '', endDate: '' })
+    setFilters({})
+    setListMode('due-today')
+    void loadDueToday()
   }
 
   async function handlePay() {
@@ -129,7 +164,11 @@ export function PromissoryNotesPage() {
     try {
       const paidNote = await payPromissoryNote(selectedNote.id, paymentMethod)
       setSelectedNote(paidNote)
-      await loadNotes(filters)
+      if (listMode === 'due-today') {
+        await loadDueToday()
+      } else {
+        await loadNotes(filters)
+      }
       notify({
         type: 'success',
         title: 'Nota baixada',
@@ -155,16 +194,26 @@ export function PromissoryNotesPage() {
           subtitle="Acompanhe vencimentos, imprima parcelas e registre baixas diretamente no caixa aberto."
           metricLabel="Aberto"
           metricValue={formatCurrency(metrics.openAmount)}
-          status={`${metrics.openCount} parcela(s) em aberto`}
+          status={listMode === 'due-today' ? 'Cobranca do dia' : `${metrics.openCount} parcela(s) em aberto`}
         />
 
-        <div className="metric-grid metric-grid--3">
+        <div className="metric-grid metric-grid--4">
           <Metric label="A receber" value={formatCurrency(metrics.openAmount)} tone="gold" icon={ReceiptText} />
+          <Metric label="Vence hoje" value={formatCurrency(metrics.dueTodayAmount)} tone="gold" icon={CalendarClock} />
           <Metric label="Vencido" value={formatCurrency(metrics.overdueAmount)} tone="danger" icon={AlertCircle} />
           <Metric label="Recebido" value={formatCurrency(metrics.paidAmount)} tone="success" icon={CheckCircle2} />
         </div>
 
         <section className="scanner-panel">
+          <div className="qr-modal-actions">
+            <button className="action-button" type="button" onClick={showDueToday} disabled={isLoading}>
+              Cobranca de hoje
+            </button>
+            <button className="secondary-button" type="button" onClick={clearFilters} disabled={isLoading}>
+              Todas
+            </button>
+          </div>
+
           <form className="notes-filter-form" onSubmit={handleFilterSubmit}>
             <div className="field-group">
               <label htmlFor="noteStatus">Status</label>
@@ -177,6 +226,7 @@ export function PromissoryNotesPage() {
                 <option value="PENDING">Pendentes</option>
                 <option value="OVERDUE">Vencidos</option>
                 <option value="PAID">Pagos</option>
+                <option value="CANCELLED">Cancelados</option>
               </select>
             </div>
             <div className="field-group">
@@ -296,6 +346,10 @@ export function PromissoryNotesPage() {
                 {selectedNote.status === 'PAID' ? (
                   <div className="feedback-message feedback-message--success">
                     Pago em {formatNullableDateTime(selectedNote.paidAt)} por {selectedNote.paymentMethod ?? '-'}.
+                  </div>
+                ) : selectedNote.status === 'CANCELLED' ? (
+                  <div className="feedback-message feedback-message--warning">
+                    Nota cancelada junto com a venda #{selectedNote.saleId}.
                   </div>
                 ) : (
                   <div className="promissory-pay-panel">

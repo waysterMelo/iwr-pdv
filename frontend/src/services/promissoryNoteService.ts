@@ -17,6 +17,10 @@ export async function getPromissoryNotes(filters: PromissoryNoteFilters = {}) {
   return get<PromissoryNote[]>(`/api/promissory-notes${toQuery(filters)}`)
 }
 
+export async function getPromissoryNotesDueToday() {
+  return get<PromissoryNote[]>('/api/promissory-notes/due-today')
+}
+
 export async function payPromissoryNote(noteId: number, paymentMethod: Exclude<PaymentMethod, 'PROMISSORY_NOTE'>) {
   return post<PromissoryNote>(`/api/promissory-notes/${noteId}/payments`, { paymentMethod })
 }

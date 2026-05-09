@@ -718,6 +718,11 @@ h3 {
   color: #166534;
 }
 
+.feedback-message--warning {
+  border-color: var(--color-gold);
+  color: #92400e;
+}
+
 .form-actions,
 .list-toolbar,
 .product-card-actions,
@@ -2385,6 +2390,11 @@ h3 {
 .feedback-message--success {
   border-left-color: #34d399;
   color: #bbf7d0;
+}
+
+.feedback-message--warning {
+  border-left-color: #fbbf24;
+  color: #fde68a;
 }
 
 .category-card {

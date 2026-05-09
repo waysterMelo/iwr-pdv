@@ -17,6 +17,7 @@ import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
+import com.iwr.pdv.promissorynote.domain.PromissoryNoteStatus;
 import com.iwr.pdv.sale.domain.SaleRepository;
 import com.iwr.pdv.sale.domain.StockMovementRepository;
 import java.math.BigDecimal;
@@ -416,6 +417,187 @@ class SaleControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.expectedCashAmount").value(150.00))
                 .andExpect(jsonPath("$.totalsByPaymentMethod.PROMISSORY_NOTE").value(100.00));
+    }
+
+    @Test
+    void shouldListDueTodayPromissoryNotesAndRefreshOverdueStatus() throws Exception {
+        Customer customer = customerRepository.save(buildCustomer("Cliente Cobranca"));
+        Product product = productRepository.save(buildProduct("Blazer Alfaiataria", "IWR-NP-002", new BigDecimal("120.00"), 3, true));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "PROMISSORY_NOTE",
+                  "discountAmount": 0,
+                  "customerId": %d,
+                  "promissoryInstallments": [
+                    {
+                      "dueDate": "%s",
+                      "amount": 60.00
+                    },
+                    {
+                      "dueDate": "%s",
+                      "amount": 60.00
+                    }
+                  ]
+                }
+                """.formatted(
+                product.getId(),
+                customer.getId(),
+                LocalDate.now(),
+                LocalDate.now().plusDays(1)
+        );
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/promissory-notes/due-today")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].dueDate").value(LocalDate.now().toString()))
+                .andExpect(jsonPath("$[0].status").value("PENDING"));
+
+        PromissoryNote tomorrowNote = promissoryNoteRepository.findAll()
+                .stream()
+                .filter(note -> note.getDueDate().equals(LocalDate.now().plusDays(1)))
+                .findFirst()
+                .orElseThrow();
+        tomorrowNote.setDueDate(LocalDate.now().minusDays(1));
+        tomorrowNote.setStatus(PromissoryNoteStatus.PENDING);
+        promissoryNoteRepository.saveAndFlush(tomorrowNote);
+
+        mockMvc.perform(get("/api/promissory-notes")
+                        .header("Authorization", authHeader)
+                        .param("status", "OVERDUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(tomorrowNote.getId()))
+                .andExpect(jsonPath("$[0].status").value("OVERDUE"));
+
+        mockMvc.perform(get("/api/promissory-notes/due-today")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void shouldCancelOpenPromissoryNotesWhenSaleIsCancelled() throws Exception {
+        Customer customer = customerRepository.save(buildCustomer("Cliente Cancelamento"));
+        Product product = productRepository.save(buildProduct("Camisa Viscose", "IWR-NP-003", new BigDecimal("80.00"), 3, true));
+
+        String saleJson = mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "items": [
+                                    {
+                                      "productId": %d,
+                                      "quantity": 1
+                                    }
+                                  ],
+                                  "paymentMethod": "PROMISSORY_NOTE",
+                                  "discountAmount": 0,
+                                  "customerId": %d,
+                                  "promissoryInstallments": [
+                                    {
+                                      "dueDate": "%s",
+                                      "amount": 80.00
+                                    }
+                                  ]
+                                }
+                                """.formatted(product.getId(), customer.getId(), LocalDate.now())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+
+        mockMvc.perform(post("/api/sales/{saleId}/cancel", saleId)
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Cliente desistiu da venda a prazo\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+
+        PromissoryNote note = promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(saleId)
+                .stream()
+                .findFirst()
+                .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(PromissoryNoteStatus.CANCELLED, note.getStatus());
+
+        mockMvc.perform(get("/api/promissory-notes/due-today")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(post("/api/promissory-notes/{noteId}/payments", note.getId())
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentMethod\":\"PIX\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Promissory note is cancelled."));
+    }
+
+    @Test
+    void shouldRejectSaleCancellationWhenPromissoryNoteWasPaid() throws Exception {
+        Customer customer = customerRepository.save(buildCustomer("Cliente Nota Paga"));
+        Product product = productRepository.save(buildProduct("Calca Reta", "IWR-NP-004", new BigDecimal("90.00"), 3, true));
+
+        String saleJson = mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "items": [
+                                    {
+                                      "productId": %d,
+                                      "quantity": 1
+                                    }
+                                  ],
+                                  "paymentMethod": "PROMISSORY_NOTE",
+                                  "discountAmount": 0,
+                                  "customerId": %d,
+                                  "promissoryInstallments": [
+                                    {
+                                      "dueDate": "%s",
+                                      "amount": 90.00
+                                    }
+                                  ]
+                                }
+                                """.formatted(product.getId(), customer.getId(), LocalDate.now())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long saleId = Long.valueOf(saleJson.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        PromissoryNote note = promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(saleId)
+                .stream()
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(post("/api/promissory-notes/{noteId}/payments", note.getId())
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentMethod\":\"CASH\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAID"));
+
+        mockMvc.perform(post("/api/sales/{saleId}/cancel", saleId)
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Tentativa apos baixa\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Sale has paid promissory notes and cannot be cancelled without a receivable reversal."));
     }
 
     @Test

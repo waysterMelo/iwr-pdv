@@ -2,7 +2,7 @@ import type { AuthUser } from './auth'
 import type { Customer } from './customer'
 import type { PaymentMethod, SaleItem } from './sale'
 
-export type PromissoryNoteStatus = 'PENDING' | 'PAID' | 'OVERDUE'
+export type PromissoryNoteStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED'
 
 export type PromissoryInstallmentPayload = {
   dueDate: string

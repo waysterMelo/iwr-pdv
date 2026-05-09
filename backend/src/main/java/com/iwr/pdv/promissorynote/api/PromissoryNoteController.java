@@ -45,6 +45,12 @@ public class PromissoryNoteController {
         return promissoryNoteService.list(status, customerId, startDate, endDate);
     }
 
+    @GetMapping("/due-today")
+    @Operation(summary = "List unpaid promissory notes due today or overdue")
+    public List<PromissoryNoteResponse> listDueToday() {
+        return promissoryNoteService.listDueToday();
+    }
+
     @GetMapping("/{noteId}")
     @Operation(summary = "Find promissory note by id")
     public PromissoryNoteResponse findById(@PathVariable Long noteId) {

@@ -11,6 +11,8 @@ public interface PromissoryNoteService {
 
     List<PromissoryNoteResponse> list(PromissoryNoteStatus status, Long customerId, LocalDate startDate, LocalDate endDate);
 
+    List<PromissoryNoteResponse> listDueToday();
+
     PromissoryNoteResponse findById(Long noteId);
 
     PromissoryNoteResponse pay(Long noteId, PromissoryNotePaymentRequest request, AppUser operator);

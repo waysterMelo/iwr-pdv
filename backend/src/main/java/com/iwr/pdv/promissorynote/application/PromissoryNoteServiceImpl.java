@@ -54,6 +54,7 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             LocalDate startDate,
             LocalDate endDate
     ) {
+        refreshOverdueStatuses();
         LocalDate start = startDate == null ? LocalDate.of(1970, 1, 1) : startDate;
         LocalDate end = endDate == null ? LocalDate.of(9999, 12, 31) : endDate;
 
@@ -68,26 +69,43 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             notes = promissoryNoteRepository.findByDueDateBetweenOrderByDueDateAsc(start, end);
         }
 
-        refreshOverdueStatus(notes);
         return notes.stream().map(promissoryNoteMapper::toResponse).toList();
     }
 
     @Override
     @Transactional
+    public List<PromissoryNoteResponse> listDueToday() {
+        refreshOverdueStatuses();
+        LocalDate today = LocalDate.now(clock);
+        return promissoryNoteRepository.findByStatusInAndDueDateLessThanEqualOrderByDueDateAsc(
+                        List.of(PromissoryNoteStatus.PENDING, PromissoryNoteStatus.OVERDUE),
+                        today
+                )
+                .stream()
+                .map(promissoryNoteMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
     public PromissoryNoteResponse findById(Long noteId) {
+        refreshOverdueStatuses();
         PromissoryNote note = findNote(noteId);
-        refreshOverdueStatus(List.of(note));
         return promissoryNoteMapper.toResponse(note);
     }
 
     @Override
     @Transactional
     public PromissoryNoteResponse pay(Long noteId, PromissoryNotePaymentRequest request, AppUser operator) {
+        refreshOverdueStatuses();
         PromissoryNote note = findNote(noteId);
-        refreshOverdueStatus(List.of(note));
 
         if (note.getStatus() == PromissoryNoteStatus.PAID) {
             throw new BusinessRuleException("Promissory note is already paid.");
+        }
+
+        if (note.getStatus() == PromissoryNoteStatus.CANCELLED) {
+            throw new BusinessRuleException("Promissory note is cancelled.");
         }
 
         if (request.paymentMethod() == PaymentMethod.PROMISSORY_NOTE) {
@@ -137,8 +155,8 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
     @Override
     @Transactional
     public String generatePrintableNote(Long noteId) {
+        refreshOverdueStatuses();
         PromissoryNote note = findNote(noteId);
-        refreshOverdueStatus(List.of(note));
 
         StringBuilder rows = new StringBuilder();
         List<SaleItem> items = note.getSale().getItems()
@@ -238,15 +256,10 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Promissory note not found for id " + noteId + "."));
     }
 
-    private void refreshOverdueStatus(List<PromissoryNote> notes) {
+    private void refreshOverdueStatuses() {
         LocalDate today = LocalDate.now(clock);
         OffsetDateTime now = OffsetDateTime.now(clock);
-        for (PromissoryNote note : notes) {
-            if (note.getStatus() == PromissoryNoteStatus.PENDING && note.getDueDate().isBefore(today)) {
-                note.setStatus(PromissoryNoteStatus.OVERDUE);
-                note.setUpdatedAt(now);
-            }
-        }
+        promissoryNoteRepository.markPendingNotesOverdue(today, now);
     }
 
     private String formatMoney(BigDecimal value) {
@@ -258,6 +271,7 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             case PENDING -> "Pendente";
             case PAID -> "Pago";
             case OVERDUE -> "Vencido";
+            case CANCELLED -> "Cancelado";
         };
     }
 
