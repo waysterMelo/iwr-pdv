@@ -15,8 +15,8 @@ import com.iwr.pdv.product.mapper.ProductMapper;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.OffsetDateTime;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -43,7 +43,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductSearchRepository productSearchRepository;
     private final ProductMapper productMapper;
     private final ProductCodeGenerator productCodeGenerator;
-    private final ProductQrCodeService productQrCodeService;
+    private final ProductBarcodeService productBarcodeService;
     private final ProductLabelService productLabelService;
     private final Clock clock;
 
@@ -53,7 +53,7 @@ public class ProductServiceImpl implements ProductService {
             ProductSearchRepository productSearchRepository,
             ProductMapper productMapper,
             ProductCodeGenerator productCodeGenerator,
-            ProductQrCodeService productQrCodeService,
+            ProductBarcodeService productBarcodeService,
             ProductLabelService productLabelService,
             Clock clock
     ) {
@@ -62,7 +62,7 @@ public class ProductServiceImpl implements ProductService {
         this.productSearchRepository = productSearchRepository;
         this.productMapper = productMapper;
         this.productCodeGenerator = productCodeGenerator;
-        this.productQrCodeService = productQrCodeService;
+        this.productBarcodeService = productBarcodeService;
         this.productLabelService = productLabelService;
         this.clock = clock;
     }
@@ -146,8 +146,10 @@ public class ProductServiceImpl implements ProductService {
             throw new ResourceNotFoundException("Product not found for code ''.");
         }
 
-        Product product = productRepository.findByCodeIgnoreCase(code.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found for code " + code.trim() + "."));
+        String sanitizedCode = code.trim();
+        Product product = productRepository.findByCodeIgnoreCase(sanitizedCode)
+                .or(() -> productRepository.findByCodeEndingWith(sanitizedCode))
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found for code " + sanitizedCode + "."));
 
         return productMapper.toResponse(product);
     }
@@ -176,9 +178,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] generateQrCode(Long productId) {
+    public byte[] generateBarcode(Long productId) {
         Product product = findProductById(productId);
-        return productQrCodeService.generateQrCode(product.getCode());
+        return productBarcodeService.generateBarcode(product.getCode());
     }
 
     @Override

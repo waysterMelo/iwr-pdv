@@ -9,7 +9,7 @@ import {
   Grid3X3,
   Package,
   PackageCheck,
-  QrCode,
+  Barcode,
   Shirt,
   ShoppingBag,
   Sparkles,
@@ -92,12 +92,12 @@ function validateForm(form: ProductFormState) {
   return null
 }
 
-function getQrCodeUrl(productId: number) {
-  return `/api/products/${productId}/qr-code`
+function getBarcodeUrl(productId: number) {
+  return `/api/products/${productId}/barcode`
 }
 
-function getQrDownloadName(product: Product) {
-  return `${product.code.toLowerCase()}-qr-code.png`
+function getBarcodeDownloadName(product: Product) {
+  return `${product.code.toLowerCase()}-barcode.png`
 }
 
 function getLabelUrl(productId: number) {
@@ -172,7 +172,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
   const [isProductsLoading, setIsProductsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [busyProductId, setBusyProductId] = useState<number | null>(null)
-  const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
+  const [selectedBarcodeProduct, setSelectedBarcodeProduct] = useState<Product | null>(null)
   const [selectedLabelProduct, setSelectedLabelProduct] = useState<Product | null>(null)
   const [copiedProductId, setCopiedProductId] = useState<number | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set())
@@ -364,7 +364,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
         <PageHeader
           eyebrow="Estoque"
           title="Gestao completa de produtos"
-          subtitle="Cadastre, filtre, ordene e acompanhe estoque com foco em operacao de loja: produtos ativos, ruptura, estoque baixo, QR Code e etiquetas prontas para venda."
+          subtitle="Cadastre, filtre, ordene e acompanhe estoque com foco em operacao de loja: produtos ativos, ruptura, estoque baixo, codigo de barras e etiquetas prontas para venda."
           metricLabel="Valor nesta pagina"
           metricValue={formatCurrency(inventoryValue)}
           status={`${productPage.totalElements} produto(s)`}
@@ -811,19 +811,19 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                       <button
                         className="product-qr-preview"
                         type="button"
-                        onClick={() => setSelectedQrProduct(product)}
-                        aria-label={`Ampliar QR Code do produto ${product.code}`}
+                        onClick={() => setSelectedBarcodeProduct(product)}
+                        aria-label={`Ampliar codigo de barras do produto ${product.code}`}
                       >
                         <img
                           className="product-qr-image"
-                          src={getQrCodeUrl(product.id)}
-                          alt={`QR Code do produto ${product.code}`}
+                          src={getBarcodeUrl(product.id)}
+                          alt={`Codigo de barras do produto ${product.code}`}
                           loading="lazy"
                         />
                       </button>
                       <div className="product-qr-content">
                         <div className="product-qr-copy">
-                          <span><QrCode size={14} strokeWidth={2.3} aria-hidden="true" />QR Code</span>
+                          <span><Barcode size={14} strokeWidth={2.3} aria-hidden="true" />Codigo de barras</span>
                           <strong>{product.code}</strong>
                         </div>
                         <div className="product-qr-actions">
@@ -838,10 +838,10 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                           </button>
                           <a
                             className="icon-link"
-                            href={getQrCodeUrl(product.id)}
-                            download={getQrDownloadName(product)}
-                            title="Baixar QR Code"
-                            aria-label={`Baixar QR Code do produto ${product.code}`}
+                            href={getBarcodeUrl(product.id)}
+                            download={getBarcodeDownloadName(product)}
+                            title="Baixar codigo de barras"
+                            aria-label={`Baixar codigo de barras do produto ${product.code}`}
                           >
                             Baixar
                           </a>
@@ -903,11 +903,11 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
         </div>
       </div>
 
-      {selectedQrProduct ? (
+      {selectedBarcodeProduct ? (
         <div
           className="qr-modal-backdrop"
           role="presentation"
-          onClick={() => setSelectedQrProduct(null)}
+          onClick={() => setSelectedBarcodeProduct(null)}
         >
           <section
             className="qr-modal"
@@ -918,36 +918,36 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
           >
             <header className="qr-modal-header">
               <div>
-                <span className="eyebrow">QR Code</span>
-                <h2 id="qr-modal-title">{selectedQrProduct.name}</h2>
-                <p>{selectedQrProduct.code}</p>
+                <span className="eyebrow">Codigo de barras</span>
+                <h2 id="qr-modal-title">{selectedBarcodeProduct.name}</h2>
+                <p>{selectedBarcodeProduct.code}</p>
               </div>
               <button
                 className="icon-button icon-button--close"
                 type="button"
-                onClick={() => setSelectedQrProduct(null)}
-                aria-label="Fechar visualizacao do QR Code"
+                onClick={() => setSelectedBarcodeProduct(null)}
+                aria-label="Fechar visualizacao do codigo de barras"
               >
                 Fechar
               </button>
             </header>
             <img
               className="qr-modal-image"
-              src={getQrCodeUrl(selectedQrProduct.id)}
-              alt={`QR Code ampliado do produto ${selectedQrProduct.code}`}
+              src={getBarcodeUrl(selectedBarcodeProduct.id)}
+              alt={`Codigo de barras ampliado do produto ${selectedBarcodeProduct.code}`}
             />
             <div className="qr-modal-actions">
               <button
                 className="secondary-button"
                 type="button"
-                onClick={() => void handleCopyCode(selectedQrProduct)}
+                onClick={() => void handleCopyCode(selectedBarcodeProduct)}
               >
-                {copiedProductId === selectedQrProduct.id ? 'Codigo copiado' : 'Copiar codigo'}
+                {copiedProductId === selectedBarcodeProduct.id ? 'Codigo copiado' : 'Copiar codigo'}
               </button>
               <a
                 className="action-button action-button--link"
-                href={getQrCodeUrl(selectedQrProduct.id)}
-                download={getQrDownloadName(selectedQrProduct)}
+                href={getBarcodeUrl(selectedBarcodeProduct.id)}
+                download={getBarcodeDownloadName(selectedBarcodeProduct)}
               >
                 Baixar PNG
               </a>

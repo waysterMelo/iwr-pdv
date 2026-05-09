@@ -186,8 +186,8 @@ public class ProductController {
         return productService.updateActivation(productId, request);
     }
 
-    @GetMapping(value = "/{productId}/qr-code", produces = MediaType.IMAGE_PNG_VALUE)
-    @Operation(summary = "Generate the QR code image for a product")
+    @GetMapping(value = "/{productId}/barcode", produces = MediaType.IMAGE_PNG_VALUE)
+    @Operation(summary = "Generate the barcode image for a product")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -199,11 +199,11 @@ public class ProductController {
             ),
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
-    public ResponseEntity<byte[]> generateQrCode(@PathVariable Long productId, HttpServletRequest servletRequest) {
+    public ResponseEntity<byte[]> generateBarcode(@PathVariable Long productId, HttpServletRequest servletRequest) {
         authorizationService.requireAdmin(currentUser(servletRequest));
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
-                .body(productService.generateQrCode(productId));
+                .body(productService.generateBarcode(productId));
     }
 
     @GetMapping(value = "/{productId}/label", produces = MediaType.TEXT_HTML_VALUE)

@@ -76,8 +76,8 @@ function validateForm(form: ProductEditFormState) {
   return null
 }
 
-function getQrCodeUrl(productId: number) {
-  return `/api/products/${productId}/qr-code`
+function getBarcodeUrl(productId: number) {
+  return `/api/products/${productId}/barcode`
 }
 
 export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageProps) {
@@ -309,8 +309,8 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
               {product ? (
                 <img
                   className="product-qr-image"
-                  src={getQrCodeUrl(product.id)}
-                  alt={`QR Code do produto ${product.code}`}
+                  src={getBarcodeUrl(product.id)}
+                  alt={`Codigo de barras do produto ${product.code}`}
                 />
               ) : null}
               <div>

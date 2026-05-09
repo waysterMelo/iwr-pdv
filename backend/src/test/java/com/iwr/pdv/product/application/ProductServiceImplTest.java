@@ -47,7 +47,7 @@ class ProductServiceImplTest {
     private ProductCodeGenerator productCodeGenerator;
 
     @Mock
-    private ProductQrCodeService productQrCodeService;
+    private ProductBarcodeService productBarcodeService;
 
     @Mock
     private ProductLabelService productLabelService;
@@ -63,7 +63,7 @@ class ProductServiceImplTest {
                 productSearchRepository,
                 new ProductMapper(),
                 productCodeGenerator,
-                productQrCodeService,
+                productBarcodeService,
                 productLabelService,
                 clock
         );
@@ -218,18 +218,37 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void shouldGenerateQrCodeFromProductCode() {
+    void shouldFindProductByNumericCodeSuffixForSale() {
+        Product product = new Product();
+        product.setId(11L);
+        product.setName("Vestido Midi");
+        product.setCode("IWR-000011");
+        product.setCategory(category());
+        product.setPrice(new BigDecimal("149.90"));
+        product.setStockQuantity(8);
+        product.setActive(true);
+
+        when(productRepository.findByCodeIgnoreCase("000011")).thenReturn(Optional.empty());
+        when(productRepository.findByCodeEndingWith("000011")).thenReturn(Optional.of(product));
+
+        ProductResponse response = productService.findByCodeForSale("000011");
+
+        assertEquals("IWR-000011", response.code());
+    }
+
+    @Test
+    void shouldGenerateBarcodeFromProductCode() {
         Product product = new Product();
         product.setId(8L);
         product.setCode("IWR-000008");
 
         when(productRepository.findById(8L)).thenReturn(Optional.of(product));
-        when(productQrCodeService.generateQrCode("IWR-000008"))
-                .thenReturn("qr".getBytes(StandardCharsets.UTF_8));
+        when(productBarcodeService.generateBarcode("IWR-000008"))
+                .thenReturn("barcode".getBytes(StandardCharsets.UTF_8));
 
-        byte[] qrCode = productService.generateQrCode(8L);
+        byte[] barcode = productService.generateBarcode(8L);
 
-        assertEquals("qr", new String(qrCode, StandardCharsets.UTF_8));
+        assertEquals("barcode", new String(barcode, StandardCharsets.UTF_8));
     }
 
     @Test

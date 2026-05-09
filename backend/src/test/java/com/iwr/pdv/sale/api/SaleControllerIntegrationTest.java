@@ -124,7 +124,7 @@ class SaleControllerIntegrationTest {
     }
 
     @Test
-    void shouldSimulateMobilePdvSaleFlowWithoutPrintingOrQrCamera() throws Exception {
+    void shouldSimulateMobilePdvSaleFlowWithoutPrintingOrBarcodeReader() throws Exception {
         String productPayload = """
                 {
                   "name": "Produto Mobile Real",
@@ -151,7 +151,7 @@ class SaleControllerIntegrationTest {
 
         mockMvc.perform(get("/api/sales/product-by-code")
                         .header("Authorization", authHeader)
-                        .param("code", "IWR-MOBILE-001"))
+                        .param("code", "001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(product.getId()))
                 .andExpect(jsonPath("$.active").value(true));

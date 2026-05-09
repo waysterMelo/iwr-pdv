@@ -12,16 +12,16 @@ public class ProductLabelServiceImpl implements ProductLabelService {
 
     private static final Locale BRAZIL = Locale.of("pt", "BR");
 
-    private final ProductQrCodeService productQrCodeService;
+    private final ProductBarcodeService productBarcodeService;
 
-    public ProductLabelServiceImpl(ProductQrCodeService productQrCodeService) {
-        this.productQrCodeService = productQrCodeService;
+    public ProductLabelServiceImpl(ProductBarcodeService productBarcodeService) {
+        this.productBarcodeService = productBarcodeService;
     }
 
     @Override
     public String generateLabel(Product product) {
-        String encodedQrCode = Base64.getEncoder()
-                .encodeToString(productQrCodeService.generateQrCode(product.getCode()));
+        String encodedBarcode = Base64.getEncoder()
+                .encodeToString(productBarcodeService.generateBarcode(product.getCode()));
 
         return """
                 <!doctype html>
@@ -46,69 +46,79 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       width: 50mm;
                       height: 30mm;
                       display: grid;
-                      grid-template-columns: minmax(0, 1fr) 25mm;
-                      gap: 2mm;
-                      align-items: center;
-                      padding: 2.4mm;
+                      grid-template-rows: 4mm 17.5mm 4.5mm;
+                      gap: 0.5mm;
+                      padding: 1mm 2mm;
                       background: #fff;
                       border: 1px solid #d1d5db;
                     }
-                    .content {
+                    .label-header,
+                    .label-footer {
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      gap: 2mm;
                       min-width: 0;
                     }
-                    .brand {
-                      margin: 0 0 1.1mm;
-                      font-size: 6.4pt;
-                      font-weight: 800;
-                      letter-spacing: 0.45pt;
-                      color: #4b5563;
-                    }
                     .name {
-                      margin: 0 0 1.3mm;
-                      max-height: 8mm;
+                      width: 100%%;
+                      min-width: 0;
                       overflow: hidden;
-                      font-size: 7.4pt;
-                      line-height: 1.12;
+                      font-size: 6pt;
+                      line-height: 1.05;
                       font-weight: 700;
-                      word-break: break-word;
+                      text-align: center;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
+                    }
+                    .barcode-wrap {
+                      display: grid;
+                      place-items: center;
+                      min-width: 0;
+                      overflow: hidden;
+                    }
+                    .barcode-wrap img {
+                      width: 46mm;
+                      height: 17mm;
+                      display: block;
+                      object-fit: fill;
+                      image-rendering: crisp-edges;
+                    }
+                    .code {
+                      flex: 1 1 auto;
+                      min-width: 0;
+                      overflow: hidden;
+                      font-size: 6.5pt;
+                      line-height: 1;
+                      font-weight: 800;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
                     }
                     .price {
-                      margin: 0 0 1.1mm;
-                      font-size: 12.4pt;
+                      flex: 0 0 auto;
+                      font-size: 11.5pt;
                       line-height: 1;
                       font-weight: 900;
                     }
-                    .qr-frame {
-                      width: 25mm;
-                      height: 26mm;
-                      display: grid;
-                      place-items: center;
-                      padding: 1mm;
-                      background: #fff;
-                      border: 0;
-                    }
-                    img {
-                      width: 24mm;
-                      height: 24mm;
-                      display: block;
-                      object-fit: contain;
-                    }
+                    p { margin: 0; }
                     @media print {
                       body { min-height: auto; background: #fff; }
-                      .label { border: 0; }
+                      .label { border: 0; break-after: page; }
                     }
                   </style>
                 </head>
                 <body>
                   <section class="label" aria-label="Etiqueta de produto">
-                    <div class="content">
-                      <p class="brand">IWR MODAS</p>
+                    <header class="label-header">
                       <p class="name">%s</p>
+                    </header>
+                    <div class="barcode-wrap" aria-label="Codigo de barras do produto">
+                      <img src="data:image/png;base64,%s" alt="Codigo de barras do produto">
+                    </div>
+                    <footer class="label-footer">
+                      <p class="code">%s</p>
                       <p class="price">%s</p>
-                    </div>
-                    <div class="qr-frame" aria-label="QR Code do produto">
-                      <img src="data:image/png;base64,%s" alt="QR Code do produto">
-                    </div>
+                    </footer>
                   </section>
                   <script>
                     window.addEventListener('load', () => {
@@ -120,8 +130,9 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                 """.formatted(
                 escapeHtml(product.getName()),
                 escapeHtml(product.getName()),
-                escapeHtml(formatCurrency(product)),
-                encodedQrCode
+                encodedBarcode,
+                escapeHtml(product.getCode()),
+                escapeHtml(formatCurrency(product))
         );
     }
 

@@ -177,7 +177,7 @@ class UserManagementControllerIntegrationTest {
     @Test
     void shouldRestrictSellerToSalesAndCashRegister() throws Exception {
         String sellerHeader = "Bearer " + createSellerAndLogin("joao", "Joao Vendedor");
-        Product product = productRepository.save(buildProduct("Blusa QR", "IWR-SELLER-001", new BigDecimal("30.00"), 3, true));
+        Product product = productRepository.save(buildProduct("Blusa Barcode", "IWR-SELLER-001", new BigDecimal("30.00"), 3, true));
 
         mockMvc.perform(get("/api/users")
                         .header("Authorization", sellerHeader))

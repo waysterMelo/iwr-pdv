@@ -284,7 +284,7 @@ class ProductControllerIntegrationTest {
     }
 
     @Test
-    void shouldGenerateProductQrCodeAsPng() throws Exception {
+    void shouldGenerateProductBarcodeAsPng() throws Exception {
         Product savedProduct = productRepository.save(buildProduct(
                 "Casaco Tricot",
                 "IWR-040",
@@ -293,7 +293,7 @@ class ProductControllerIntegrationTest {
                 true
         ));
 
-        mockMvc.perform(get("/api/products/{productId}/qr-code", savedProduct.getId())
+        mockMvc.perform(get("/api/products/{productId}/barcode", savedProduct.getId())
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(result -> {
@@ -323,16 +323,24 @@ class ProductControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(result -> {
                     String html = result.getResponse().getContentAsString();
-                    if (!html.contains("IWR MODAS")
-                            || !html.contains("Vestido Festa")
+                    if (!html.contains("Vestido Festa")
+                            || !html.contains("IWR-050")
                             || !html.contains("@page { size: 50mm 30mm; margin: 0; }")
-                            || !html.contains("width: 18mm;")
-                            || !html.contains("class=\"qr-frame\"")
+                            || !html.contains("grid-template-rows: 4mm 17.5mm 4.5mm;")
+                            || !html.contains("padding: 1mm 2mm;")
+                            || !html.contains("width: 46mm;")
+                            || !html.contains("height: 17mm;")
+                            || !html.contains("image-rendering: crisp-edges;")
+                            || !html.contains("class=\"barcode-wrap\"")
                             || !html.contains("data:image/png;base64,")) {
                         throw new AssertionError("Expected a printable label HTML response.");
                     }
-                    if (html.contains("IWR-050") || html.contains("class=\"code\"")) {
-                        throw new AssertionError("Product code must not be visible in the printable label.");
+                    if (html.contains("IWR MODAS")) {
+                        throw new AssertionError("Brand text must not be visible in the printable label.");
+                    }
+                    if (html.indexOf("class=\"label-header\"") > html.indexOf("class=\"barcode-wrap\"")
+                            || html.indexOf("class=\"barcode-wrap\"") > html.indexOf("class=\"label-footer\"")) {
+                        throw new AssertionError("Barcode label must render header, barcode and footer in order.");
                     }
                 });
     }

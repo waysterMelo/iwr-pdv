@@ -1126,11 +1126,12 @@ h3 {
 }
 
 .product-qr-image {
-  width: 92px;
-  height: 92px;
+  width: 156px;
+  height: 58px;
   padding: 6px;
   background: #fff;
-  object-fit: contain;
+  image-rendering: crisp-edges;
+  object-fit: fill;
 }
 
 .product-qr-content {
@@ -1356,13 +1357,14 @@ h3 {
 
 .qr-modal-image {
   width: min(360px, 100%);
-  aspect-ratio: 1;
+  aspect-ratio: 14 / 5;
   display: block;
   margin: 0 auto 22px;
   padding: 18px;
   background: #fff;
   border: 1px solid var(--color-border);
-  object-fit: contain;
+  image-rendering: crisp-edges;
+  object-fit: fill;
 }
 
 .qr-modal-actions {
