@@ -219,6 +219,10 @@ export function CashRegisterPage() {
                     <span><CreditCard size={14} strokeWidth={2.3} aria-hidden="true" />Credito</span>
                     <strong>{formatCurrency(totals.CREDIT_CARD)}</strong>
                   </div>
+                  <div>
+                    <span><ReceiptText size={14} strokeWidth={2.3} aria-hidden="true" />Promissoria</span>
+                    <strong>{formatCurrency(totals.PROMISSORY_NOTE)}</strong>
+                  </div>
                 </div>
 
                 <form className="product-form" onSubmit={handleMovement}>
@@ -295,7 +299,10 @@ export function CashRegisterPage() {
                       <article className="sale-history-item" key={movement.id}>
                         <span>{movement.type === 'CASH_IN' ? 'Suprimento' : 'Sangria'}</span>
                         <strong>{formatCurrency(movement.amount)}</strong>
-                        <small>{movement.reason} - {formatNullableDateTime(movement.createdAt)}</small>
+                        <small>
+                          {movement.reason}
+                          {movement.paymentMethod ? ` - ${movement.paymentMethod}` : ''} - {formatNullableDateTime(movement.createdAt)}
+                        </small>
                       </article>
                     ))
                   )}

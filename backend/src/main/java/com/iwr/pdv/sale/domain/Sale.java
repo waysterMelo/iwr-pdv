@@ -2,6 +2,8 @@ package com.iwr.pdv.sale.domain;
 
 import com.iwr.pdv.auth.domain.AppUser;
 import com.iwr.pdv.cash.domain.CashRegister;
+import com.iwr.pdv.customer.domain.Customer;
+import com.iwr.pdv.promissorynote.domain.PromissoryNote;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,6 +62,10 @@ public class Sale {
     private CashRegister cashRegister;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cancelled_by_user_id")
     private AppUser cancelledBy;
 
@@ -77,6 +83,9 @@ public class Sale {
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SaleItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sale")
+    private List<PromissoryNote> promissoryNotes = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -158,6 +167,14 @@ public class Sale {
         this.cashRegister = cashRegister;
     }
 
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
     public AppUser getCancelledBy() {
         return cancelledBy;
     }
@@ -209,5 +226,18 @@ public class Sale {
     public void addItem(SaleItem item) {
         items.add(item);
         item.setSale(this);
+    }
+
+    public List<PromissoryNote> getPromissoryNotes() {
+        return promissoryNotes;
+    }
+
+    public void setPromissoryNotes(List<PromissoryNote> promissoryNotes) {
+        this.promissoryNotes = promissoryNotes;
+    }
+
+    public void addPromissoryNote(PromissoryNote note) {
+        promissoryNotes.add(note);
+        note.setSale(this);
     }
 }

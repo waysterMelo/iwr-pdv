@@ -1,6 +1,7 @@
 package com.iwr.pdv.sale.api.dto;
 
 import com.iwr.pdv.sale.domain.PaymentMethod;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryInstallmentRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -22,6 +23,11 @@ public record SaleRequest(
         BigDecimal discountAmount,
         @DecimalMin(value = "0.00", message = "The received amount cannot be negative.")
         @Schema(description = "Amount received from the customer for cash payments")
-        BigDecimal amountReceived
+        BigDecimal amountReceived,
+        @Schema(description = "Customer id required for promissory note sales")
+        Long customerId,
+        @Valid
+        @Schema(description = "Installments required for promissory note sales")
+        List<PromissoryInstallmentRequest> promissoryInstallments
 ) {
 }

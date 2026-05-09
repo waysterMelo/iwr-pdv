@@ -62,6 +62,9 @@ public class CashRegisterMapper {
                 movement.getMovementType(),
                 movement.getAmount(),
                 movement.getReason(),
+                movement.getPaymentMethod(),
+                movement.getReferenceType(),
+                movement.getReferenceId(),
                 authMapper.toResponse(movement.getOperator()),
                 movement.getCreatedAt()
         );

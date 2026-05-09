@@ -8,11 +8,14 @@ import navSales from './assets/generated/nav-sales.png'
 import navUsers from './assets/generated/nav-users.png'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 import { CatalogingPage } from './pages/CatalogingPage'
+import { CustomerManagementPage } from './pages/CustomerManagementPage'
 import { LoginPage } from './pages/LoginPage'
+import { LoyaltyPage } from './pages/LoyaltyPage'
 import { MobileSalesPage } from './pages/MobileSalesPage'
 import { MobileCashRegisterPage } from './pages/MobileCashRegisterPage'
 import { ProductEditPage } from './pages/ProductEditPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
+import { PromissoryNotesPage } from './pages/PromissoryNotesPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
 import { SalesHistoryPage } from './pages/SalesHistoryPage'
 import { UserManagementPage } from './pages/UserManagementPage'
@@ -21,12 +24,15 @@ import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
+type AppView = 'checkout' | 'cash-register' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
 
 const menuImages: Record<AppView, string> = {
   checkout: navSales,
   'cash-register': navCashRegister,
+  'promissory-notes': navHistory,
+  loyalty: navUsers,
+  customers: navUsers,
   history: navHistory,
   products: navProducts,
   'product-edit': navProducts,
@@ -45,6 +51,9 @@ function App() {
   const allMenuItems: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
     { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
+    { id: 'promissory-notes', label: 'Notas', eyebrow: 'Promissorias' },
+    { id: 'loyalty', label: 'Fidelidade', eyebrow: 'Clientes' },
+    { id: 'customers', label: 'Clientes', eyebrow: 'Cadastro' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
     { id: 'products', label: 'Produtos', eyebrow: 'Estoque', adminOnly: true },
     { id: 'cataloging', label: 'Catalogacao', eyebrow: 'Lotes', adminOnly: true },
@@ -244,6 +253,9 @@ function App() {
 
         {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
         {visibleView === 'cash-register' ? <CashRegisterPage /> : null}
+        {visibleView === 'promissory-notes' ? <PromissoryNotesPage /> : null}
+        {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
+        {visibleView === 'customers' ? <CustomerManagementPage /> : null}
         {visibleView === 'history' ? <SalesHistoryPage /> : null}
         {visibleView === 'products' ? (
           <ProductManagementPage

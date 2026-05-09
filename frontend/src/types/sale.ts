@@ -1,6 +1,8 @@
 import type { AuthUser } from './auth'
+import type { Customer } from './customer'
+import type { PromissoryInstallmentPayload, PromissoryNoteSummary } from './promissoryNote'
 
-export type PaymentMethod = 'CASH' | 'PIX' | 'DEBIT_CARD' | 'CREDIT_CARD'
+export type PaymentMethod = 'CASH' | 'PIX' | 'DEBIT_CARD' | 'CREDIT_CARD' | 'PROMISSORY_NOTE'
 export type SaleStatus = 'COMPLETED' | 'CANCELLED'
 
 export type SaleItemPayload = {
@@ -13,6 +15,8 @@ export type SalePayload = {
   paymentMethod: PaymentMethod
   discountAmount: number
   amountReceived?: number
+  customerId?: number
+  promissoryInstallments?: PromissoryInstallmentPayload[]
 }
 
 export type SaleItem = {
@@ -29,6 +33,7 @@ export type Sale = {
   id: number
   status: SaleStatus
   operator: AuthUser | null
+  customer: Customer | null
   paymentMethod: PaymentMethod
   subtotalAmount: number
   discountAmount: number
@@ -41,4 +46,5 @@ export type Sale = {
   cancellationReason: string | null
   createdAt: string
   items: SaleItem[]
+  promissoryNotes: PromissoryNoteSummary[]
 }

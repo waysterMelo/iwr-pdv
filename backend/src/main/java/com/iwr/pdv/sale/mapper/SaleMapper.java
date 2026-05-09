@@ -1,7 +1,10 @@
 package com.iwr.pdv.sale.mapper;
 
 import com.iwr.pdv.auth.mapper.AuthMapper;
+import com.iwr.pdv.customer.mapper.CustomerMapper;
 import com.iwr.pdv.product.domain.Product;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteSummaryResponse;
+import com.iwr.pdv.promissorynote.domain.PromissoryNote;
 import com.iwr.pdv.sale.api.dto.SaleItemResponse;
 import com.iwr.pdv.sale.api.dto.SaleResponse;
 import com.iwr.pdv.sale.domain.Sale;
@@ -13,9 +16,11 @@ import org.springframework.stereotype.Component;
 public class SaleMapper {
 
     private final AuthMapper authMapper;
+    private final CustomerMapper customerMapper;
 
-    public SaleMapper(AuthMapper authMapper) {
+    public SaleMapper(AuthMapper authMapper, CustomerMapper customerMapper) {
         this.authMapper = authMapper;
+        this.customerMapper = customerMapper;
     }
 
     public SaleItem toItem(Product product, int quantity) {
@@ -37,6 +42,7 @@ public class SaleMapper {
                 sale.getId(),
                 sale.getStatus(),
                 sale.getOperator() == null ? null : authMapper.toResponse(sale.getOperator()),
+                customerMapper.toResponse(sale.getCustomer()),
                 sale.getPaymentMethod(),
                 sale.getSubtotalAmount(),
                 sale.getDiscountAmount(),
@@ -51,6 +57,10 @@ public class SaleMapper {
                 sale.getItems()
                         .stream()
                         .map(this::toItemResponse)
+                        .toList(),
+                sale.getPromissoryNotes()
+                        .stream()
+                        .map(this::toPromissoryNoteSummary)
                         .toList()
         );
     }
@@ -64,6 +74,17 @@ public class SaleMapper {
                 item.getQuantity(),
                 item.getUnitPrice(),
                 item.getSubtotal()
+        );
+    }
+
+    private PromissoryNoteSummaryResponse toPromissoryNoteSummary(PromissoryNote note) {
+        return new PromissoryNoteSummaryResponse(
+                note.getId(),
+                note.getInstallmentNumber(),
+                note.getTotalInstallments(),
+                note.getAmount(),
+                note.getDueDate(),
+                note.getStatus()
         );
     }
 }

@@ -1,6 +1,7 @@
 package com.iwr.pdv.cash.domain;
 
 import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.sale.domain.PaymentMethod;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,6 +37,16 @@ public class CashMovement {
 
     @Column(nullable = false, length = 180)
     private String reason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", length = 30)
+    private PaymentMethod paymentMethod;
+
+    @Column(name = "reference_type", length = 40)
+    private String referenceType;
+
+    @Column(name = "reference_id")
+    private Long referenceId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "operator_user_id", nullable = false)
@@ -82,6 +93,30 @@ public class CashMovement {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public Long getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(Long referenceId) {
+        this.referenceId = referenceId;
     }
 
     public AppUser getOperator() {
