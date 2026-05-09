@@ -27,7 +27,10 @@ public class ProductQrCodeServiceImpl implements ProductQrCodeService {
                     BarcodeFormat.QR_CODE,
                     QR_CODE_SIZE,
                     QR_CODE_SIZE,
-                    Map.of(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name())
+                    Map.of(
+                            EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name(),
+                            EncodeHintType.MARGIN, 1
+                    )
             );
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

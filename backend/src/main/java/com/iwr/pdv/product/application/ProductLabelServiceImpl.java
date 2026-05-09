@@ -46,7 +46,7 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       width: 50mm;
                       height: 30mm;
                       display: grid;
-                      grid-template-columns: minmax(0, 1fr) 21mm;
+                      grid-template-columns: minmax(0, 1fr) 25mm;
                       gap: 2mm;
                       align-items: center;
                       padding: 2.4mm;
@@ -79,17 +79,17 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       font-weight: 900;
                     }
                     .qr-frame {
-                      width: 21mm;
-                      height: 21mm;
+                      width: 25mm;
+                      height: 26mm;
                       display: grid;
                       place-items: center;
-                      padding: 1.5mm;
+                      padding: 1mm;
                       background: #fff;
                       border: 0;
                     }
                     img {
-                      width: 18mm;
-                      height: 18mm;
+                      width: 24mm;
+                      height: 24mm;
                       display: block;
                       object-fit: contain;
                     }
