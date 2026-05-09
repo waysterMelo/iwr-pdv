@@ -131,14 +131,14 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
       {isLoading ? (
         <div style={{ padding: '16px', textAlign: 'center' }}>Carregando caixa...</div>
       ) : !isOpen ? (
-        <section className="mobile-action-panel">
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Nenhum caixa aberto</h2>
-            <p style={{ color: 'var(--text-color)', opacity: 0.7 }}>Informe o saldo inicial para abrir o caixa e liberar as vendas.</p>
+        <section className="mobile-action-panel mobile-action-panel--empty">
+          <div className="mobile-action-panel-header">
+            <h2>Nenhum caixa aberto</h2>
+            <p>Informe o saldo inicial para abrir o caixa e liberar as vendas.</p>
           </div>
-          <form className="mobile-manual-form" onSubmit={handleOpen} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label htmlFor="mobileOpeningAmount">Saldo inicial (Dinheiro em caixa)</label>
+          <form className="mobile-manual-form" onSubmit={handleOpen}>
+            <div>
+              <label htmlFor="mobileOpeningAmount">Saldo inicial (Dinheiro)</label>
               <CurrencyInput
                 id="mobileOpeningAmount"
                 value={openingAmount}
@@ -153,49 +153,50 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
         </section>
       ) : view === 'status' ? (
         <>
-          <section className="mobile-total-panel" style={{ textAlign: 'left', padding: '24px' }}>
-            <span style={{ opacity: 0.8 }}>Resumo do Caixa</span>
-            <strong style={{ fontSize: '2rem' }}>{formatCurrency(cashRegister.totalSalesAmount)}</strong>
-            <small style={{ opacity: 0.7 }}>Aberto em: {formatNullableDateTime(cashRegister.openedAt)}</small>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <section className="mobile-total-panel">
+            <span>Resumo do Caixa</span>
+            <strong>{formatCurrency(cashRegister.totalSalesAmount)}</strong>
+            <small>Aberto em: {formatNullableDateTime(cashRegister.openedAt)}</small>
+
+            <div className="mobile-total-panel-footer">
               <div>
-                <span style={{ display: 'block', opacity: 0.7, fontSize: '0.875rem' }}>Dinheiro Esperado</span>
+                <span>Dinheiro Esperado</span>
                 <strong>{formatCurrency(cashRegister.expectedCashAmount)}</strong>
               </div>
               <div>
-                <span style={{ display: 'block', opacity: 0.7, fontSize: '0.875rem' }}>Movimentacoes</span>
+                <span>Movimentacoes</span>
                 <strong>{formatCurrency(cashRegister.cashInAmount - cashRegister.cashOutAmount)}</strong>
               </div>
             </div>
           </section>
 
-          <section className="mobile-action-panel" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button className="mobile-primary-button" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }} type="button" onClick={() => setView('movement')}>
+          <section className="mobile-action-panel">
+            <button className="mobile-primary-button" type="button" onClick={() => setView('movement')}>
               Registrar Sangria/Suprimento
             </button>
-            <button className="mobile-primary-button" style={{ backgroundColor: '#ef4444' }} type="button" onClick={() => setView('close')}>
+            <button className="mobile-primary-button mobile-primary-button--danger" type="button" onClick={() => setView('close')}>
               Fechar Caixa
             </button>
           </section>
         </>
       ) : view === 'movement' ? (
         <section className="mobile-action-panel">
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Nova Movimentacao</h2>
-          <form onSubmit={handleMovement} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <h2>Nova Movimentacao</h2>
+          <form className="mobile-manual-form" onSubmit={handleMovement}>
+            <div>
               <label>Tipo</label>
-              <select value={movementType} onChange={(e) => setMovementType(e.target.value as CashMovementType)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }}>
+              <select value={movementType} onChange={(e) => setMovementType(e.target.value as CashMovementType)}>
                 <option value="CASH_IN">Suprimento (Entrada)</option>
                 <option value="CASH_OUT">Sangria (Retirada)</option>
               </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div>
               <label>Valor</label>
-              <CurrencyInput value={movementAmount} onChange={setMovementAmount} placeholder="0.00" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }} />
+              <CurrencyInput value={movementAmount} onChange={setMovementAmount} placeholder="0.00" />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div>
               <label>Motivo</label>
-              <input value={movementReason} onChange={(e) => setMovementReason(e.target.value)} placeholder="Ex.: Sangria para cofre" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }} />
+              <input value={movementReason} onChange={(e) => setMovementReason(e.target.value)} placeholder="Ex.: Sangria para cofre" />
             </div>
             <button className="mobile-primary-button" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Registrando...' : 'Confirmar'}
@@ -204,14 +205,14 @@ export function MobileCashRegisterPage({ onBack }: MobileCashRegisterPageProps) 
         </section>
       ) : (
         <section className="mobile-action-panel">
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Fechamento de Caixa</h2>
-          <p style={{ marginBottom: '16px', opacity: 0.8 }}>O sistema espera encontrar {formatCurrency(cashRegister!.expectedCashAmount)} em dinheiro.</p>
-          <form onSubmit={handleClose} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <h2>Fechamento de Caixa</h2>
+          <p>O sistema espera encontrar {formatCurrency(cashRegister!.expectedCashAmount)} em dinheiro.</p>
+          <form className="mobile-manual-form" onSubmit={handleClose}>
+            <div>
               <label>Dinheiro Contado</label>
-              <CurrencyInput value={declaredCashAmount} onChange={setDeclaredCashAmount} placeholder="0.00" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-body)', color: 'var(--text-color)' }} />
+              <CurrencyInput value={declaredCashAmount} onChange={setDeclaredCashAmount} placeholder="0.00" />
             </div>
-            <button className="mobile-primary-button" style={{ backgroundColor: '#ef4444' }} type="submit" disabled={isSubmitting}>
+            <button className="mobile-primary-button mobile-primary-button--danger" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Fechando...' : 'Confirmar Fechamento'}
             </button>
           </form>

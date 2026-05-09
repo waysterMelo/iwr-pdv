@@ -9,13 +9,18 @@ import com.iwr.pdv.auth.api.dto.LoginRequest;
 import com.iwr.pdv.auth.application.AuthService;
 import com.iwr.pdv.cash.domain.CashMovementRepository;
 import com.iwr.pdv.cash.domain.CashRegisterRepository;
+import com.iwr.pdv.customer.domain.Customer;
+import com.iwr.pdv.customer.domain.CustomerRepository;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductCategory;
 import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
+import com.iwr.pdv.promissorynote.domain.PromissoryNote;
+import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
 import com.iwr.pdv.sale.domain.StockMovementRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +52,12 @@ class SaleControllerIntegrationTest {
     private StockMovementRepository stockMovementRepository;
 
     @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private PromissoryNoteRepository promissoryNoteRepository;
+
+    @Autowired
     private CashMovementRepository cashMovementRepository;
 
     @Autowired
@@ -63,9 +74,11 @@ class SaleControllerIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
         stockMovementRepository.deleteAll();
+        promissoryNoteRepository.deleteAll();
         saleRepository.deleteAll();
         cashMovementRepository.deleteAll();
         cashRegisterRepository.deleteAll();
+        customerRepository.deleteAll();
         productRepository.deleteAll();
         openCashRegister();
     }
@@ -337,6 +350,75 @@ class SaleControllerIntegrationTest {
     }
 
     @Test
+    void shouldClosePromissoryNoteSaleAndSettleInstallmentIntoCashRegister() throws Exception {
+        Customer customer = customerRepository.save(buildCustomer("Cliente Promissoria"));
+        Product product = productRepository.save(buildProduct("Conjunto Linho", "IWR-NP-001", new BigDecimal("100.00"), 3, true));
+
+        String payload = """
+                {
+                  "items": [
+                    {
+                      "productId": %d,
+                      "quantity": 1
+                    }
+                  ],
+                  "paymentMethod": "PROMISSORY_NOTE",
+                  "discountAmount": 0,
+                  "customerId": %d,
+                  "promissoryInstallments": [
+                    {
+                      "dueDate": "%s",
+                      "amount": 50.00
+                    },
+                    {
+                      "dueDate": "%s",
+                      "amount": 50.00
+                    }
+                  ]
+                }
+                """.formatted(
+                product.getId(),
+                customer.getId(),
+                LocalDate.now().plusDays(10),
+                LocalDate.now().plusDays(20)
+        );
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.paymentMethod").value("PROMISSORY_NOTE"))
+                .andExpect(jsonPath("$.customer.name").value("Cliente Promissoria"))
+                .andExpect(jsonPath("$.promissoryNotes.length()").value(2))
+                .andExpect(jsonPath("$.promissoryNotes[0].amount").value(50.00));
+
+        org.junit.jupiter.api.Assertions.assertEquals(2, promissoryNoteRepository.count());
+
+        PromissoryNote firstNote = promissoryNoteRepository.findAll()
+                .stream()
+                .filter(note -> note.getInstallmentNumber() == 1)
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(post("/api/promissory-notes/{noteId}/payments", firstNote.getId())
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentMethod\":\"CASH\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAID"))
+                .andExpect(jsonPath("$.paymentMethod").value("CASH"));
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, cashMovementRepository.count());
+
+        mockMvc.perform(get("/api/cash-register/current")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.expectedCashAmount").value(150.00))
+                .andExpect(jsonPath("$.totalsByPaymentMethod.PROMISSORY_NOTE").value(100.00));
+    }
+
+    @Test
     void shouldRejectDiscountGreaterThanSubtotal() throws Exception {
         Product product = productRepository.save(buildProduct("Bolsa Pequena", "IWR-105", new BigDecimal("50.00"), 2, true));
 
@@ -476,6 +558,17 @@ class SaleControllerIntegrationTest {
         product.setUpdatedAt(OffsetDateTime.now());
 
         return product;
+    }
+
+    private Customer buildCustomer(String name) {
+        Customer customer = new Customer();
+        customer.setName(name);
+        customer.setCpf("00011122233");
+        customer.setPhone("11999999999");
+        customer.setActive(true);
+        customer.setCreatedAt(OffsetDateTime.now());
+        customer.setUpdatedAt(OffsetDateTime.now());
+        return customer;
     }
 
     private Long categoryId() {

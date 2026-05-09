@@ -5,8 +5,14 @@ import com.iwr.pdv.cash.application.CashRegisterService;
 import com.iwr.pdv.cash.domain.CashRegister;
 import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
+import com.iwr.pdv.customer.domain.Customer;
+import com.iwr.pdv.customer.domain.CustomerRepository;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductRepository;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryInstallmentRequest;
+import com.iwr.pdv.promissorynote.domain.PromissoryNote;
+import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
+import com.iwr.pdv.promissorynote.domain.PromissoryNoteStatus;
 import com.iwr.pdv.sale.api.dto.SaleCancellationRequest;
 import com.iwr.pdv.sale.api.dto.SaleItemRequest;
 import com.iwr.pdv.sale.api.dto.SaleRequest;
@@ -41,6 +47,8 @@ public class SaleServiceImpl implements SaleService {
     private final SaleRepository saleRepository;
     private final ProductRepository productRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final CustomerRepository customerRepository;
+    private final PromissoryNoteRepository promissoryNoteRepository;
     private final SaleMapper saleMapper;
     private final CashRegisterService cashRegisterService;
     private final Clock clock;
@@ -49,6 +57,8 @@ public class SaleServiceImpl implements SaleService {
             SaleRepository saleRepository,
             ProductRepository productRepository,
             StockMovementRepository stockMovementRepository,
+            CustomerRepository customerRepository,
+            PromissoryNoteRepository promissoryNoteRepository,
             SaleMapper saleMapper,
             CashRegisterService cashRegisterService,
             Clock clock
@@ -56,6 +66,8 @@ public class SaleServiceImpl implements SaleService {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
         this.stockMovementRepository = stockMovementRepository;
+        this.customerRepository = customerRepository;
+        this.promissoryNoteRepository = promissoryNoteRepository;
         this.saleMapper = saleMapper;
         this.cashRegisterService = cashRegisterService;
         this.clock = clock;
@@ -67,6 +79,7 @@ public class SaleServiceImpl implements SaleService {
         Map<Long, Integer> quantitiesByProductId = consolidateQuantities(request.items());
         OffsetDateTime now = OffsetDateTime.now(clock);
         CashRegister cashRegister = cashRegisterService.requireOpenRegister();
+        Customer customer = resolveCustomer(request);
 
         Sale sale = new Sale();
         sale.setSoldAt(now);
@@ -74,6 +87,7 @@ public class SaleServiceImpl implements SaleService {
         sale.setStatus(SaleStatus.COMPLETED);
         sale.setOperator(operator);
         sale.setCashRegister(cashRegister);
+        sale.setCustomer(customer);
         sale.setPaymentMethod(request.paymentMethod());
         sale.setSubtotalAmount(BigDecimal.ZERO);
         sale.setDiscountAmount(resolveDiscount(request.discountAmount()));
@@ -96,8 +110,14 @@ public class SaleServiceImpl implements SaleService {
         validateDiscount(sale.getSubtotalAmount(), sale.getDiscountAmount());
         sale.setTotalAmount(sale.getSubtotalAmount().subtract(sale.getDiscountAmount()));
         applyPaymentAmounts(sale, request.amountReceived());
+        validatePromissoryInstallments(sale, request.promissoryInstallments());
 
         Sale savedSale = saleRepository.save(sale);
+        if (savedSale.getPaymentMethod() == PaymentMethod.PROMISSORY_NOTE) {
+            List<PromissoryNote> notes = buildPromissoryNotes(savedSale, customer, request.promissoryInstallments(), now);
+            promissoryNoteRepository.saveAll(notes);
+            notes.forEach(savedSale::addPromissoryNote);
+        }
         stockMovementRepository.saveAll(savedSale.getItems()
                 .stream()
                 .map(item -> toStockMovement(item, savedSale.getId(), now, StockMovementType.SALE))
@@ -433,6 +453,25 @@ public class SaleServiceImpl implements SaleService {
         }
     }
 
+    private Customer resolveCustomer(SaleRequest request) {
+        if (request.paymentMethod() != PaymentMethod.PROMISSORY_NOTE && request.customerId() == null) {
+            return null;
+        }
+
+        if (request.customerId() == null) {
+            throw new BusinessRuleException("Customer is required for promissory note sales.");
+        }
+
+        Customer customer = customerRepository.findById(request.customerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found for id " + request.customerId() + "."));
+
+        if (!Boolean.TRUE.equals(customer.getActive())) {
+            throw new BusinessRuleException("Customer is inactive and cannot be used in a sale.");
+        }
+
+        return customer;
+    }
+
     private void applyPaymentAmounts(Sale sale, BigDecimal amountReceived) {
         if (sale.getPaymentMethod() == PaymentMethod.CASH) {
             if (amountReceived == null || amountReceived.compareTo(sale.getTotalAmount()) < 0) {
@@ -445,6 +484,48 @@ public class SaleServiceImpl implements SaleService {
 
         sale.setAmountReceived(null);
         sale.setChangeAmount(BigDecimal.ZERO);
+    }
+
+    private void validatePromissoryInstallments(Sale sale, List<PromissoryInstallmentRequest> installments) {
+        if (sale.getPaymentMethod() != PaymentMethod.PROMISSORY_NOTE) {
+            return;
+        }
+
+        if (installments == null || installments.isEmpty()) {
+            throw new BusinessRuleException("At least one installment is required for promissory note sales.");
+        }
+
+        BigDecimal installmentTotal = installments.stream()
+                .map(PromissoryInstallmentRequest::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (installmentTotal.compareTo(sale.getTotalAmount()) != 0) {
+            throw new BusinessRuleException("Promissory note installments must match the sale total.");
+        }
+    }
+
+    private List<PromissoryNote> buildPromissoryNotes(
+            Sale sale,
+            Customer customer,
+            List<PromissoryInstallmentRequest> installments,
+            OffsetDateTime createdAt
+    ) {
+        int totalInstallments = installments.size();
+        return java.util.stream.IntStream.range(0, totalInstallments)
+                .mapToObj(index -> {
+                    PromissoryInstallmentRequest installment = installments.get(index);
+                    PromissoryNote note = new PromissoryNote();
+                    note.setSale(sale);
+                    note.setCustomer(customer);
+                    note.setInstallmentNumber(index + 1);
+                    note.setTotalInstallments(totalInstallments);
+                    note.setAmount(installment.amount());
+                    note.setDueDate(installment.dueDate());
+                    note.setStatus(PromissoryNoteStatus.PENDING);
+                    note.setCreatedAt(createdAt);
+                    note.setUpdatedAt(createdAt);
+                    return note;
+                })
+                .toList();
     }
 
     private StockMovement toStockMovement(
@@ -478,6 +559,7 @@ public class SaleServiceImpl implements SaleService {
             case PIX -> "PIX";
             case DEBIT_CARD -> "Cartao debito";
             case CREDIT_CARD -> "Cartao credito";
+            case PROMISSORY_NOTE -> "Nota promissoria";
         };
     }
 

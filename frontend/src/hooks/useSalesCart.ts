@@ -6,6 +6,7 @@ import { closeSale } from '../services/saleService'
 import type { CashRegister } from '../types/cashRegister'
 import type { Product } from '../types/product'
 import type { PaymentMethod, Sale } from '../types/sale'
+import type { PromissoryInstallmentPayload } from '../types/promissoryNote'
 import { getErrorMessage } from '../utils/errors'
 
 export type CartItem = {
@@ -143,7 +144,7 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
     showMessage('Carrinho limpo. Pronto para uma nova venda.', 'success')
   }
 
-  async function finalizeSale() {
+  async function finalizeSale(options: { customerId?: number; promissoryInstallments?: PromissoryInstallmentPayload[] } = {}) {
     if (cartItems.length === 0) {
       showMessage('Adicione pelo menos um item antes de finalizar a venda.', 'error')
       return null
@@ -164,6 +165,24 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
       return null
     }
 
+    if (paymentMethod === 'PROMISSORY_NOTE') {
+      if (!options.customerId) {
+        showMessage('Selecione um cliente para vender na nota promissoria.', 'error')
+        return null
+      }
+
+      if (!options.promissoryInstallments?.length) {
+        showMessage('Informe pelo menos uma parcela para a nota promissoria.', 'error')
+        return null
+      }
+
+      const installmentTotal = options.promissoryInstallments.reduce((sum, installment) => sum + installment.amount, 0)
+      if (Math.abs(installmentTotal - totalAmount) > 0.009) {
+        showMessage('A soma das parcelas precisa fechar com o total da venda.', 'error')
+        return null
+      }
+    }
+
     setIsClosingSale(true)
 
     try {
@@ -175,6 +194,8 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
         paymentMethod,
         discountAmount: parsedDiscountAmount,
         amountReceived: paymentMethod === 'CASH' ? parsedAmountReceived : undefined,
+        customerId: options.customerId,
+        promissoryInstallments: options.promissoryInstallments,
       })
 
       setCartItems([])

@@ -6,6 +6,8 @@ import com.iwr.pdv.cash.api.dto.CashRegisterCloseRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterOpenRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterResponse;
 import com.iwr.pdv.cash.domain.CashRegister;
+import com.iwr.pdv.sale.domain.PaymentMethod;
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface CashRegisterService {
@@ -19,6 +21,15 @@ public interface CashRegisterService {
     Optional<CashRegisterResponse> current();
 
     CashRegister requireOpenRegister();
+
+    CashRegister registerReceivablePayment(
+            BigDecimal amount,
+            PaymentMethod paymentMethod,
+            String reason,
+            AppUser operator,
+            String referenceType,
+            Long referenceId
+    );
 
     CashRegisterResponse toResponse(CashRegister cashRegister);
 }

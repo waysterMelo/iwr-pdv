@@ -1,4 +1,5 @@
 import type { AuthUser } from './auth'
+import type { PaymentMethod } from './sale'
 
 export type CashRegisterStatus = 'OPEN' | 'CLOSED'
 export type CashMovementType = 'CASH_IN' | 'CASH_OUT'
@@ -8,6 +9,9 @@ export type CashMovement = {
   type: CashMovementType
   amount: number
   reason: string
+  paymentMethod: PaymentMethod | null
+  referenceType: string | null
+  referenceId: number | null
   operator: AuthUser
   createdAt: string
 }

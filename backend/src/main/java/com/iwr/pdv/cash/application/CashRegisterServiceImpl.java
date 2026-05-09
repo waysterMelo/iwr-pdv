@@ -79,6 +79,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         movement.setMovementType(request.type());
         movement.setAmount(request.amount());
         movement.setReason(request.reason().trim());
+        movement.setPaymentMethod(PaymentMethod.CASH);
         movement.setOperator(operator);
         movement.setCreatedAt(OffsetDateTime.now(clock));
         cashMovementRepository.save(movement);
@@ -127,6 +128,33 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     @Override
+    @Transactional
+    public CashRegister registerReceivablePayment(
+            BigDecimal amount,
+            PaymentMethod paymentMethod,
+            String reason,
+            AppUser operator,
+            String referenceType,
+            Long referenceId
+    ) {
+        CashRegister cashRegister = requireOpenRegister();
+
+        CashMovement movement = new CashMovement();
+        movement.setCashRegister(cashRegister);
+        movement.setMovementType(CashMovementType.CASH_IN);
+        movement.setAmount(amount);
+        movement.setReason(reason);
+        movement.setPaymentMethod(paymentMethod);
+        movement.setReferenceType(referenceType);
+        movement.setReferenceId(referenceId);
+        movement.setOperator(operator);
+        movement.setCreatedAt(OffsetDateTime.now(clock));
+        cashMovementRepository.save(movement);
+
+        return cashRegister;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public CashRegisterResponse toResponse(CashRegister cashRegister) {
         CashTotals totals = calculateTotals(cashRegister);
@@ -154,7 +182,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         List<CashMovement> movements = cashMovementRepository.findByCashRegisterIdOrderByCreatedAtDesc(cashRegister.getId());
         for (CashMovement movement : movements) {
             if (movement.getMovementType() == CashMovementType.CASH_IN) {
-                cashInAmount = cashInAmount.add(movement.getAmount());
+                if (movement.getPaymentMethod() == null || movement.getPaymentMethod() == PaymentMethod.CASH) {
+                    cashInAmount = cashInAmount.add(movement.getAmount());
+                }
             } else {
                 cashOutAmount = cashOutAmount.add(movement.getAmount());
             }

@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import navCashRegister from './assets/generated/nav-cash-register.png'
+import navCataloging from './assets/generated/nav-cataloging.png'
+import navHistory from './assets/generated/nav-history.png'
+import navProducts from './assets/generated/nav-products.png'
+import navSales from './assets/generated/nav-sales.png'
+import navUsers from './assets/generated/nav-users.png'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 import { CatalogingPage } from './pages/CatalogingPage'
+import { CustomerManagementPage } from './pages/CustomerManagementPage'
 import { LoginPage } from './pages/LoginPage'
+import { LoyaltyPage } from './pages/LoyaltyPage'
 import { MobileSalesPage } from './pages/MobileSalesPage'
 import { MobileCashRegisterPage } from './pages/MobileCashRegisterPage'
 import { ProductEditPage } from './pages/ProductEditPage'
 import { ProductManagementPage } from './pages/ProductManagementPage'
+import { PromissoryNotesPage } from './pages/PromissoryNotesPage'
 import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
 import { SalesHistoryPage } from './pages/SalesHistoryPage'
 import { UserManagementPage } from './pages/UserManagementPage'
@@ -15,17 +24,20 @@ import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
+type AppView = 'checkout' | 'cash-register' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'cataloging' | 'history' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
 
-const menuIcons: Record<AppView, string> = {
-  checkout: 'PD',
-  'cash-register': 'CX',
-  history: 'HI',
-  products: 'ES',
-  'product-edit': 'ED',
-  cataloging: 'LT',
-  users: 'US',
+const menuImages: Record<AppView, string> = {
+  checkout: navSales,
+  'cash-register': navCashRegister,
+  'promissory-notes': navHistory,
+  loyalty: navUsers,
+  customers: navUsers,
+  history: navHistory,
+  products: navProducts,
+  'product-edit': navProducts,
+  cataloging: navCataloging,
+  users: navUsers,
 }
 
 function App() {
@@ -39,6 +51,9 @@ function App() {
   const allMenuItems: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
     { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
+    { id: 'promissory-notes', label: 'Notas', eyebrow: 'Promissorias' },
+    { id: 'loyalty', label: 'Fidelidade', eyebrow: 'Clientes' },
+    { id: 'customers', label: 'Clientes', eyebrow: 'Cadastro' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
     { id: 'products', label: 'Produtos', eyebrow: 'Estoque', adminOnly: true },
     { id: 'cataloging', label: 'Catalogacao', eyebrow: 'Lotes', adminOnly: true },
@@ -53,6 +68,7 @@ function App() {
       ? { id: 'product-edit' as const, label: 'Editar produto', eyebrow: 'Estoque' }
       : menuItems.find((item) => item.id === visibleView) ?? menuItems[0]
   const operatorInitial = currentUser?.displayName.trim().charAt(0).toUpperCase() || 'I'
+  const isOperationLayout = true
 
   useEffect(() => {
     if (!getAuthToken()) {
@@ -132,8 +148,8 @@ function App() {
               <p>Venda por camera com carrinho simplificado e fechamento direto no caixa aberto.</p>
             </section>
 
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <button className="mobile-sell-button" type="button" onClick={() => setMobileView('cash-register')} style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}>
+            <div className="mobile-home-actions">
+              <button className="mobile-sell-button mobile-sell-button--secondary" type="button" onClick={() => setMobileView('cash-register')}>
                 Meu Caixa
               </button>
               <button className="mobile-sell-button" type="button" onClick={() => setMobileView('sale')}>
@@ -151,27 +167,48 @@ function App() {
   }
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${isOperationLayout ? 'app-layout--operation' : 'app-layout--compact'}`}>
       <aside className="app-sidebar">
         <div className="brand-block">
-          <span className="brand-mark">IWR.</span>
-          <span className="brand-caption">Atelier PDV</span>
+          {isOperationLayout ? <div className="brand-logo-letter">I</div> : null}
+          <div className="brand-text-group">
+            <span className="brand-mark">IWR.</span>
+            <span className="brand-caption">ATELIER PDV</span>
+          </div>
         </div>
+
+        {isOperationLayout ? (
+          <div className="premium-status-card">
+            <div className="premium-status-card__icon" aria-hidden="true" />
+            <div>
+              <strong>Operacao premium</strong>
+              <span>Caixa aberto - Loja online</span>
+            </div>
+          </div>
+        ) : null}
 
         <nav className="side-navigation" aria-label="Navegacao principal">
           {menuItems.map((item) => (
+            (() => {
+              const menuImage = menuImages[item.id]
+
+              return (
             <button
               className={visibleView === item.id ? 'side-nav-button side-nav-button--active' : 'side-nav-button'}
               type="button"
               key={item.id}
               onClick={() => setCurrentView(item.id)}
             >
-              <span className="side-nav-icon">{menuIcons[item.id]}</span>
+              <span className="side-nav-icon">
+                <img src={menuImage} alt="" aria-hidden="true" />
+              </span>
               <span className="side-nav-copy">
                 <span>{item.eyebrow}</span>
                 <strong>{item.label}</strong>
               </span>
             </button>
+              )
+            })()
           ))}
         </nav>
 
@@ -216,6 +253,9 @@ function App() {
 
         {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
         {visibleView === 'cash-register' ? <CashRegisterPage /> : null}
+        {visibleView === 'promissory-notes' ? <PromissoryNotesPage /> : null}
+        {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
+        {visibleView === 'customers' ? <CustomerManagementPage /> : null}
         {visibleView === 'history' ? <SalesHistoryPage /> : null}
         {visibleView === 'products' ? (
           <ProductManagementPage

@@ -63,9 +63,9 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
       </header>
 
       {(!checkout.cashRegister || checkout.cashRegister.status !== 'OPEN') ? (
-        <section className="mobile-action-panel" style={{ textAlign: 'center', padding: '40px 20px', marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Nenhum caixa aberto</h2>
-          <p style={{ opacity: 0.7, marginBottom: '24px' }}>Voce precisa abrir o caixa para realizar vendas.</p>
+        <section className="mobile-action-panel mobile-action-panel--empty">
+          <h2>Nenhum caixa aberto</h2>
+          <p>Voce precisa abrir o caixa para realizar vendas.</p>
           <button className="mobile-primary-button" type="button" onClick={onBack}>
             Ir para Meu Caixa
           </button>

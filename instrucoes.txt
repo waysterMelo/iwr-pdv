@@ -1,556 +1,899 @@
-import React, { useMemo, useState } from "react";
+# Design System — IWR Atelier PDV
 
-const Icon = ({ children, size = 18 }) => (
-  <span style={{ fontSize: size, lineHeight: 1 }} aria-hidden="true">{children}</span>
-);
+## 1. Conceito visual
 
-const ShoppingBag = (props) => <Icon {...props}>◈</Icon>;
-const Landmark = (props) => <Icon {...props}>◆</Icon>;
-const History = (props) => <Icon {...props}>◷</Icon>;
-const Package = (props) => <Icon {...props}>▣</Icon>;
-const Users = (props) => <Icon {...props}>♟</Icon>;
-const QrCode = (props) => <Icon {...props}>▦</Icon>;
-const Printer = (props) => <Icon {...props}>▤</Icon>;
-const ShieldCheck = (props) => <Icon {...props}>◇</Icon>;
-const ChevronDown = (props) => <Icon {...props}>⌄</Icon>;
-const LogOut = (props) => <Icon {...props}>↗</Icon>;
-const Sparkles = (props) => <Icon {...props}>✦</Icon>;
-const Crown = (props) => <Icon {...props}>♕</Icon>;
-const Plus = (props) => <Icon {...props}>＋</Icon>;
-const Filter = (props) => <Icon {...props}>⟡</Icon>;
-const ReceiptText = (props) => <Icon {...props}>▧</Icon>;
-const WalletCards = (props) => <Icon {...props}>▰</Icon>;
-const SearchIcon = (props) => <Icon {...props}>⌕</Icon>;
-const Arrow = (props) => <Icon {...props}>→</Icon>;
-const Check = (props) => <Icon {...props}>✓</Icon>;
-const Alert = (props) => <Icon {...props}>!</Icon>;
+O sistema deve transmitir a sensação de uma operação de loja premium, com estética de boutique de moda, acabamento editorial e atmosfera de luxo discreto.
 
-const gold = "#C6A15B";
+A interface deve parecer sofisticada, mas continuar operacional. O usuário precisa vender, cadastrar produtos, controlar caixa e consultar histórico com rapidez. O visual deve ajudar a operação, não virar enfeite pesado.
 
-const menu = [
-  { id: "vendas", group: "PDV", label: "Vendas", icon: ShoppingBag, hint: "Venda rápida" },
-  { id: "caixa", group: "Operação", label: "Caixa", icon: Landmark, hint: "Abertura e fechamento" },
-  { id: "historico", group: "Consultas", label: "Histórico", icon: History, hint: "Vendas concluídas" },
-  { id: "produtos", group: "Estoque", label: "Produtos", icon: Package, hint: "Cadastro e QR Code" },
-  { id: "usuarios", group: "Acessos", label: "Usuários", icon: Users, hint: "Permissões" },
-];
+**Direção estética:** dark premium, moda de luxo, preto profundo, branco elegante, dourado refinado, cards com profundidade, bordas suaves e detalhes luminosos.
 
-const products = [
-  { name: "Produto Sprint 5 Debug", code: "IWR-000003", price: "R$ 39,90", stock: 0, total: "R$ 0,00", status: "Sem estoque", tone: "danger" },
-  { name: "Produto Sprint 5 Validação", code: "IWR-000002", price: "R$ 39,90", stock: 3, total: "R$ 119,70", status: "Estoque baixo", tone: "warning" },
-  { name: "Vestido Feminino", code: "IWF-002", price: "R$ 80,00", stock: 1, total: "R$ 80,00", status: "Estoque baixo", tone: "warning" },
-  { name: "Produto Homologação Software", code: "IWR-000001", price: "R$ 49,90", stock: 5, total: "R$ 249,50", status: "Ativo", tone: "success" },
-];
+---
 
-const cartItems = [
-  { name: "Produto Sprint 5 Validação", code: "IWR-000002", qty: 2, unit: "R$ 39,90", total: "R$ 79,80" },
-];
+## 2. Personalidade da interface
 
-const sales = [
-  { id: "#2", value: "R$ 79,80", detail: "Concluída · PIX · 26/04/2026, 17:28", seller: "Maria" },
-  { id: "#1", value: "R$ 39,90", detail: "Concluída · Cash · 25/04/2026, 13:42", seller: "Administrador" },
-];
+A aplicação deve comunicar:
 
-function Badge({ children, tone = "gold", dot = false }) {
-  const tones = {
-    gold: "border-[#C6A15B]/45 bg-[#C6A15B]/12 text-[#F3DFA8]",
-    success: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-    warning: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-    danger: "border-red-400/30 bg-red-400/10 text-red-300",
-    dark: "border-white/10 bg-white/[0.045] text-white/72",
-  };
-  return (
-    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${tones[tone]}`}>
-      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-      {children}
-    </span>
-  );
+* Luxo discreto
+* Confiança
+* Organização
+* Agilidade operacional
+* Exclusividade
+* Controle financeiro e comercial
+* Atendimento de boutique
+
+Evitar aparência de sistema genérico, planilha, painel administrativo básico ou dashboard muito colorido.
+
+---
+
+## 3. Paleta de cores
+
+### Cores principais
+
+| Nome              |                      Hex | Uso                                                  |
+| ----------------- | -----------------------: | ---------------------------------------------------- |
+| Preto absoluto    |                `#070708` | Sidebar, fundo principal escuro                      |
+| Preto premium     |                `#0A0A0B` | Background geral da aplicação                        |
+| Grafite profundo  |                `#101012` | Cards e painéis principais                           |
+| Grafite elevado   |                `#111113` | Superfícies secundárias                              |
+| Dourado principal |                `#C6A15B` | Destaques, botões principais, linhas, estados ativos |
+| Dourado claro     |                `#F3DFA8` | Textos especiais e badges premium                    |
+| Branco            |                `#FFFFFF` | Textos principais e botões contrastantes             |
+| Branco suave      | `rgba(255,255,255,0.58)` | Textos secundários                                   |
+| Branco apagado    | `rgba(255,255,255,0.35)` | Labels, hints e descrições fracas                    |
+
+### Cores de estado
+
+| Estado      |                  Cor base | Uso                                             |
+| ----------- | ------------------------: | ----------------------------------------------- |
+| Sucesso     | `emerald-400` / `#34D399` | Caixa aberto, usuário ativo, estoque disponível |
+| Alerta      |   `amber-400` / `#FBBF24` | Estoque baixo, atenção operacional              |
+| Erro/Perigo |     `red-400` / `#F87171` | Sem estoque, cancelar venda, ação destrutiva    |
+
+### Regras de uso
+
+* O dourado deve ser usado como acento, nunca como fundo dominante da aplicação inteira.
+* O fundo principal deve permanecer escuro.
+* Branco puro deve ser reservado para títulos, botões de alto contraste e informações essenciais.
+* Textos de apoio devem usar branco com opacidade entre 35% e 60%.
+* Evitar azul, roxo, verde forte ou cores neon fora dos estados necessários.
+
+---
+
+## 4. Tipografia
+
+### Estilo usado no modelo
+
+O modelo usa uma combinação entre fonte serifada para títulos e fonte sans-serif para interface.
+
+### Títulos principais
+
+**Fonte sugerida:** serifada editorial.
+
+Opções:
+
+* Playfair Display
+* Cormorant Garamond
+* Libre Baskerville
+* Bodoni Moda
+
+Uso:
+
+* Nome da marca
+* Títulos grandes das telas
+* Valores financeiros em destaque
+* Métricas principais
+
+Exemplo visual:
+
+```css
+font-family: 'Playfair Display', serif;
+letter-spacing: -0.06em;
+line-height: 0.95;
+```
+
+### Interface e textos operacionais
+
+**Fonte sugerida:** sans-serif limpa e moderna.
+
+Opções:
+
+* Inter
+* Satoshi
+* Manrope
+* Geist
+* Plus Jakarta Sans
+
+Uso:
+
+* Menus
+* Botões
+* Labels
+* Formulários
+* Tabelas
+* Descrições
+
+Exemplo visual:
+
+```css
+font-family: 'Inter', sans-serif;
+```
+
+### Hierarquia recomendada
+
+| Elemento         |     Tamanho |             Peso | Observação           |
+| ---------------- | ----------: | ---------------: | -------------------- |
+| Título da página | 56px a 72px | Regular/Semibold | Serifado, elegante   |
+| Título de card   | 28px a 32px | Regular/Semibold | Serifado             |
+| Métrica grande   | 32px a 48px |          Regular | Serifado             |
+| Texto comum      | 14px a 16px |          400/500 | Sans-serif           |
+| Label            | 10px a 11px |          800/900 | Uppercase e espaçado |
+| Botão            |        11px |          800/900 | Uppercase e espaçado |
+
+---
+
+## 5. Espaçamentos e grid
+
+### Layout geral
+
+* Sidebar desktop: `320px`
+* Conteúdo desktop: margem esquerda de `320px`
+* Padding lateral desktop: `48px` a `80px`
+* Padding mobile: `20px`
+* Gap padrão entre blocos: `24px`
+* Gap entre campos: `16px`
+* Padding de cards: `24px` a `28px`
+
+### Bordas
+
+A interface usa cantos grandes para reforçar o visual premium.
+
+| Elemento         |          Radius |
+| ---------------- | --------------: |
+| Cards principais | `28px` a `30px` |
+| Cards internos   | `22px` a `24px` |
+| Botões           | `16px` a `18px` |
+| Inputs           |          `16px` |
+| Badges           |         `999px` |
+
+---
+
+## 6. Background e profundidade
+
+### Fundo principal
+
+Usar preto com gradientes radiais sutis.
+
+```css
+background:
+  radial-gradient(circle at 78% 4%, rgba(198,161,91,0.18), transparent 28%),
+  radial-gradient(circle at 45% 90%, rgba(255,255,255,0.06), transparent 28%),
+  linear-gradient(135deg, #0A0A0B, #121214 45%, #070707);
+```
+
+### Grid sutil de fundo
+
+Usar uma malha quase invisível para dar sensação tecnológica e refinada.
+
+```css
+background-image:
+  linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px);
+background-size: 54px 54px;
+opacity: 0.055;
+```
+
+### Sombras
+
+Cards devem ter sombras grandes e suaves.
+
+```css
+box-shadow: 0 30px 110px rgba(0,0,0,0.43);
+```
+
+Barra final ou elementos fixos:
+
+```css
+box-shadow: 0 26px 100px rgba(0,0,0,0.62);
+```
+
+---
+
+## 7. Sidebar
+
+### Estrutura
+
+A sidebar deve ter:
+
+* Bloco de marca no topo
+* Status da operação
+* Menu com ícone, grupo, nome e descrição curta
+* Usuário logado no rodapé
+
+### Largura
+
+```css
+width: 320px;
+```
+
+### Fundo
+
+```css
+background: rgba(7,7,8,0.94);
+backdrop-filter: blur(24px);
+border-right: 1px solid rgba(255,255,255,0.10);
+```
+
+### Item de menu ativo
+
+O item ativo deve ser branco com texto preto, criando contraste forte.
+
+```css
+background: #FFFFFF;
+color: #000000;
+box-shadow: 0 20px 60px rgba(255,255,255,0.12);
+```
+
+Adicionar uma barra dourada à esquerda:
+
+```css
+background: #C6A15B;
+width: 4px;
+border-radius: 0 999px 999px 0;
+```
+
+### Item inativo
+
+```css
+color: rgba(255,255,255,0.66);
+background: transparent;
+```
+
+Hover:
+
+```css
+background: rgba(255,255,255,0.055);
+color: #FFFFFF;
+```
+
+---
+
+## 8. Navegação mobile
+
+No mobile, a sidebar vira uma navegação inferior fixa.
+
+### Estrutura
+
+* 5 botões: Vendas, Caixa, Histórico, Produtos, Usuários
+* Fundo preto translúcido
+* Botão ativo dourado com texto preto
+
+```css
+position: fixed;
+bottom: 12px;
+left: 12px;
+right: 12px;
+background: rgba(7,7,8,0.90);
+backdrop-filter: blur(20px);
+border: 1px solid rgba(255,255,255,0.10);
+border-radius: 24px;
+```
+
+---
+
+## 9. Cards e painéis
+
+### Card principal
+
+```css
+background: rgba(16,16,18,0.78);
+border: 1px solid rgba(255,255,255,0.10);
+border-radius: 30px;
+padding: 24px;
+box-shadow: 0 30px 110px rgba(0,0,0,0.43);
+backdrop-filter: blur(20px);
+```
+
+### Detalhe dourado superior
+
+Todo painel importante pode ter uma linha dourada sutil no topo.
+
+```css
+height: 1px;
+background: linear-gradient(to right, transparent, rgba(198,161,91,0.70), transparent);
+```
+
+### Glow decorativo
+
+```css
+background: rgba(198,161,91,0.10);
+filter: blur(48px);
+```
+
+### Uso correto
+
+Usar cards para:
+
+* Formulários
+* Carrinho da venda
+* Resumo de pagamento
+* Produtos cadastrados
+* Detalhes de venda
+* Usuários cadastrados
+
+Evitar cards dentro de cards em excesso. Quando necessário, usar card interno mais simples e com menos sombra.
+
+---
+
+## 10. Botões
+
+### Botão primário
+
+Uso: ação principal da tela.
+
+Exemplos:
+
+* Finalizar venda
+* Cadastrar produto
+* Fechar caixa
+* Cadastrar usuário
+
+```css
+background: #C6A15B;
+color: #080809;
+border-radius: 16px;
+font-size: 11px;
+font-weight: 900;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+box-shadow: 0 18px 60px rgba(198,161,91,0.28);
+```
+
+Hover:
+
+```css
+transform: translateY(-2px);
+background: #E0C077;
+box-shadow: 0 22px 75px rgba(198,161,91,0.35);
+```
+
+### Botão branco / alto contraste
+
+Uso: ação crítica positiva em barra final.
+
+```css
+background: #FFFFFF;
+color: #000000;
+```
+
+### Botão ghost
+
+Uso: ações secundárias.
+
+```css
+background: rgba(255,255,255,0.035);
+border: 1px solid rgba(255,255,255,0.10);
+color: #FFFFFF;
+```
+
+Hover:
+
+```css
+border-color: rgba(198,161,91,0.55);
+background: rgba(198,161,91,0.10);
+```
+
+### Botão destrutivo
+
+Uso: cancelar venda, excluir, desativar.
+
+```css
+background: rgba(248,113,113,0.10);
+border: 1px solid rgba(248,113,113,0.30);
+color: #FECACA;
+```
+
+---
+
+## 11. Inputs e formulários
+
+### Campo padrão
+
+```css
+height: 52px;
+border-radius: 16px;
+border: 1px solid rgba(255,255,255,0.10);
+background: rgba(0,0,0,0.30);
+color: rgba(255,255,255,0.80);
+padding: 0 16px;
+box-shadow: inset 0 2px 10px rgba(0,0,0,0.40);
+```
+
+### Label
+
+```css
+font-size: 10px;
+font-weight: 900;
+letter-spacing: 0.24em;
+text-transform: uppercase;
+color: rgba(255,255,255,0.45);
+```
+
+### Focus
+
+```css
+border-color: rgba(198,161,91,0.70);
+```
+
+### Regras UX
+
+* Labels sempre acima do campo.
+* Placeholders devem ser exemplos reais: `Ex.: Vestido midi floral`.
+* Campos monetários devem mostrar `R$ 0,00`.
+* Campos de busca devem ter ícone.
+* Selects devem ter seta discreta.
+* Formulários devem ter botão principal largo em telas menores.
+
+---
+
+## 12. Badges
+
+Badges são usados para status e metadados.
+
+### Badge premium
+
+```css
+border: 1px solid rgba(198,161,91,0.45);
+background: rgba(198,161,91,0.12);
+color: #F3DFA8;
+```
+
+### Badge sucesso
+
+```css
+border: 1px solid rgba(52,211,153,0.30);
+background: rgba(52,211,153,0.10);
+color: #6EE7B7;
+```
+
+### Badge alerta
+
+```css
+border: 1px solid rgba(251,191,36,0.30);
+background: rgba(251,191,36,0.10);
+color: #FCD34D;
+```
+
+### Badge perigo
+
+```css
+border: 1px solid rgba(248,113,113,0.30);
+background: rgba(248,113,113,0.10);
+color: #FCA5A5;
+```
+
+### Regra
+
+Badges devem ser pequenos, uppercase e com tracking alto.
+
+---
+
+## 13. Métricas
+
+### Card de métrica
+
+```css
+border-radius: 24px;
+border: 1px solid rgba(255,255,255,0.10);
+background: rgba(255,255,255,0.035);
+padding: 20px;
+```
+
+### Métrica dourada
+
+Usar para total financeiro, status principal ou indicador mais importante.
+
+```css
+border-color: rgba(198,161,91,0.25);
+background: rgba(198,161,91,0.08);
+```
+
+### Métrica de perigo
+
+Usar para ruptura, estoque zerado e diferença negativa.
+
+```css
+border-color: rgba(248,113,113,0.20);
+background: rgba(248,113,113,0.08);
+```
+
+---
+
+## 14. Tabelas, listas e cards operacionais
+
+O modelo evita tabelas secas quando a operação precisa de leitura rápida. Sempre que possível, transformar linhas em cards ricos.
+
+### Produto cadastrado
+
+Cada produto deve exibir:
+
+* Nome
+* Código
+* Status de estoque
+* Status ativo/inativo
+* Preço
+* Estoque
+* Total em estoque
+* Data de atualização
+* QR Code
+* Ações: copiar, baixar, editar, etiqueta
+
+### Venda no histórico
+
+Cada venda deve exibir:
+
+* Número da venda
+* Valor total
+* Status
+* Forma de pagamento
+* Data/hora
+* Vendedor
+
+### Usuário
+
+Cada usuário deve exibir:
+
+* Nome
+* Login
+* Nível
+* Status
+* Criado em
+* Atualizado em
+* Ações: editar e permissões
+
+---
+
+## 15. Padrão das telas
+
+### Estrutura geral de cada tela
+
+1. Header da página
+2. Ações rápidas
+3. Métricas principais
+4. Conteúdo principal em cards
+5. Ação final ou confirmação quando necessário
+
+---
+
+## 16. Tela Vendas
+
+### Objetivo UX
+
+Vender rápido com leitura de código, mínimo atrito e confirmação clara.
+
+### Blocos
+
+* Header com status do caixa
+* Ações rápidas: Nova venda, Imprimir última, Buscar produto
+* Campo de leitura de código
+* Feedback de produto localizado
+* Pagamento
+* Resumo da venda
+* Carrinho
+* Barra fixa de finalização
+
+### Regras
+
+* O total deve estar sempre visível.
+* O botão de finalizar venda deve ter destaque máximo.
+* O carrinho deve permitir alterar quantidade sem sair da tela.
+* Feedback após leitura deve ser imediato: produto localizado, estoque disponível e horário da leitura.
+
+---
+
+## 17. Tela Caixa
+
+### Objetivo UX
+
+Dar segurança operacional para abertura, movimentação e fechamento do caixa.
+
+### Blocos
+
+* Header com status do caixa
+* Ações rápidas: Registrar sangria, Imprimir resumo, Fechar caixa
+* Métricas: total vendido, dinheiro esperado, movimentações
+* Resumo por forma de pagamento
+* Registro de movimentação
+* Fechamento com diferença calculada
+
+### Regras
+
+* Diferença zero deve aparecer como sucesso.
+* Diferença negativa ou positiva deve usar estado de alerta.
+* Fechamento só deve parecer disponível quando dinheiro contado estiver preenchido.
+
+---
+
+## 18. Tela Histórico
+
+### Objetivo UX
+
+Permitir auditoria rápida e reimpressão de recibos.
+
+### Blocos
+
+* Header com total listado
+* Filtros por período e pagamento
+* Lista de vendas
+* Detalhe da venda selecionada
+* Ações: imprimir e cancelar
+
+### Regras
+
+* A venda selecionada deve ter destaque visual.
+* O detalhe deve mudar sem abrir nova página.
+* Cancelar venda deve usar botão destrutivo.
+
+---
+
+## 19. Tela Produtos
+
+### Objetivo UX
+
+Cadastrar, buscar, controlar estoque e gerar etiquetas rapidamente.
+
+### Blocos
+
+* Header com valor em estoque
+* Ações rápidas: novo produto, gerar etiquetas, filtrar estoque
+* Métricas de estoque
+* Formulário de novo produto
+* Filtros combinados
+* Cards de produtos
+
+### Regras
+
+* Produto sem estoque deve ter badge vermelho.
+* Estoque baixo deve ter badge âmbar.
+* Produtos ativos devem ter badge verde.
+* QR Code deve ficar visualmente destacado.
+* Etiqueta deve ser ação principal dentro do card do produto.
+
+---
+
+## 20. Tela Usuários
+
+### Objetivo UX
+
+Controlar permissões sem confusão.
+
+### Blocos
+
+* Header com total de usuários
+* Métricas: usuários, admins, vendedores
+* Formulário de novo usuário
+* Bloco explicativo de regra de acesso
+* Cards de usuários cadastrados
+
+### Regras
+
+* Administrador e vendedor devem ter distinção clara.
+* A regra de acesso deve estar visível perto do formulário.
+* Permissões deve ser ação separada de Editar.
+
+---
+
+## 21. Microinterações
+
+### Hover
+
+Elementos clicáveis sobem levemente:
+
+```css
+transform: translateY(-2px);
+```
+
+### Transições
+
+```css
+transition: all 200ms ease;
+```
+
+### Feedback visual
+
+* Produto encontrado: badge verde
+* Estoque baixo: badge âmbar
+* Sem estoque: badge vermelho
+* Venda finalizada: feedback verde
+* Erro de validação: borda vermelha e mensagem curta abaixo do campo
+
+---
+
+## 22. Responsividade
+
+### Desktop
+
+* Sidebar fixa à esquerda
+* Conteúdo com grid em 2 colunas quando fizer sentido
+* Cards largos e métricas em linha
+
+### Tablet
+
+* Sidebar pode continuar se houver espaço ou virar topo compacto
+* Grids reduzem para 2 colunas
+
+### Mobile
+
+* Sidebar some
+* Menu inferior aparece
+* Cards ocupam 100% da largura
+* Botões principais ficam largos
+* Barra de finalização fica acima do menu inferior
+
+---
+
+## 23. Acessibilidade
+
+* Contraste forte entre fundo e texto.
+* Botões com área de clique confortável.
+* Não depender apenas de cor para status: usar texto no badge.
+* Inputs sempre com label.
+* Ações destrutivas devem ter confirmação.
+* Fontes pequenas só para labels, nunca para conteúdo essencial.
+
+---
+
+## 24. Tokens CSS recomendados
+
+```css
+:root {
+  --color-bg: #0A0A0B;
+  --color-bg-deep: #070708;
+  --color-surface: #101012;
+  --color-surface-2: #111113;
+  --color-gold: #C6A15B;
+  --color-gold-light: #F3DFA8;
+  --color-white: #FFFFFF;
+
+  --text-primary: rgba(255,255,255,1);
+  --text-secondary: rgba(255,255,255,0.58);
+  --text-muted: rgba(255,255,255,0.35);
+
+  --border-soft: rgba(255,255,255,0.10);
+  --border-gold: rgba(198,161,91,0.35);
+
+  --radius-card: 30px;
+  --radius-inner: 24px;
+  --radius-button: 16px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 30px 110px rgba(0,0,0,0.43);
+  --shadow-gold: 0 18px 60px rgba(198,161,91,0.28);
+
+  --sidebar-width: 320px;
+}
+```
+
+---
+
+## 25. Classes utilitárias sugeridas
+
+```css
+.premium-surface {
+  background: rgba(16,16,18,0.78);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 30px;
+  box-shadow: 0 30px 110px rgba(0,0,0,0.43);
+  backdrop-filter: blur(20px);
 }
 
-function Button({ children, variant = "primary", icon: BtnIcon, wide = false }) {
-  const styles = {
-    primary: "bg-[#C6A15B] text-[#080809] shadow-[0_18px_60px_rgba(198,161,91,0.28)] hover:-translate-y-0.5 hover:bg-[#E0C077] hover:shadow-[0_22px_75px_rgba(198,161,91,0.35)]",
-    dark: "bg-white text-black shadow-[0_18px_60px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:bg-[#E8E0D2]",
-    ghost: "border border-white/10 bg-white/[0.035] text-white hover:-translate-y-0.5 hover:border-[#C6A15B]/55 hover:bg-[#C6A15B]/10",
-    danger: "border border-red-400/30 bg-red-400/10 text-red-200 hover:-translate-y-0.5 hover:bg-red-400/20",
-    soft: "border border-[#C6A15B]/20 bg-[#C6A15B]/8 text-[#F3DFA8] hover:-translate-y-0.5 hover:bg-[#C6A15B]/15",
-  };
-  return (
-    <button className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] transition duration-200 ${wide ? "w-full" : ""} ${styles[variant]}`}>
-      {BtnIcon && <BtnIcon size={15} />}
-      {children}
-    </button>
-  );
+.gold-line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(198,161,91,0.70), transparent);
 }
 
-function Field({ label, placeholder, wide, icon: FieldIcon, action, value }) {
-  const isSelect = ["status", "nível", "forma", "tipo", "estoque", "ordenar"].some((x) => label.toLowerCase().includes(x));
-  return (
-    <label className={wide ? "md:col-span-2" : ""}>
-      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.24em] text-white/45">{label}</span>
-      <div className="group flex h-13 min-h-[52px] items-center justify-between rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white/80 shadow-inner shadow-black/40 transition focus-within:border-[#C6A15B]/70 hover:border-white/20">
-        <div className="flex min-w-0 items-center gap-3">
-          {FieldIcon && <span className="text-[#C6A15B]"><FieldIcon size={16} /></span>}
-          <span className={value ? "truncate text-white" : "truncate text-white/50"}>{value || placeholder}</span>
-        </div>
-        {action ? <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C6A15B]">{action}</span> : isSelect ? <ChevronDown size={16} className="text-white/35" /> : null}
-      </div>
-    </label>
-  );
+.premium-button {
+  background: #C6A15B;
+  color: #080809;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  box-shadow: 0 18px 60px rgba(198,161,91,0.28);
+  transition: all 200ms ease;
 }
 
-function Panel({ children, className = "", title, subtitle, action }) {
-  return (
-    <section className={`group relative overflow-hidden rounded-[30px] border border-white/10 bg-[#101012]/78 p-6 shadow-[0_30px_110px_rgba(0,0,0,0.43)] backdrop-blur-xl transition duration-300 hover:border-white/16 ${className}`}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C6A15B]/70 to-transparent" />
-      <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-[#C6A15B]/10 blur-3xl transition group-hover:bg-[#C6A15B]/16" />
-      {(title || subtitle || action) && (
-        <div className="relative mb-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            {title && <h2 className="font-serif text-3xl tracking-[-0.045em] text-white">{title}</h2>}
-            {subtitle && <p className="mt-2 max-w-2xl text-sm leading-6 text-white/55">{subtitle}</p>}
-          </div>
-          {action}
-        </div>
-      )}
-      <div className="relative">{children}</div>
-    </section>
-  );
+.premium-button:hover {
+  transform: translateY(-2px);
+  background: #E0C077;
 }
 
-function Metric({ label, value, hint, tone = "default" }) {
-  const toneMap = {
-    default: "border-white/10 bg-white/[0.035]",
-    gold: "border-[#C6A15B]/25 bg-[#C6A15B]/8",
-    danger: "border-red-400/20 bg-red-400/8",
-    success: "border-emerald-400/20 bg-emerald-400/8",
-  };
-  return (
-    <div className={`relative overflow-hidden rounded-[24px] border p-5 ${toneMap[tone]}`}>
-      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-white/5 blur-2xl" />
-      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-white/45">{label}</div>
-      <div className="font-serif text-3xl tracking-[-0.05em] text-white md:text-4xl">{value}</div>
-      {hint && <div className="mt-3 text-xs text-white/42">{hint}</div>}
-    </div>
-  );
+.premium-input {
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.30);
+  color: rgba(255,255,255,0.80);
+  padding: 0 16px;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.40);
 }
 
-function Header({ eyebrow, title, subtitle, metricLabel, metricValue, status }) {
-  return (
-    <div className="mb-8 grid gap-6 border-b border-white/10 pb-8 lg:grid-cols-[1fr_360px] lg:items-end">
-      <div>
-        <div className="mb-4 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-[0.32em] text-[#C6A15B]">
-          <Sparkles size={14} /> {eyebrow}
-          {status && <Badge tone="success" dot>{status}</Badge>}
-        </div>
-        <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-[-0.065em] text-white md:text-7xl">{title}</h1>
-        <p className="mt-5 max-w-3xl text-base leading-7 text-white/58">{subtitle}</p>
-      </div>
-      {metricLabel && (
-        <div className="relative overflow-hidden rounded-[30px] border border-[#C6A15B]/24 bg-[#090909] p-7 shadow-[0_26px_90px_rgba(0,0,0,0.55)]">
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(198,161,91,0.16),transparent_45%),radial-gradient(circle_at_90%_10%,rgba(255,255,255,0.12),transparent_30%)]" />
-          <div className="relative text-[10px] font-black uppercase tracking-[0.25em] text-[#C6A15B]">{metricLabel}</div>
-          <div className="relative mt-4 font-serif text-5xl tracking-[-0.06em] text-white">{metricValue}</div>
-          <div className="relative mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full w-2/3 rounded-full bg-[#C6A15B]" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
+.premium-input:focus {
+  outline: none;
+  border-color: rgba(198,161,91,0.70);
 }
+```
 
-function Sidebar({ current, setCurrent }) {
-  return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-[320px] border-r border-white/10 bg-[#070708]/94 p-6 backdrop-blur-2xl lg:block">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_5%,rgba(198,161,91,0.15),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.045),transparent)]" />
-      <div className="relative flex h-full flex-col">
-        <div className="mb-9 flex items-center gap-4 rounded-[26px] border border-white/10 bg-white/[0.035] p-4">
-          <div className="grid h-15 w-15 place-items-center rounded-2xl border border-[#C6A15B]/35 bg-[#C6A15B]/12 font-serif text-3xl italic text-[#F3DFA8]">I</div>
-          <div>
-            <div className="font-serif text-3xl italic leading-none text-white">IWR.</div>
-            <div className="mt-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#C6A15B]">Atelier PDV</div>
-          </div>
-        </div>
+---
 
-        <div className="mb-5 rounded-[22px] border border-[#C6A15B]/20 bg-[#C6A15B]/8 p-4">
-          <div className="flex items-center gap-3">
-            <Crown size={20} />
-            <div>
-              <div className="text-sm font-bold text-white">Operação premium</div>
-              <div className="mt-1 text-xs text-white/45">Caixa aberto · Loja online</div>
-            </div>
-          </div>
-        </div>
+## 26. Checklist para aplicar no sistema real
 
-        <nav className="space-y-2">
-          {menu.map((item) => {
-            const NavIcon = item.icon;
-            const active = current === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setCurrent(item.id)}
-                className={`group relative flex w-full items-center gap-4 rounded-[22px] px-4 py-4 text-left transition duration-200 ${active ? "bg-white text-black shadow-[0_20px_60px_rgba(255,255,255,0.12)]" : "text-white/66 hover:bg-white/[0.055] hover:text-white"}`}
-              >
-                {active && <div className="absolute -left-6 h-11 w-1 rounded-r-full bg-[#C6A15B]" />}
-                <span className={`grid h-11 w-11 place-items-center rounded-2xl border transition ${active ? "border-black/10 bg-black text-[#C6A15B]" : "border-white/10 bg-white/[0.045] text-[#C6A15B] group-hover:border-[#C6A15B]/35"}`}>
-                  <NavIcon size={18} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className={`block text-[9px] font-black uppercase tracking-[0.25em] ${active ? "text-black/50" : "text-white/35"}`}>{item.group}</span>
-                  <span className="mt-1 block text-sm font-black">{item.label}</span>
-                  <span className={`mt-0.5 block truncate text-xs ${active ? "text-black/45" : "text-white/30"}`}>{item.hint}</span>
-                </span>
-                {active && <Arrow size={16} />}
-              </button>
-            );
-          })}
-        </nav>
+* [ ] Criar variáveis CSS do tema premium.
+* [ ] Trocar fundo branco por fundo preto premium com gradiente.
+* [ ] Refazer sidebar com largura de 320px.
+* [ ] Adicionar item ativo branco com barra dourada.
+* [ ] Padronizar cards com radius grande e sombra suave.
+* [ ] Padronizar botões primário, ghost, branco e destrutivo.
+* [ ] Padronizar inputs com labels uppercase.
+* [ ] Criar badges de status.
+* [ ] Transformar listagens secas em cards quando possível.
+* [ ] Adicionar ações rápidas no topo das telas.
+* [ ] Criar navegação mobile inferior.
+* [ ] Garantir que a barra de finalizar venda fique fixa.
+* [ ] Adicionar feedback visual para produto encontrado, erro e sucesso.
+* [ ] Conferir contraste e legibilidade.
+* [ ] Testar em desktop, tablet e mobile.
 
-        <div className="mt-auto rounded-[26px] border border-white/10 bg-white/[0.045] p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <Badge tone="success" dot>Online</Badge>
-            <span className="text-xs text-white/35">26/04 · 17:45</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-full bg-[#C6A15B] font-serif text-xl italic text-black">A</div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold text-white">Administrador</div>
-              <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C6A15B]">Administrador</div>
-            </div>
-            <button className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-white/55 transition hover:border-[#C6A15B]/40 hover:text-white">
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-}
+---
 
-function MobileNav({ current, setCurrent }) {
-  return (
-    <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 gap-1 rounded-[24px] border border-white/10 bg-[#070708]/90 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.55)] backdrop-blur-xl lg:hidden">
-      {menu.map((item) => {
-        const NavIcon = item.icon;
-        const active = current === item.id;
-        return (
-          <button key={item.id} onClick={() => setCurrent(item.id)} className={`rounded-2xl px-2 py-3 text-center transition ${active ? "bg-[#C6A15B] text-black" : "text-white/55"}`}>
-            <div className="flex justify-center"><NavIcon size={17} /></div>
-            <div className="mt-1 text-[9px] font-black uppercase tracking-[0.08em]">{item.label}</div>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+## 27. Prompt para aplicar no sistema existente
 
-function QuickActions({ actions }) {
-  return (
-    <div className="mb-6 flex flex-wrap gap-3">
-      {actions.map((action) => <Button key={action.label} variant={action.variant || "ghost"} icon={action.icon}>{action.label}</Button>)}
-    </div>
-  );
-}
+Use este prompt com sua equipe ou IA de programação:
 
-function Vendas() {
-  return (
-    <>
-      <Header eyebrow="PDV" title="Caixa com leitura por código" subtitle="Leia o QR Code ou digite o código do produto para montar a venda, finalizar no backend e baixar estoque automaticamente." metricLabel="Total da venda" metricValue="R$ 79,80" status="Caixa #2 aberto" />
-      <QuickActions actions={[{ label: "Nova venda", icon: Plus, variant: "primary" }, { label: "Imprimir última", icon: Printer }, { label: "Buscar produto", icon: SearchIcon }]} />
-      <div className="space-y-6">
-        <Panel>
-          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-            <Field label="Leitor de código" placeholder="Aponte o leitor ou digite o código" value="IWR-000002" icon={QrCode} action="Enter" />
-            <Button icon={Plus}>Adicionar</Button>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Badge tone="success" dot>Produto localizado</Badge>
-            <Badge tone="dark">Estoque disponível: 3</Badge>
-            <Badge tone="gold">Última leitura há 3s</Badge>
-          </div>
-        </Panel>
+```text
+Você deve redesenhar a interface existente do sistema IWR Atelier PDV mantendo a estrutura funcional atual das telas, sem alterar regras de negócio, endpoints, banco de dados, nomes de funções críticas ou fluxos principais.
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_440px]">
-          <Panel title="Pagamento" subtitle="Revise subtotal, desconto e forma de pagamento antes de finalizar.">
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field label="Forma de pagamento" placeholder="Dinheiro" value="PIX" />
-              <Field label="Desconto R$" placeholder="R$ 0,00" />
-              <Field label="Valor recebido" placeholder="R$ 0,00" value="R$ 79,80" />
-              <Metric label="Troco" value="R$ 0,00" hint="Pagamento exato" tone="gold" />
-            </div>
-          </Panel>
+Aplique o Design System Premium IWR Atelier PDV descrito abaixo.
 
-          <Panel title="Resumo da venda" subtitle="Conferência rápida antes do fechamento.">
-            <div className="space-y-3">
-              <Metric label="Subtotal" value="R$ 79,80" />
-              <Metric label="Desconto" value="R$ 0,00" />
-              <Metric label="Itens" value="2" hint="1 produto no carrinho" tone="gold" />
-            </div>
-          </Panel>
-        </div>
+Objetivo visual:
+Transformar o sistema em uma interface dark premium inspirada em boutiques de moda de luxo, com estética preto, branco e dourado, visual sofisticado, sidebar moderna, cards ricos em detalhes, profundidade visual, gradientes sutis e forte hierarquia operacional.
 
-        <Panel title="Carrinho da venda" subtitle="Revise quantidades antes de finalizar a venda." action={<Button variant="ghost">Limpar carrinho</Button>}>
-          <div className="space-y-3">
-            {cartItems.map((item) => (
-              <div key={item.code} className="grid gap-4 rounded-[24px] border border-white/10 bg-black/22 p-5 md:grid-cols-[1fr_auto_auto] md:items-center">
-                <div>
-                  <Badge tone="dark">{item.code}</Badge>
-                  <h3 className="mt-3 text-xl font-black text-white">{item.name}</h3>
-                  <p className="mt-1 text-sm text-white/45">{item.qty} unidades · {item.unit}</p>
-                </div>
-                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-2">
-                  <button className="grid h-9 w-9 place-items-center rounded-xl bg-white/5 text-white">−</button>
-                  <span className="w-8 text-center font-black text-white">{item.qty}</span>
-                  <button className="grid h-9 w-9 place-items-center rounded-xl bg-[#C6A15B] text-black">+</button>
-                </div>
-                <div className="text-right font-serif text-3xl text-white">{item.total}</div>
-              </div>
-            ))}
-          </div>
-        </Panel>
+Telas que devem ser preservadas estruturalmente:
+1. Vendas / Caixa com leitura por código
+2. Abertura e fechamento de caixa
+3. Histórico de vendas
+4. Gestão completa de produtos
+5. Usuários e permissões
 
-        <div className="sticky bottom-6 z-10 flex flex-wrap items-center justify-between gap-4 rounded-[30px] border border-[#C6A15B]/24 bg-[#090909]/95 p-6 shadow-[0_26px_100px_rgba(0,0,0,0.62)] backdrop-blur-xl max-lg:bottom-24">
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C6A15B]">Subtotal R$ 79,80 · Desconto R$ 0,00</div>
-            <div className="mt-2 font-serif text-4xl tracking-[-0.05em] text-white">R$ 79,80</div>
-          </div>
-          <Button variant="dark" icon={ReceiptText}>Finalizar venda</Button>
-        </div>
-      </div>
-    </>
-  );
-}
+Regras obrigatórias:
+- Manter a estrutura funcional das telas.
+- Melhorar apenas UI, UX, responsividade e organização visual.
+- Não remover funcionalidades existentes.
+- Não alterar lógica de backend.
+- Não quebrar integrações existentes.
+- Não trocar nomes de rotas ou funções sem necessidade.
+- Substituir alertas simples por feedbacks visuais premium.
+- Criar componentes reutilizáveis: Sidebar, Button, Card, MetricCard, Badge, Input, PageHeader, QuickActions, MobileNav.
+- Usar tema preto, branco e dourado.
+- Aplicar responsividade desktop e mobile.
+- Evitar visual genérico de dashboard.
 
-function Caixa() {
-  return (
-    <>
-      <Header eyebrow="Caixa diário" title="Abertura e fechamento de caixa" subtitle="Abra o caixa antes de vender, registre sangrias ou suprimentos e feche comparando o dinheiro esperado com o valor contado." metricLabel="Status do caixa" metricValue="Aberto" status="Desde 17:45" />
-      <QuickActions actions={[{ label: "Registrar sangria", icon: WalletCards, variant: "soft" }, { label: "Imprimir resumo", icon: Printer }, { label: "Fechar caixa", icon: Landmark, variant: "primary" }]} />
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <Metric label="Total vendido" value="R$ 119,70" hint="2 vendas concluídas" tone="gold" />
-        <Metric label="Dinheiro esperado" value="R$ 100,00" hint="Inclui suprimentos" />
-        <Metric label="Saldo de movimentações" value="R$ 0,00" hint="Sem sangrias hoje" />
-      </div>
-      <div className="grid gap-6 lg:grid-cols-[430px_1fr]">
-        <Panel title="Resumo por pagamento" subtitle="Totais considerados apenas para vendas concluídas.">
-          <div className="grid grid-cols-2 gap-3">
-            <Metric label="Dinheiro" value="R$ 39,90" />
-            <Metric label="Pix" value="R$ 79,80" tone="gold" />
-            <Metric label="Débito" value="R$ 0,00" />
-            <Metric label="Crédito" value="R$ 0,00" />
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <Field label="Tipo" placeholder="Suprimento" />
-            <Field label="Valor" placeholder="R$ 0,00" />
-            <Field label="Motivo" placeholder="Ex.: Sangria para cofre" wide />
-          </div>
-          <div className="mt-5"><Button variant="ghost" icon={WalletCards} wide>Registrar movimentação</Button></div>
-        </Panel>
-        <Panel title="Fechamento" subtitle="Conte o dinheiro físico e informe o valor declarado." action={<Badge tone="success" dot>Conferência aberta</Badge>}>
-          <div className="grid gap-5 md:grid-cols-[1fr_220px]">
-            <Field label="Dinheiro contado" placeholder="R$ 0,00" value="R$ 100,00" />
-            <Metric label="Diferença" value="R$ 0,00" tone="success" />
-          </div>
-          <div className="mt-5"><Button icon={Landmark}>Fechar caixa</Button></div>
-          <div className="mt-6 rounded-[24px] border border-dashed border-white/15 bg-black/20 p-8 text-white/45">Nenhuma sangria ou suprimento registrado hoje.</div>
-        </Panel>
-      </div>
-    </>
-  );
-}
+Componentes principais:
+- Sidebar fixa desktop com 320px.
+- Menu inferior no mobile.
+- Header grande por tela com título, descrição, status e métrica principal.
+- Cards com fundo escuro translúcido, borda suave, radius grande e glow dourado sutil.
+- Botão primário dourado.
+- Botão secundário ghost.
+- Botão destrutivo vermelho discreto.
+- Inputs escuros com label uppercase.
+- Badges para status.
+- Métricas em cards.
 
-function Historico() {
-  const [selected, setSelected] = useState(0);
-  return (
-    <>
-      <Header eyebrow="Histórico" title="Histórico de vendas" subtitle="Consulte vendas reais, revise itens vendidos e acompanhe o total do período." metricLabel="Total listado" metricValue="R$ 119,70" status="2 vendas" />
-      <Panel className="mb-6" title="Filtros do período" subtitle="Use datas, método de pagamento e vendedor para auditoria rápida.">
-        <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
-          <Field label="Início" placeholder="dd/mm/aaaa" />
-          <Field label="Fim" placeholder="dd/mm/aaaa" />
-          <Field label="Pagamento" placeholder="Todos" />
-          <Button icon={Filter}>Filtrar</Button>
-          <Button variant="ghost">Limpar</Button>
-        </div>
-      </Panel>
-      <div className="grid gap-6 lg:grid-cols-[430px_1fr]">
-        <Panel title="Vendas" subtitle="Selecione uma venda para ver os itens.">
-          <div className="space-y-4">
-            {sales.map((sale, index) => (
-              <button key={sale.id} onClick={() => setSelected(index)} className={`w-full rounded-[24px] border p-5 text-left transition hover:-translate-y-0.5 ${selected === index ? "border-[#C6A15B]/55 bg-[#C6A15B]/12 shadow-[0_20px_60px_rgba(198,161,91,0.12)]" : "border-white/10 bg-white/[0.035]"}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C6A15B]">Venda {sale.id}</div>
-                    <div className="mt-3 font-serif text-3xl text-white">{sale.value}</div>
-                    <div className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">{sale.detail}</div>
-                  </div>
-                  {selected === index && <Badge tone="success" dot>Ativa</Badge>}
-                </div>
-              </button>
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Detalhe da venda" subtitle={`Venda ${sales[selected].id} · Concluída · Vendedor: ${sales[selected].seller}`} action={<div className="flex gap-3"><Button variant="ghost" icon={Printer}>Imprimir</Button><Button variant="danger">Cancelar</Button></div>}>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Metric label="Pagamento" value={selected === 0 ? "PIX" : "Cash"} />
-            <Metric label="Desconto" value="R$ 0,00" />
-            <Metric label="Total" value={sales[selected].value} tone="gold" />
-          </div>
-          <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.035] p-5">
-            <Badge>IWR-000003</Badge>
-            <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-              <div><h3 className="text-xl font-bold text-white">Produto Sprint 5 Debug</h3><p className="mt-2 text-white/45">2 x R$ 39,90</p></div>
-              <div className="font-serif text-3xl text-white">R$ 79,80</div>
-            </div>
-          </div>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-function ProdutoCard({ p }) {
-  const stockTone = p.stock === 0 ? "danger" : p.stock <= 3 ? "warning" : "success";
-  return (
-    <div className="rounded-[28px] border border-white/10 bg-white/[0.035] p-5 transition hover:-translate-y-0.5 hover:border-[#C6A15B]/30">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h3 className="font-serif text-3xl tracking-[-0.045em] text-white">{p.name}</h3>
-          <div className="mt-2 flex flex-wrap gap-2"><Badge tone="dark">{p.code}</Badge><Badge tone={stockTone} dot>{p.status}</Badge></div>
-        </div>
-        <Badge tone="success">Ativo</Badge>
-      </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-4">
-        <Metric label="Preço" value={p.price} />
-        <Metric label="Estoque" value={String(p.stock)} tone={stockTone} />
-        <Metric label="Total estoque" value={p.total} />
-        <Metric label="Atualizado" value="26/04" />
-      </div>
-      <div className="mt-5 flex flex-wrap items-center gap-3 rounded-[24px] border border-white/10 bg-black/25 p-4">
-        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white text-black"><QrCode size={34} /></div>
-        <div className="mr-auto">
-          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">QR Code</div>
-          <div className="mt-1 font-bold text-white">{p.code}</div>
-        </div>
-        <Button variant="ghost">Copiar</Button><Button variant="ghost">Baixar</Button><Button variant="ghost">Editar</Button><Button icon={Printer}>Etiqueta</Button>
-      </div>
-    </div>
-  );
-}
-
-function Produtos() {
-  const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
-  return (
-    <>
-      <Header eyebrow="Estoque" title="Gestão completa de produtos" subtitle="Cadastre, filtre, ordene e acompanhe estoque com foco em operação de loja: produtos ativos, ruptura, estoque baixo, QR Code e etiquetas prontas para venda." metricLabel="Valor nesta página" metricValue="R$ 449,20" status="4 produtos" />
-      <QuickActions actions={[{ label: "Novo produto", icon: Plus, variant: "primary" }, { label: "Gerar etiquetas", icon: Printer }, { label: "Filtrar estoque", icon: Filter }]} />
-      <div className="mb-6 grid gap-4 md:grid-cols-4">
-        <Metric label="Itens na página" value="4" />
-        <Metric label="Estoque total" value={String(totalStock)} tone="gold" />
-        <Metric label="Estoque baixo" value="3" tone="danger" />
-        <Metric label="Sem estoque" value="1" tone="danger" />
-      </div>
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <Panel title="Novo produto" subtitle="Deixe o código vazio para gerar automaticamente no padrão da loja.">
-          <div className="grid gap-4">
-            <Field label="Nome" placeholder="Ex.: Vestido midi floral" />
-            <Field label="Código" placeholder="Opcional. Ex.: IWR-001" />
-            <Field label="Preço" placeholder="R$ 0,00" />
-            <Field label="Estoque" placeholder="0" />
-            <Field label="Status" placeholder="Ativo" />
-          </div>
-          <div className="mt-6 space-y-3"><Button icon={Plus} wide>Cadastrar produto</Button><Button variant="ghost" wide>Limpar formulário</Button></div>
-        </Panel>
-        <Panel title="Produtos cadastrados" subtitle="Use filtros combinados para encontrar produtos, controlar ruptura e imprimir etiquetas.">
-          <div className="grid gap-4 rounded-[26px] border border-white/10 bg-black/22 p-5 md:grid-cols-4">
-            <Field label="Busca" placeholder="Nome ou código" icon={SearchIcon} />
-            <Field label="Status" placeholder="Todos" />
-            <Field label="Estoque" placeholder="Todos" />
-            <Field label="Ordenar por" placeholder="Maior primeiro" />
-          </div>
-          <div className="mt-4 flex items-center justify-between text-xs text-white/45">
-            <span>4 produto(s) encontrados</span><span>Página 1 de 1</span>
-          </div>
-          <div className="mt-7 space-y-5">
-            {products.map((p) => <ProdutoCard key={p.code} p={p} />)}
-          </div>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-function Usuarios() {
-  return (
-    <>
-      <Header eyebrow="Acessos" title="Usuários e permissões" subtitle="Cadastre vendedores e administradores para controlar o acesso aos menus do PDV." metricLabel="Usuários" metricValue="2" status="Controle ativo" />
-      <div className="mb-6 grid gap-4 md:grid-cols-3"><Metric label="Usuários" value="2" /><Metric label="Admins" value="1" tone="gold" /><Metric label="Vendedores" value="1" /></div>
-      <div className="grid gap-6 lg:grid-cols-[430px_1fr]">
-        <Panel title="Novo usuário" subtitle="Somente administradores podem cadastrar ou alterar usuários.">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Nome" placeholder="Ex.: Maria Silva" />
-            <Field label="Usuário" placeholder="Ex.: maria" />
-            <Field label="Nível" placeholder="Vendedor" />
-            <Field label="Status" placeholder="Ativo" />
-            <Field label="Senha" placeholder="Mínimo 6 caracteres" wide />
-          </div>
-          <div className="mt-6 rounded-[22px] border border-[#C6A15B]/20 bg-[#C6A15B]/8 p-4 text-sm leading-6 text-white/60">
-            <span className="font-bold text-[#F3DFA8]">Regra de acesso:</span> vendedores acessam apenas Vendas e Caixa. Administradores acessam todos os módulos.
-          </div>
-          <div className="mt-6 space-y-3"><Button icon={ShieldCheck} wide>Cadastrar usuário</Button><Button variant="ghost" wide>Limpar formulário</Button></div>
-        </Panel>
-        <Panel title="Usuários cadastrados" subtitle="Visualize permissões, status e datas de atualização.">
-          <div className="space-y-5">
-            {[{ name: "Administrador", user: "admin", role: "Admin", date: "25/04/2026, 20:11" }, { name: "Maria", user: "maria", role: "Vendedor", date: "26/04/2026, 15:23" }].map((u) => (
-              <div key={u.user} className="rounded-[28px] border border-white/10 bg-white/[0.035] p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div><h3 className="font-serif text-3xl text-white">{u.name}</h3><div className="mt-2"><Badge tone="dark">{u.user}</Badge></div></div>
-                  <div className="flex gap-2"><Badge>{u.role}</Badge><Badge tone="success" dot>Ativo</Badge></div>
-                </div>
-                <div className="mt-5 grid gap-3 md:grid-cols-3"><Metric label="Nível" value={u.role} /><Metric label="Criado" value={u.date} /><Metric label="Atualizado" value={u.date} /></div>
-                <div className="mt-5 flex flex-wrap gap-3"><Button variant="ghost">Editar</Button><Button variant="soft">Permissões</Button></div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-function App() {
-  const [current, setCurrent] = useState("vendas");
-  const pages = useMemo(() => ({ vendas: <Vendas />, caixa: <Caixa />, historico: <Historico />, produtos: <Produtos />, usuarios: <Usuarios /> }), []);
-  const page = menu.find((x) => x.id === current);
-
-  return (
-    <div className="min-h-screen bg-[#0A0A0B] pb-28 text-white lg:pb-0">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_78%_4%,rgba(198,161,91,0.18),transparent_28%),radial-gradient(circle_at_45%_90%,rgba(255,255,255,0.06),transparent_28%),linear-gradient(135deg,#0A0A0B,#121214_45%,#070707)]" />
-      <div className="fixed inset-0 opacity-[0.055] [background-image:linear-gradient(rgba(255,255,255,.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:54px_54px]" />
-      <div className="fixed inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-[#0A0A0B] to-transparent" />
-      <Sidebar current={current} setCurrent={setCurrent} />
-      <MobileNav current={current} setCurrent={setCurrent} />
-      <main className="relative z-10 px-5 py-8 lg:ml-[320px] lg:px-12 xl:px-20">
-        <div className="mb-8 flex items-center justify-between lg:hidden">
-          <div><div className="font-serif text-3xl italic">IWR.</div><div className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C6A15B]">Atelier PDV</div></div>
-          <Badge>{page?.label}</Badge>
-        </div>
-        <div className="mb-8 hidden items-center justify-between gap-3 lg:flex">
-          <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 text-sm text-white/55">
-            <SearchIcon size={16} /> Buscar produto, venda ou usuário...
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C6A15B]">{page?.group}</span>
-            <span className="font-serif text-2xl text-white">{page?.label}</span>
-            <Crown size={18} color={gold} />
-          </div>
-        </div>
-        <div key={current}>{pages[current]}</div>
-      </main>
-    </div>
-  );
-}
-
-export default App;
+A experiência deve priorizar operação rápida, leitura clara e aparência premium.

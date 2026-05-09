@@ -1,6 +1,8 @@
 package com.iwr.pdv.sale.api.dto;
 
 import com.iwr.pdv.auth.api.dto.UserResponse;
+import com.iwr.pdv.customer.api.dto.CustomerResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteSummaryResponse;
 import com.iwr.pdv.sale.domain.PaymentMethod;
 import com.iwr.pdv.sale.domain.SaleStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,6 +17,8 @@ public record SaleResponse(
         SaleStatus status,
         @Schema(description = "Sale operator")
         UserResponse operator,
+        @Schema(description = "Sale customer")
+        CustomerResponse customer,
         @Schema(description = "Payment method")
         PaymentMethod paymentMethod,
         @Schema(description = "Subtotal before discount", example = "319.80")
@@ -38,6 +42,8 @@ public record SaleResponse(
         @Schema(description = "Creation timestamp", example = "2026-04-25T16:00:00Z")
         OffsetDateTime createdAt,
         @Schema(description = "Sale items")
-        List<SaleItemResponse> items
+        List<SaleItemResponse> items,
+        @Schema(description = "Promissory note installments created for the sale")
+        List<PromissoryNoteSummaryResponse> promissoryNotes
 ) {
 }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { BadgeDollarSign, CalendarClock, CreditCard, ReceiptText, UserRound } from 'lucide-react'
 import { cancelSale, getSaleReceiptUrl, getSales } from '../services/saleService'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { PageHeader } from '../components/PageHeader'
 import type { Sale } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
@@ -107,20 +109,14 @@ export function SalesHistoryPage() {
   return (
     <main className="app-shell">
       <div className="app-container history-container">
-        <section className="checkout-hero-panel">
-          <div>
-            <span className="eyebrow">Historico</span>
-            <h1>Historico de vendas</h1>
-            <p>
-              Consulte vendas reais, revise itens vendidos e acompanhe o total do periodo.
-            </p>
-          </div>
-          <div className="checkout-summary">
-            <span>Total listado</span>
-            <strong>{formatCurrency(totalAmount)}</strong>
-            <small>{sales.length} venda(s) encontradas</small>
-          </div>
-        </section>
+        <PageHeader
+          eyebrow="Historico"
+          title="Historico de vendas"
+          subtitle="Consulte vendas reais, revise itens vendidos e acompanhe o total do periodo."
+          metricLabel="Total listado"
+          metricValue={formatCurrency(totalAmount)}
+          status={`${sales.length} venda(s)`}
+        />
 
         <section className="scanner-panel">
           <form className="history-filter-form" onSubmit={handleFilterSubmit}>
@@ -181,7 +177,7 @@ export function SalesHistoryPage() {
                     key={sale.id}
                     onClick={() => setSelectedSale(sale)}
                   >
-                    <span>Venda #{sale.id}</span>
+                    <span><ReceiptText size={14} strokeWidth={2.3} aria-hidden="true" />Venda #{sale.id}</span>
                     <strong>{formatCurrency(sale.totalAmount)}</strong>
                     <small>
                       {sale.status === 'CANCELLED' ? 'Cancelada' : 'Concluida'} - {sale.paymentMethod} -{' '}
@@ -231,16 +227,16 @@ export function SalesHistoryPage() {
               <div className="cart-list">
                 <article className="cart-item">
                   <div className="cart-item-main">
-                    <span>Pagamento</span>
+                    <span><CreditCard size={14} strokeWidth={2.3} aria-hidden="true" />Pagamento</span>
                     <strong>{selectedSale.paymentMethod}</strong>
-                    <small>Vendedor: {getSellerName(selectedSale)}</small>
+                    <small><UserRound size={13} strokeWidth={2.3} aria-hidden="true" />Vendedor: {getSellerName(selectedSale)}</small>
                   </div>
                   <div className="cart-price">
-                    <span>Desconto</span>
+                    <span><BadgeDollarSign size={14} strokeWidth={2.3} aria-hidden="true" />Desconto</span>
                     <strong>{formatCurrency(selectedSale.discountAmount)}</strong>
                   </div>
                   <div className="cart-price">
-                    <span>Total</span>
+                    <span><BadgeDollarSign size={14} strokeWidth={2.3} aria-hidden="true" />Total</span>
                     <strong>{formatCurrency(selectedSale.totalAmount)}</strong>
                   </div>
                 </article>
@@ -253,12 +249,12 @@ export function SalesHistoryPage() {
                 {selectedSale.items.map((item) => (
                   <article className="cart-item" key={item.id}>
                     <div className="cart-item-main">
-                      <span>{item.productCode}</span>
+                      <span><CalendarClock size={14} strokeWidth={2.3} aria-hidden="true" />{item.productCode}</span>
                       <strong>{item.productName}</strong>
                       <small>{item.quantity} x {formatCurrency(item.unitPrice)}</small>
                     </div>
                     <div className="cart-price">
-                      <span>Subtotal</span>
+                      <span><BadgeDollarSign size={14} strokeWidth={2.3} aria-hidden="true" />Subtotal</span>
                       <strong>{formatCurrency(item.subtotal)}</strong>
                     </div>
                   </article>

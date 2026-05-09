@@ -4,5 +4,6 @@ public enum PaymentMethod {
     CASH,
     PIX,
     DEBIT_CARD,
-    CREDIT_CARD
+    CREDIT_CARD,
+    PROMISSORY_NOTE
 }

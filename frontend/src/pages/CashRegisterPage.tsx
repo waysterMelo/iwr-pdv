@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Banknote, CreditCard, Landmark, ReceiptText, TrendingUp, Wallet } from 'lucide-react'
 import {
   addCashMovement,
   closeCashRegister,
@@ -9,6 +10,8 @@ import type { CashMovementType, CashRegister } from '../types/cashRegister'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
+import { Metric } from '../components/Metric'
+import { PageHeader } from '../components/PageHeader'
 import { useAppMessage } from '../hooks/useAppMessage'
 
 export function CashRegisterPage() {
@@ -113,25 +116,42 @@ export function CashRegisterPage() {
   }
 
   const totals = cashRegister?.totalsByPaymentMethod ?? {}
+  const declaredCashNumber = Number(declaredCashAmount) || 0
+  const closingDifference = cashRegister ? declaredCashNumber - cashRegister.expectedCashAmount : 0
 
   return (
     <main className="app-shell">
       <div className="app-container history-container">
-        <section className="checkout-hero-panel">
-          <div>
-            <span className="eyebrow">Caixa diario</span>
-            <h1>Abertura e fechamento de caixa</h1>
-            <p>
-              Abra o caixa antes de vender, registre sangrias ou suprimentos e feche
-              comparando o dinheiro esperado com o valor contado.
-            </p>
+        <PageHeader
+          eyebrow="Caixa diario"
+          title="Abertura e fechamento de caixa"
+          subtitle="Abra o caixa antes de vender, registre sangrias ou suprimentos e feche comparando o dinheiro esperado com o valor contado."
+          metricLabel="Status do caixa"
+          metricValue={isLoading ? '...' : cashRegister?.status === 'OPEN' ? 'Aberto' : 'Fechado'}
+          status={cashRegister?.status === 'OPEN' ? `Desde ${formatNullableDateTime(cashRegister.openedAt)}` : undefined}
+        />
+
+        {cashRegister?.status === 'OPEN' ? (
+          <div className="quick-actions">
+            <button
+              className="quick-action quick-action--soft quick-action--movement"
+              type="button"
+              onClick={() => document.getElementById('movementAmount')?.focus()}
+            >
+              Registrar sangria
+            </button>
+            <button className="quick-action quick-action--ghost quick-action--print" type="button" onClick={() => window.print()}>
+              Imprimir resumo
+            </button>
+            <button
+              className="quick-action quick-action--primary quick-action--close-cash"
+              type="button"
+              onClick={() => document.getElementById('declaredCashAmount')?.focus()}
+            >
+              Fechar caixa
+            </button>
           </div>
-          <div className="checkout-summary">
-            <span>Status do caixa</span>
-            <strong>{isLoading ? '...' : cashRegister?.status === 'OPEN' ? 'Aberto' : 'Fechado'}</strong>
-            <small>{cashRegister ? `Aberto em ${formatNullableDateTime(cashRegister.openedAt)}` : 'Nenhum caixa aberto'}</small>
-          </div>
-        </section>
+        ) : null}
 
         {message ? (
           <div
@@ -168,20 +188,11 @@ export function CashRegisterPage() {
           </section>
         ) : (
           <>
-            <section className="stats-grid">
-              <article className="stat-card">
-                <strong>{formatCurrency(cashRegister.totalSalesAmount)}</strong>
-                <span>total vendido</span>
-              </article>
-              <article className="stat-card">
-                <strong>{formatCurrency(cashRegister.expectedCashAmount)}</strong>
-                <span>dinheiro esperado</span>
-              </article>
-              <article className="stat-card">
-                <strong>{formatCurrency(cashRegister.cashInAmount - cashRegister.cashOutAmount)}</strong>
-                <span>saldo de movimentacoes</span>
-              </article>
-            </section>
+            <div className="metric-grid metric-grid--3">
+              <Metric label="Total vendido" value={formatCurrency(cashRegister.totalSalesAmount)} hint={`${Object.values(totals).filter(v => v > 0).length} forma(s) de pagamento`} tone="gold" icon={ReceiptText} />
+              <Metric label="Dinheiro esperado" value={formatCurrency(cashRegister.expectedCashAmount)} hint="Inclui suprimentos" icon={Wallet} />
+              <Metric label="Saldo de movimentacoes" value={formatCurrency(cashRegister.cashInAmount - cashRegister.cashOutAmount)} hint={`${cashRegister.movements.length} movimentacao(es)`} icon={TrendingUp} />
+            </div>
 
             <div className="history-grid">
               <section className="scanner-panel">
@@ -193,20 +204,24 @@ export function CashRegisterPage() {
                 </header>
                 <div className="product-card-grid">
                   <div>
-                    <span>Dinheiro</span>
+                    <span><Banknote size={14} strokeWidth={2.3} aria-hidden="true" />Dinheiro</span>
                     <strong>{formatCurrency(totals.CASH)}</strong>
                   </div>
                   <div>
-                    <span>Pix</span>
+                    <span><Landmark size={14} strokeWidth={2.3} aria-hidden="true" />Pix</span>
                     <strong>{formatCurrency(totals.PIX)}</strong>
                   </div>
                   <div>
-                    <span>Debito</span>
+                    <span><CreditCard size={14} strokeWidth={2.3} aria-hidden="true" />Debito</span>
                     <strong>{formatCurrency(totals.DEBIT_CARD)}</strong>
                   </div>
                   <div>
-                    <span>Credito</span>
+                    <span><CreditCard size={14} strokeWidth={2.3} aria-hidden="true" />Credito</span>
                     <strong>{formatCurrency(totals.CREDIT_CARD)}</strong>
+                  </div>
+                  <div>
+                    <span><ReceiptText size={14} strokeWidth={2.3} aria-hidden="true" />Promissoria</span>
+                    <strong>{formatCurrency(totals.PROMISSORY_NOTE)}</strong>
                   </div>
                 </div>
 
@@ -256,14 +271,20 @@ export function CashRegisterPage() {
                   </div>
                 </header>
                 <form className="scanner-form" onSubmit={handleClose}>
-                  <div className="field-group">
-                    <label htmlFor="declaredCashAmount">Dinheiro contado</label>
-                    <CurrencyInput
-                      id="declaredCashAmount"
-                      value={declaredCashAmount}
-                      onChange={setDeclaredCashAmount}
-                      placeholder="R$ 0,00"
-                    />
+                  <div className="cash-closing-layout">
+                    <div className="field-group">
+                      <label htmlFor="declaredCashAmount">Dinheiro contado</label>
+                      <CurrencyInput
+                        id="declaredCashAmount"
+                        value={declaredCashAmount}
+                        onChange={setDeclaredCashAmount}
+                        placeholder="R$ 0,00"
+                      />
+                    </div>
+                    <div className="cash-difference-card">
+                      <span>Diferenca</span>
+                      <strong>{formatCurrency(closingDifference)}</strong>
+                    </div>
                   </div>
                   <button className="action-button" type="submit" disabled={isSubmitting}>
                     Fechar caixa
@@ -278,7 +299,10 @@ export function CashRegisterPage() {
                       <article className="sale-history-item" key={movement.id}>
                         <span>{movement.type === 'CASH_IN' ? 'Suprimento' : 'Sangria'}</span>
                         <strong>{formatCurrency(movement.amount)}</strong>
-                        <small>{movement.reason} - {formatNullableDateTime(movement.createdAt)}</small>
+                        <small>
+                          {movement.reason}
+                          {movement.paymentMethod ? ` - ${movement.paymentMethod}` : ''} - {formatNullableDateTime(movement.createdAt)}
+                        </small>
                       </article>
                     ))
                   )}
