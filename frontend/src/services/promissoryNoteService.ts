@@ -29,6 +29,10 @@ export function getPromissoryNotePrintUrl(noteId: number) {
   return `/api/promissory-notes/${noteId}/print`
 }
 
+export function getPromissoryNotesBySalePrintUrl(saleId: number) {
+  return `/api/promissory-notes/sale/${saleId}/print`
+}
+
 export function getPromissoryNotesExportUrl(filters: PromissoryNoteFilters = {}, dueToday = false) {
   const query = toQuery(filters)
   const separator = query ? '&' : '?'

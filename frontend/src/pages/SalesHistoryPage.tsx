@@ -3,9 +3,11 @@ import { BadgeDollarSign, CalendarClock, CreditCard, ReceiptText, UserRound } fr
 import { cancelSale, getSaleReceiptUrl, getSales } from '../services/saleService'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationControls } from '../components/PaginationControls'
 import type { Sale } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
+import { usePagination } from '../hooks/usePagination'
 
 function getSellerName(sale: Sale) {
   return sale.operator?.displayName?.trim() || 'Vendedor nao identificado'
@@ -25,6 +27,8 @@ export function SalesHistoryPage() {
     () => sales.reduce((sum, sale) => sum + sale.totalAmount, 0),
     [sales],
   )
+  const salesPagination = usePagination(sales, 8)
+  const saleItemsPagination = usePagination(selectedSale?.items ?? [], 6)
 
   const loadSales = useCallback(async (nextStartDate: string, nextEndDate: string) => {
     setIsLoading(true)
@@ -166,7 +170,7 @@ export function SalesHistoryPage() {
               <div className="product-empty">Nenhuma venda encontrada para o periodo.</div>
             ) : (
               <div className="sale-history-list">
-                {sales.map((sale) => (
+                {salesPagination.pageItems.map((sale) => (
                   <button
                     className={
                       selectedSale?.id === sale.id
@@ -185,6 +189,14 @@ export function SalesHistoryPage() {
                     </small>
                   </button>
                 ))}
+                <PaginationControls
+                  itemLabel="vendas"
+                  page={salesPagination.page}
+                  pageSize={salesPagination.pageSize}
+                  totalItems={salesPagination.totalItems}
+                  totalPages={salesPagination.totalPages}
+                  onPageChange={salesPagination.setPage}
+                />
               </div>
             )}
           </section>
@@ -246,7 +258,7 @@ export function SalesHistoryPage() {
                     {selectedSale.cancellationReason}
                   </div>
                 ) : null}
-                {selectedSale.items.map((item) => (
+                {saleItemsPagination.pageItems.map((item) => (
                   <article className="cart-item" key={item.id}>
                     <div className="cart-item-main">
                       <span><CalendarClock size={14} strokeWidth={2.3} aria-hidden="true" />{item.productCode}</span>
@@ -259,6 +271,14 @@ export function SalesHistoryPage() {
                     </div>
                   </article>
                 ))}
+                <PaginationControls
+                  itemLabel="itens"
+                  page={saleItemsPagination.page}
+                  pageSize={saleItemsPagination.pageSize}
+                  totalItems={saleItemsPagination.totalItems}
+                  totalPages={saleItemsPagination.totalPages}
+                  onPageChange={saleItemsPagination.setPage}
+                />
               </div>
             )}
           </section>

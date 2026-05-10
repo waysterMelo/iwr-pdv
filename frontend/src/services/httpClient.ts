@@ -50,7 +50,7 @@ function resolveApiBaseUrl() {
   return normalizedBaseUrl
 }
 
-const apiBaseUrl = resolveApiBaseUrl()
+export const apiBaseUrl = resolveApiBaseUrl()
 const authTokenStorageKey = 'iwr-pdv-auth-token'
 let authToken = window.localStorage.getItem(authTokenStorageKey)
 

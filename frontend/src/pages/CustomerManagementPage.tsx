@@ -7,6 +7,9 @@ import type { Customer, CustomerPayload } from '../types/customer'
 import { getErrorMessage } from '../utils/errors'
 import { formatDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { usePagination } from '../hooks/usePagination'
+import { PaginationControls } from '../components/PaginationControls'
+import { maskCpf, maskPhone } from '../utils/masks'
 
 const initialForm: CustomerPayload = {
   name: '',
@@ -41,6 +44,7 @@ export function CustomerManagementPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const activeCustomers = useMemo(() => customers.filter((customer) => customer.active).length, [customers])
+  const customerPagination = usePagination(customers, 6)
 
   const loadCustomers = useCallback(async (nextSearch = '') => {
     setIsLoading(true)
@@ -70,7 +74,11 @@ export function CustomerManagementPage() {
 
   function handleEdit(customer: Customer) {
     setEditingCustomerId(customer.id)
-    setForm(toForm(customer))
+    setForm({
+      ...toForm(customer),
+      cpf: maskCpf(customer.cpf ?? ''),
+      phone: maskPhone(customer.phone ?? ''),
+    })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -163,8 +171,9 @@ export function CustomerManagementPage() {
                   <input
                     id="customerCpf"
                     value={form.cpf ?? ''}
-                    onChange={(event) => setForm((current) => ({ ...current, cpf: event.target.value }))}
-                    placeholder="Opcional"
+                    onChange={(event) => setForm((current) => ({ ...current, cpf: maskCpf(event.target.value) }))}
+                    inputMode="numeric"
+                    placeholder="000.000.000-00"
                   />
                 </div>
                 <div className="field-group">
@@ -172,8 +181,9 @@ export function CustomerManagementPage() {
                   <input
                     id="customerPhone"
                     value={form.phone ?? ''}
-                    onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
-                    placeholder="Opcional"
+                    onChange={(event) => setForm((current) => ({ ...current, phone: maskPhone(event.target.value) }))}
+                    inputMode="numeric"
+                    placeholder="11 9999-9999"
                   />
                 </div>
                 <div className="field-group">
@@ -256,12 +266,12 @@ export function CustomerManagementPage() {
               <div className="product-empty">Nenhum cliente encontrado.</div>
             ) : (
               <div className="product-list">
-                {customers.map((customer) => (
+                {customerPagination.pageItems.map((customer) => (
                   <article className="product-card" key={customer.id}>
                     <div className="product-card-header">
                       <div>
                         <h3>{customer.name}</h3>
-                        <span className="product-card-code">{customer.cpf || 'Sem CPF'}</span>
+                        <span className="product-card-code">{customer.cpf ? maskCpf(customer.cpf) : 'Sem CPF'}</span>
                       </div>
                       <span className={`status-badge ${customer.active ? 'status-badge--up' : 'status-badge--down'}`}>
                         {customer.active ? 'Ativo' : 'Inativo'}
@@ -270,7 +280,7 @@ export function CustomerManagementPage() {
                     <div className="product-card-grid">
                       <div>
                         <span>Telefone</span>
-                        <strong>{customer.phone || '-'}</strong>
+                        <strong>{customer.phone ? maskPhone(customer.phone) : '-'}</strong>
                       </div>
                       <div>
                         <span>Email</span>
@@ -292,6 +302,14 @@ export function CustomerManagementPage() {
                     </div>
                   </article>
                 ))}
+                <PaginationControls
+                  itemLabel="clientes"
+                  page={customerPagination.page}
+                  pageSize={customerPagination.pageSize}
+                  totalItems={customerPagination.totalItems}
+                  totalPages={customerPagination.totalPages}
+                  onPageChange={customerPagination.setPage}
+                />
               </div>
             )}
           </section>

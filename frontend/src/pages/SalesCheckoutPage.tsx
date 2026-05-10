@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { BadgeDollarSign, CalendarClock, Package, Percent, ReceiptText, UserRound } from 'lucide-react'
+import { BadgeDollarSign, CalendarClock, Package, Percent, ReceiptText, UserRound, Barcode, ScanLine, CheckCircle2, Printer } from 'lucide-react'
 import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import { createCustomer, getCustomers } from '../services/customerService'
+import { getPromissoryNotesBySalePrintUrl } from '../services/promissoryNoteService'
 import { getSaleReceiptUrl } from '../services/saleService'
 import type { Customer } from '../types/customer'
 import type { PromissoryInstallmentPayload } from '../types/promissoryNote'
@@ -9,7 +10,10 @@ import type { PaymentMethod, Sale } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationControls } from '../components/PaginationControls'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { usePagination } from '../hooks/usePagination'
+import { maskCpf, maskPhone } from '../utils/masks'
 
 type CustomerFormState = {
   name: string
@@ -52,13 +56,15 @@ function splitAmount(total: number, count: number) {
 
 export function SalesCheckoutPage() {
   const { confirm } = useAppMessage()
+  const [isFakeScannerOpen, setIsFakeScannerOpen] = useState(false)
+  const [fakeScanStatus, setFakeScanStatus] = useState<'idle' | 'scanning' | 'success'>('idle')
   const [scanCode, setScanCode] = useState('')
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null)
-  const scannerInputRef = useRef<HTMLInputElement>(null)
   const receiptFrameRef = useRef<HTMLIFrameElement>(null)
   const checkout = useSalesCart()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [customerSearch, setCustomerSearch] = useState('')
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false)
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [customerForm, setCustomerForm] = useState<CustomerFormState>(initialCustomerForm)
   const [installmentCount, setInstallmentCount] = useState(1)
@@ -69,10 +75,7 @@ export function SalesCheckoutPage() {
     () => customers.find((customer) => String(customer.id) === selectedCustomerId) ?? null,
     [customers, selectedCustomerId],
   )
-
-  useEffect(() => {
-    scannerInputRef.current?.focus()
-  }, [])
+  const cartPagination = usePagination(checkout.cartItems, 6)
 
   useEffect(() => {
     const timeoutId = window.setTimeout(async () => {
@@ -104,21 +107,24 @@ export function SalesCheckoutPage() {
     return () => window.clearTimeout(timeoutId)
   }, [checkout.paymentMethod, checkout.totalAmount, installmentCount])
 
-  async function handleScannerSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  function handleOpenFakeScanner() {
+    setIsFakeScannerOpen(true)
+    setFakeScanStatus('scanning')
+    setScanCode('')
+  }
 
-    const added = await checkout.addProductCodeToCart(scanCode)
-
-    if (added) {
-      setScanCode('')
-    }
-
-    scannerInputRef.current?.focus()
+  async function handleCodeScanned(code: string) {
+    if (!code.trim()) return
+    setFakeScanStatus('success')
+    setTimeout(async () => {
+      setIsFakeScannerOpen(false)
+      setFakeScanStatus('idle')
+      await checkout.addProductCodeToCart(code.trim().toUpperCase())
+    }, 1500)
   }
 
   function clearCart() {
     checkout.clearCart()
-    scannerInputRef.current?.focus()
   }
 
   async function handleCloseSale() {
@@ -151,8 +157,6 @@ export function SalesCheckoutPage() {
     if (sale) {
       setReceiptSale(sale)
     }
-
-    scannerInputRef.current?.focus()
   }
 
   function toPromissoryInstallments(): PromissoryInstallmentPayload[] {
@@ -219,29 +223,49 @@ export function SalesCheckoutPage() {
           <button
             className="quick-action quick-action--ghost quick-action--search"
             type="button"
-            onClick={() => scannerInputRef.current?.focus()}
+            onClick={handleOpenFakeScanner}
+            disabled={checkout.isSearching || fakeScanStatus !== 'idle'}
           >
             Buscar produto
           </button>
         </div>
 
-        <section className="scanner-panel">
-          <form className="scanner-form" onSubmit={handleScannerSubmit}>
-            <label htmlFor="scannerCode">Leitor de codigo</label>
-            <div className="scanner-row">
-              <input
-                id="scannerCode"
-                ref={scannerInputRef}
-                value={scanCode}
-                onChange={(event) => setScanCode(event.target.value.toUpperCase())}
-                placeholder="IWR-000001"
-                autoComplete="off"
-              />
-              <button className="action-button" type="submit" disabled={checkout.isSearching}>
-                {checkout.isSearching ? 'Buscando...' : 'Adicionar'}
-              </button>
+        <section className="scanner-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <header className="section-header" style={{ marginBottom: 0 }}>
+            <div>
+              <h2>Leitor de codigo</h2>
+              <p>Simule a leitura de um codigo de barras clicando abaixo.</p>
             </div>
-          </form>
+          </header>
+          
+          <button 
+            type="button" 
+            onClick={handleOpenFakeScanner}
+            disabled={checkout.isSearching || fakeScanStatus !== 'idle'}
+            style={{ 
+              background: 'rgba(255,255,255,0.02)',
+              border: '2px dashed var(--checkout-border)',
+              borderRadius: '16px',
+              height: '140px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              color: 'var(--checkout-faint)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--checkout-gold-soft)'; e.currentTarget.style.color = 'var(--checkout-text)' }}
+            onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--checkout-border)'; e.currentTarget.style.color = 'var(--checkout-faint)' }}
+          >
+            <Barcode size={64} strokeWidth={1} />
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Clique para ler</span>
+          </button>
+
+          <button className="action-button" type="button" onClick={handleOpenFakeScanner} disabled={checkout.isSearching || fakeScanStatus !== 'idle'}>
+            {checkout.isSearching ? 'Buscando...' : 'Adicionar'}
+          </button>
 
           {checkout.message ? (
             <div
@@ -312,91 +336,116 @@ export function SalesCheckoutPage() {
                 </header>
 
                 <div className="form-grid">
-                  <div className="field-group field-group--full">
+                  <div className="field-group field-group--full" style={{ position: 'relative' }}>
                     <label htmlFor="customerSearch">Buscar cliente</label>
                     <input
                       id="customerSearch"
                       value={customerSearch}
-                      onChange={(event) => setCustomerSearch(event.target.value)}
+                      onChange={(event) => {
+                        setCustomerSearch(event.target.value)
+                        if (selectedCustomerId) {
+                          setSelectedCustomerId('') // clear selection when typing
+                        }
+                      }}
+                      onFocus={() => setIsCustomerDropdownOpen(true)}
+                      onBlur={() => setTimeout(() => setIsCustomerDropdownOpen(false), 200)}
                       placeholder="Nome, CPF ou telefone"
+                      autoComplete="off"
                     />
-                  </div>
-                  <div className="field-group field-group--full">
-                    <label htmlFor="selectedCustomer">Cliente da nota</label>
-                    <select
-                      id="selectedCustomer"
-                      value={selectedCustomerId}
-                      onChange={(event) => setSelectedCustomerId(event.target.value)}
-                    >
-                      <option value="">Selecione um cliente</option>
-                      {customers.map((customer) => (
-                        <option value={customer.id} key={customer.id}>
-                          {customer.name} {customer.cpf ? `- ${customer.cpf}` : ''}
-                        </option>
-                      ))}
-                    </select>
+                    {isCustomerDropdownOpen && customers.length > 0 && customerSearch.trim().length > 0 && (
+                      <ul className="customer-dropdown">
+                        {customers.map((customer) => (
+                          <li 
+                            key={customer.id} 
+                            className="customer-dropdown-item"
+                            onClick={() => { 
+                              setSelectedCustomerId(String(customer.id))
+                              setCustomerSearch(customer.name)
+                              setIsCustomerDropdownOpen(false)
+                            }}
+                          >
+                            <div className="customer-dropdown-name">{customer.name}</div>
+                            <div className="customer-dropdown-doc">
+                              {[
+                                customer.cpf ? maskCpf(customer.cpf) : '',
+                                customer.phone ? maskPhone(customer.phone) : ''
+                              ].filter(Boolean).join(' - ') || 'Sem documento informado'}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   {selectedCustomer ? (
                     <div className="customer-inline-card field-group--full">
                       <span><UserRound size={14} strokeWidth={2.3} aria-hidden="true" />Cliente selecionado</span>
                       <strong>{selectedCustomer.name}</strong>
-                      <small>{[selectedCustomer.cpf, selectedCustomer.phone].filter(Boolean).join(' - ') || 'Sem documento informado'}</small>
+                      <small>
+                        {[
+                          selectedCustomer.cpf ? maskCpf(selectedCustomer.cpf) : '',
+                          selectedCustomer.phone ? maskPhone(selectedCustomer.phone) : '',
+                        ].filter(Boolean).join(' - ') || 'Sem documento informado'}
+                      </small>
                     </div>
                   ) : null}
                 </div>
 
-                <form className="customer-mini-form" onSubmit={handleCreateCustomer}>
-                  <div className="form-grid">
-                    <div className="field-group">
-                      <label htmlFor="newCustomerName">Novo cliente</label>
-                      <input
-                        id="newCustomerName"
-                        value={customerForm.name}
-                        onChange={(event) => setCustomerForm((current) => ({ ...current, name: event.target.value }))}
-                        placeholder="Nome completo"
-                      />
+                {!selectedCustomer ? (
+                  <form className="customer-mini-form" onSubmit={handleCreateCustomer}>
+                    <div className="form-grid">
+                      <div className="field-group">
+                        <label htmlFor="newCustomerName">Novo cliente</label>
+                        <input
+                          id="newCustomerName"
+                          value={customerForm.name}
+                          onChange={(event) => setCustomerForm((current) => ({ ...current, name: event.target.value }))}
+                          placeholder="Nome completo"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label htmlFor="newCustomerCpf">CPF</label>
+                        <input
+                          id="newCustomerCpf"
+                          value={customerForm.cpf}
+                          onChange={(event) => setCustomerForm((current) => ({ ...current, cpf: maskCpf(event.target.value) }))}
+                          inputMode="numeric"
+                          placeholder="000.000.000-00"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label htmlFor="newCustomerPhone">Telefone</label>
+                        <input
+                          id="newCustomerPhone"
+                          value={customerForm.phone}
+                          onChange={(event) => setCustomerForm((current) => ({ ...current, phone: maskPhone(event.target.value) }))}
+                          inputMode="numeric"
+                          placeholder="11 9999-9999"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label htmlFor="newCustomerEmail">Email</label>
+                        <input
+                          id="newCustomerEmail"
+                          value={customerForm.email}
+                          onChange={(event) => setCustomerForm((current) => ({ ...current, email: event.target.value }))}
+                          placeholder="Opcional"
+                        />
+                      </div>
+                      <div className="field-group field-group--full">
+                        <label htmlFor="newCustomerAddress">Endereco</label>
+                        <input
+                          id="newCustomerAddress"
+                          value={customerForm.address}
+                          onChange={(event) => setCustomerForm((current) => ({ ...current, address: event.target.value }))}
+                          placeholder="Rua, numero, bairro"
+                        />
+                      </div>
                     </div>
-                    <div className="field-group">
-                      <label htmlFor="newCustomerCpf">CPF</label>
-                      <input
-                        id="newCustomerCpf"
-                        value={customerForm.cpf}
-                        onChange={(event) => setCustomerForm((current) => ({ ...current, cpf: event.target.value }))}
-                        placeholder="Opcional"
-                      />
-                    </div>
-                    <div className="field-group">
-                      <label htmlFor="newCustomerPhone">Telefone</label>
-                      <input
-                        id="newCustomerPhone"
-                        value={customerForm.phone}
-                        onChange={(event) => setCustomerForm((current) => ({ ...current, phone: event.target.value }))}
-                        placeholder="Opcional"
-                      />
-                    </div>
-                    <div className="field-group">
-                      <label htmlFor="newCustomerEmail">Email</label>
-                      <input
-                        id="newCustomerEmail"
-                        value={customerForm.email}
-                        onChange={(event) => setCustomerForm((current) => ({ ...current, email: event.target.value }))}
-                        placeholder="Opcional"
-                      />
-                    </div>
-                    <div className="field-group field-group--full">
-                      <label htmlFor="newCustomerAddress">Endereco</label>
-                      <input
-                        id="newCustomerAddress"
-                        value={customerForm.address}
-                        onChange={(event) => setCustomerForm((current) => ({ ...current, address: event.target.value }))}
-                        placeholder="Rua, numero, bairro"
-                      />
-                    </div>
-                  </div>
-                  <button className="secondary-button" type="submit" disabled={isSavingCustomer}>
-                    {isSavingCustomer ? 'Salvando...' : 'Cadastrar e selecionar cliente'}
-                  </button>
-                </form>
+                    <button className="secondary-button" type="submit" disabled={isSavingCustomer}>
+                      {isSavingCustomer ? 'Salvando...' : 'Cadastrar e selecionar cliente'}
+                    </button>
+                  </form>
+                ) : null}
 
                 <div className="installment-toolbar">
                   <div className="field-group">
@@ -492,7 +541,7 @@ export function SalesCheckoutPage() {
               <div className="product-empty">Nenhum item no carrinho. Leia uma etiqueta para comecar.</div>
             ) : (
               <div className="cart-list">
-                {checkout.cartItems.map((item) => (
+                {cartPagination.pageItems.map((item) => (
                   <article className="cart-item" key={item.product.id}>
                     <div className="cart-item-main">
                       <span>{item.product.code}</span>
@@ -529,6 +578,14 @@ export function SalesCheckoutPage() {
                     </div>
                   </article>
                 ))}
+                <PaginationControls
+                  itemLabel="itens"
+                  page={cartPagination.page}
+                  pageSize={cartPagination.pageSize}
+                  totalItems={cartPagination.totalItems}
+                  totalPages={cartPagination.totalPages}
+                  onPageChange={cartPagination.setPage}
+                />
               </div>
             )}
           </section>
@@ -589,7 +646,7 @@ export function SalesCheckoutPage() {
             <iframe
               className="receipt-preview-frame"
               ref={receiptFrameRef}
-              src={getSaleReceiptUrl(receiptSale.id)}
+              src={receiptSale.paymentMethod === 'PROMISSORY_NOTE' ? getPromissoryNotesBySalePrintUrl(receiptSale.id) : getSaleReceiptUrl(receiptSale.id)}
               title={`Recibo da venda ${receiptSale.id}`}
             />
             <div className="qr-modal-actions">
@@ -598,17 +655,77 @@ export function SalesCheckoutPage() {
                 type="button"
                 onClick={() => receiptFrameRef.current?.contentWindow?.print()}
               >
-                Imprimir recibo
+                <Printer size={14} strokeWidth={2.3} aria-hidden="true" />
+                {receiptSale.paymentMethod === 'PROMISSORY_NOTE' ? 'Imprimir promissorias' : 'Imprimir recibo'}
               </button>
               <a
                 className="action-button action-button--link"
-                href={getSaleReceiptUrl(receiptSale.id)}
+                href={receiptSale.paymentMethod === 'PROMISSORY_NOTE' ? getPromissoryNotesBySalePrintUrl(receiptSale.id) : getSaleReceiptUrl(receiptSale.id)}
                 target="_blank"
                 rel="noreferrer"
               >
                 Abrir em nova aba
               </a>
+              </div>
+              </section>
+              </div>
+              ) : null}
+
+      {isFakeScannerOpen ? (
+        <div className="qr-modal-backdrop" role="presentation" style={{ zIndex: 100 }} onClick={() => setIsFakeScannerOpen(false)}>
+          <section className="receipt-modal" style={{ width: '400px', padding: '32px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '24px' }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ fontSize: '1.5rem', color: 'var(--checkout-text)', margin: 0 }}>
+              {fakeScanStatus === 'scanning' ? 'Lendo codigo...' : 'Codigo lido com sucesso!'}
+            </h2>
+            <div style={{ height: '140px', position: 'relative', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+               {fakeScanStatus === 'scanning' ? (
+                 <>
+                   <Barcode size={80} strokeWidth={1} color="rgba(255,255,255,0.4)" />
+                   <div style={{ 
+                     position: 'absolute', 
+                     top: 0, 
+                     left: 0, 
+                     right: 0, 
+                     height: '4px', 
+                     background: '#ef4444', 
+                     boxShadow: '0 0 20px 4px rgba(239, 68, 68, 0.6)',
+                     animation: 'scan-line 1s ease-in-out infinite alternate' 
+                   }} />
+                   <style>{`
+                     @keyframes scan-line {
+                       0% { transform: translateY(0); }
+                       100% { transform: translateY(136px); }
+                     }
+                   `}</style>
+                   <input
+                     autoFocus
+                     onBlur={(e) => e.target.focus()}
+                     value={scanCode}
+                     onChange={(e) => setScanCode(e.target.value)}
+                     onKeyDown={(e) => {
+                       if (e.key === 'Enter') {
+                         e.preventDefault()
+                         void handleCodeScanned(scanCode)
+                       }
+                     }}
+                     style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                     aria-hidden="true"
+                   />
+                 </>
+               ) : (
+                 <CheckCircle2 size={80} color="#34d399" />
+               )}
             </div>
+            {fakeScanStatus === 'success' ? (
+               <p style={{ margin: 0, color: 'var(--checkout-success)' }}>Adicionando ao carrinho...</p>
+            ) : (
+               <p style={{ margin: 0, color: 'var(--checkout-muted)' }}>Posicione o codigo de barras no centro.</p>
+            )}
+            {fakeScanStatus === 'scanning' && (
+               <button className="secondary-button" type="button" onClick={() => setIsFakeScannerOpen(false)}>
+                 Cancelar
+               </button>
+            )}
           </section>
         </div>
       ) : null}

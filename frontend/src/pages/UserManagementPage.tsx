@@ -11,6 +11,8 @@ import { formatDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationControls } from '../components/PaginationControls'
+import { usePagination } from '../hooks/usePagination'
 
 type UserFormState = {
   username: string
@@ -71,6 +73,7 @@ export function UserManagementPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const userPagination = usePagination(users, 6)
 
   useEffect(() => {
     void loadUsers()
@@ -288,7 +291,7 @@ export function UserManagementPage() {
               <div className="product-empty">Nenhum usuario cadastrado.</div>
             ) : (
               <div className="product-list">
-                {users.map((user) => (
+                {userPagination.pageItems.map((user) => (
                   <article className="product-card" key={user.id}>
                     <div className="product-card-header">
                       <div>
@@ -323,6 +326,14 @@ export function UserManagementPage() {
                     </div>
                   </article>
                 ))}
+                <PaginationControls
+                  itemLabel="usuarios"
+                  page={userPagination.page}
+                  pageSize={userPagination.pageSize}
+                  totalItems={userPagination.totalItems}
+                  totalPages={userPagination.totalPages}
+                  onPageChange={userPagination.setPage}
+                />
               </div>
             )}
           </section>

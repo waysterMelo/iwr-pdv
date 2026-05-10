@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { AlertCircle, CalendarClock, CheckCircle2, FileDown, Printer, ReceiptText, Search } from 'lucide-react'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationControls } from '../components/PaginationControls'
 import { getCustomers } from '../services/customerService'
 import {
   getPromissoryNotePrintUrl,
@@ -16,6 +17,8 @@ import type { PaymentMethod } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { usePagination } from '../hooks/usePagination'
+import { maskCpf, maskPhone } from '../utils/masks'
 
 const statusLabels: Record<PromissoryNoteStatus, string> = {
   PENDING: 'Pendente',
@@ -67,6 +70,18 @@ export function PromissoryNotesPage() {
       )
     })
   }, [notes, searchTerm])
+  const notePagination = usePagination(filteredNotes, 8)
+
+  useEffect(() => {
+    if (filteredNotes.length === 0) {
+      setSelectedNote(null)
+      return
+    }
+
+    if (!selectedNote || !filteredNotes.some((note) => note.id === selectedNote.id)) {
+      setSelectedNote(filteredNotes[0])
+    }
+  }, [filteredNotes, selectedNote])
 
   const metrics = useMemo(() => {
     const openNotes = notes.filter((note) => note.status !== 'PAID')
@@ -309,7 +324,7 @@ export function PromissoryNotesPage() {
               <div className="product-empty">Nenhuma nota encontrada.</div>
             ) : (
               <div className="sale-history-list">
-                {filteredNotes.map((note) => (
+                {notePagination.pageItems.map((note) => (
                   <button
                     className={selectedNote?.id === note.id ? 'sale-history-item sale-history-item--active' : 'sale-history-item'}
                     type="button"
@@ -323,6 +338,14 @@ export function PromissoryNotesPage() {
                     </small>
                   </button>
                 ))}
+                <PaginationControls
+                  itemLabel="parcelas"
+                  page={notePagination.page}
+                  pageSize={notePagination.pageSize}
+                  totalItems={notePagination.totalItems}
+                  totalPages={notePagination.totalPages}
+                  onPageChange={notePagination.setPage}
+                />
               </div>
             )}
           </section>
@@ -343,7 +366,12 @@ export function PromissoryNotesPage() {
                   <div className="cart-item-main">
                     <span><ReceiptText size={14} strokeWidth={2.3} aria-hidden="true" />{statusLabels[selectedNote.status]}</span>
                     <strong>{selectedNote.customer.name}</strong>
-                    <small>{[selectedNote.customer.cpf, selectedNote.customer.phone].filter(Boolean).join(' - ') || 'Sem documento'}</small>
+                    <small>
+                      {[
+                        selectedNote.customer.cpf ? maskCpf(selectedNote.customer.cpf) : '',
+                        selectedNote.customer.phone ? maskPhone(selectedNote.customer.phone) : '',
+                      ].filter(Boolean).join(' - ') || 'Sem documento'}
+                    </small>
                   </div>
                   <div className="cart-price">
                     <span>Valor</span>

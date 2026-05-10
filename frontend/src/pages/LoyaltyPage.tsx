@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Cake, CalendarDays, Gift, Phone } from 'lucide-react'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationControls } from '../components/PaginationControls'
 import { getCustomerBirthdays } from '../services/customerService'
 import type { Customer } from '../types/customer'
 import { getErrorMessage } from '../utils/errors'
+import { usePagination } from '../hooks/usePagination'
+import { maskPhone } from '../utils/masks'
 
 type BirthdayCustomer = Customer & {
   nextBirthday: Date
@@ -84,6 +87,7 @@ export function LoyaltyPage() {
 
   const todayCount = birthdayCustomers.filter((customer) => customer.daysUntilBirthday === 0).length
   const nextSevenDaysCount = birthdayCustomers.filter((customer) => customer.daysUntilBirthday <= 7).length
+  const birthdayPagination = usePagination(birthdayCustomers, 8)
 
   return (
     <main className="app-shell">
@@ -119,7 +123,7 @@ export function LoyaltyPage() {
             <div className="product-empty">Nenhum aniversario cadastrado.</div>
           ) : (
             <div className="product-list">
-              {birthdayCustomers.map((customer) => (
+              {birthdayPagination.pageItems.map((customer) => (
                 <article className="product-card" key={customer.id}>
                   <div className="product-card-header">
                     <div>
@@ -133,7 +137,7 @@ export function LoyaltyPage() {
                   <div className="product-card-grid">
                     <div>
                       <span>Telefone</span>
-                      <strong>{customer.phone || '-'}</strong>
+                      <strong>{customer.phone ? maskPhone(customer.phone) : '-'}</strong>
                     </div>
                     <div>
                       <span>Email</span>
@@ -146,6 +150,14 @@ export function LoyaltyPage() {
                   </div>
                 </article>
               ))}
+              <PaginationControls
+                itemLabel="clientes"
+                page={birthdayPagination.page}
+                pageSize={birthdayPagination.pageSize}
+                totalItems={birthdayPagination.totalItems}
+                totalPages={birthdayPagination.totalPages}
+                onPageChange={birthdayPagination.setPage}
+              />
             </div>
           )}
         </section>

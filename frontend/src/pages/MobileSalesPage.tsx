@@ -5,6 +5,8 @@ import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import type { PaymentMethod } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
+import { PaginationControls } from '../components/PaginationControls'
+import { usePagination } from '../hooks/usePagination'
 
 type MobileSalesPageProps = {
   onBack: () => void
@@ -15,6 +17,7 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
   const [manualCode, setManualCode] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
   const checkout = useSalesCart({ initialPaymentMethod: 'PIX' })
+  const cartPagination = usePagination(checkout.cartItems, 5)
 
   async function handleManualSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -130,7 +133,7 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
               <div className="mobile-empty-state">Nenhum produto adicionado.</div>
             ) : (
               <div className="mobile-cart-list">
-                {checkout.cartItems.map((item) => (
+                {cartPagination.pageItems.map((item) => (
                   <article className="mobile-cart-item" key={item.product.id}>
                     <div>
                       <span>{item.product.code}</span>
@@ -162,6 +165,14 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
                     <strong className="mobile-item-total">{formatCurrency(getCartItemTotal(item))}</strong>
                   </article>
                 ))}
+                <PaginationControls
+                  itemLabel="itens"
+                  page={cartPagination.page}
+                  pageSize={cartPagination.pageSize}
+                  totalItems={cartPagination.totalItems}
+                  totalPages={cartPagination.totalPages}
+                  onPageChange={cartPagination.setPage}
+                />
               </div>
             )}
           </section>

@@ -5,6 +5,7 @@ import {
   closeCashRegister,
   getCurrentCashRegister,
   openCashRegister,
+  downloadCashRegisterReport,
 } from '../services/cashRegisterService'
 import type { CashMovementType, CashRegister } from '../types/cashRegister'
 import { getErrorMessage } from '../utils/errors'
@@ -12,7 +13,9 @@ import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationControls } from '../components/PaginationControls'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { usePagination } from '../hooks/usePagination'
 
 export function CashRegisterPage() {
   const { notify } = useAppMessage()
@@ -26,6 +29,7 @@ export function CashRegisterPage() {
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const showMessage = useCallback((nextMessage: string, nextType: 'success' | 'error') => {
     setMessage(nextMessage)
@@ -56,6 +60,17 @@ export function CashRegisterPage() {
 
     return () => window.clearTimeout(timeoutId)
   }, [loadCashRegister])
+
+  async function handleDownloadReport() {
+    setIsDownloading(true)
+    try {
+      await downloadCashRegisterReport()
+    } catch (error) {
+      showMessage(getErrorMessage(error, 'Nao foi possivel baixar o relatorio.'), 'error')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   async function handleOpen(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -118,6 +133,7 @@ export function CashRegisterPage() {
   const totals = cashRegister?.totalsByPaymentMethod ?? {}
   const declaredCashNumber = Number(declaredCashAmount) || 0
   const closingDifference = cashRegister ? declaredCashNumber - cashRegister.expectedCashAmount : 0
+  const movementPagination = usePagination(cashRegister?.movements ?? [], 8)
 
   return (
     <main className="app-shell">
@@ -140,8 +156,8 @@ export function CashRegisterPage() {
             >
               Registrar sangria
             </button>
-            <button className="quick-action quick-action--ghost quick-action--print" type="button" onClick={() => window.print()}>
-              Imprimir resumo
+            <button className="quick-action quick-action--ghost quick-action--print" type="button" onClick={handleDownloadReport} disabled={isDownloading}>
+              {isDownloading ? 'Gerando...' : 'Imprimir resumo'}
             </button>
             <button
               className="quick-action quick-action--primary quick-action--close-cash"
@@ -194,7 +210,47 @@ export function CashRegisterPage() {
               <Metric label="Saldo de movimentacoes" value={formatCurrency(cashRegister.cashInAmount - cashRegister.cashOutAmount)} hint={`${cashRegister.movements.length} movimentacao(es)`} icon={TrendingUp} />
             </div>
 
-            <div className="history-grid">
+            {/* Print Report Section */}
+            <div className="cash-register-report">
+              <div className="cash-register-report-header">
+                <h1>Relatorio de Caixa</h1>
+                <p>Data de abertura: {formatNullableDateTime(cashRegister.openedAt)}</p>
+                <p>Status: {cashRegister.status === 'OPEN' ? 'Aberto' : 'Fechado'}</p>
+              </div>
+
+              <div className="cash-register-report-section">
+                <h3>Resumo por Pagamento</h3>
+                <table className="cash-register-report-table">
+                  <thead>
+                    <tr>
+                      <th>Forma de Pagamento</th>
+                      <th style={{ textAlign: 'right' }}>Valor Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Dinheiro</td><td className="value">{formatCurrency(totals.CASH || 0)}</td></tr>
+                    <tr><td>Pix</td><td className="value">{formatCurrency(totals.PIX || 0)}</td></tr>
+                    <tr><td>Cartao de Debito</td><td className="value">{formatCurrency(totals.DEBIT_CARD || 0)}</td></tr>
+                    <tr><td>Cartao de Credito</td><td className="value">{formatCurrency(totals.CREDIT_CARD || 0)}</td></tr>
+                    <tr><td>Nota Promissoria</td><td className="value">{formatCurrency(totals.PROMISSORY_NOTE || 0)}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="cash-register-report-section">
+                <h3>Saldos do Caixa</h3>
+                <table className="cash-register-report-table">
+                  <tbody>
+                    <tr><td>Total Vendido</td><td className="value">{formatCurrency(cashRegister.totalSalesAmount)}</td></tr>
+                    <tr><td>Dinheiro Esperado na Gaveta</td><td className="value">{formatCurrency(cashRegister.expectedCashAmount)}</td></tr>
+                    <tr><td>Total de Suprimentos</td><td className="value">{formatCurrency(cashRegister.cashInAmount)}</td></tr>
+                    <tr><td>Total de Sangrias</td><td className="value">{formatCurrency(cashRegister.cashOutAmount)}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="cash-register-grid">
               <section className="scanner-panel">
                 <header className="section-header">
                   <div>
@@ -263,7 +319,7 @@ export function CashRegisterPage() {
                 </form>
               </section>
 
-              <section className="cart-panel">
+              <section className="cart-panel cash-closing-panel">
                 <header className="section-header">
                   <div>
                     <h2>Fechamento</h2>
@@ -295,7 +351,7 @@ export function CashRegisterPage() {
                   {cashRegister.movements.length === 0 ? (
                     <div className="product-empty">Nenhuma sangria ou suprimento registrado.</div>
                   ) : (
-                    cashRegister.movements.map((movement) => (
+                    movementPagination.pageItems.map((movement) => (
                       <article className="sale-history-item" key={movement.id}>
                         <span>{movement.type === 'CASH_IN' ? 'Suprimento' : 'Sangria'}</span>
                         <strong>{formatCurrency(movement.amount)}</strong>
@@ -306,6 +362,14 @@ export function CashRegisterPage() {
                       </article>
                     ))
                   )}
+                  <PaginationControls
+                    itemLabel="movimentacoes"
+                    page={movementPagination.page}
+                    pageSize={movementPagination.pageSize}
+                    totalItems={movementPagination.totalItems}
+                    totalPages={movementPagination.totalPages}
+                    onPageChange={movementPagination.setPage}
+                  />
                 </div>
               </section>
             </div>

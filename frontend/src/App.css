@@ -3899,7 +3899,7 @@ h3 {
 
 .sales-checkout-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(360px, 0.92fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(420px, 1.8fr);
   gap: 24px;
   align-items: start;
 }
@@ -4422,17 +4422,41 @@ h3 {
   display: grid;
   gap: 18px;
   margin-top: 22px;
-  padding-top: 22px;
-  border-top: 1px solid var(--color-border);
+  padding: 24px;
+  border: 1px solid rgba(198, 161, 91, 0.45);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(198, 161, 91, 0.20) 0%, rgba(198, 161, 91, 0.08) 100%);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 0 32px rgba(198, 161, 91, 0.12), inset 0 1px 0 rgba(198, 161, 91, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.promissory-sale-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(198, 161, 91, 0.9), transparent);
+  opacity: 1;
+}
+
+@media (max-width: 720px) {
+  .promissory-sale-box {
+    padding: 16px;
+    gap: 16px;
+  }
 }
 
 .customer-mini-form {
   display: grid;
   gap: 14px;
   padding: 16px;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(198, 161, 91, 0.22);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 2px 16px rgba(0, 0, 0, 0.2);
 }
 
 .customer-inline-card {
@@ -4441,9 +4465,10 @@ h3 {
   align-content: center;
   gap: 6px;
   padding: 16px;
-  border: 1px solid rgba(198, 161, 91, 0.24);
+  border: 1px solid rgba(198, 161, 91, 0.38);
   border-radius: 18px;
-  background: rgba(198, 161, 91, 0.08);
+  background: linear-gradient(135deg, rgba(198, 161, 91, 0.16), rgba(0, 0, 0, 0.28));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .customer-inline-card span,
@@ -4470,9 +4495,10 @@ h3 {
   gap: 14px;
   align-items: end;
   padding: 16px;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(198, 161, 91, 0.22);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 2px 16px rgba(0, 0, 0, 0.2);
 }
 
 .installment-toolbar > div:last-child {
@@ -4500,9 +4526,9 @@ h3 {
   gap: 12px;
   align-items: end;
   padding: 14px;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(198, 161, 91, 0.15);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .notes-filter-form {
@@ -4544,6 +4570,52 @@ h3 {
   background: rgba(198, 161, 91, 0.08);
 }
 
+.customer-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin: 8px 0 0 0;
+  padding: 8px;
+  list-style: none;
+  background: rgba(16, 16, 18, 0.96);
+  border: 1px solid rgba(198, 161, 91, 0.28);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.customer-dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 180ms ease, transform 180ms ease;
+  background: transparent;
+}
+
+.customer-dropdown-item:hover {
+  background: rgba(198, 161, 91, 0.12);
+  transform: translateX(4px);
+}
+
+.customer-dropdown-name {
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.customer-dropdown-doc {
+  font-size: 0.68rem;
+  color: rgba(198, 161, 91, 0.8);
+  margin-top: 4px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .promissory-print-frame {
   width: 100%;
   min-height: 520px;
@@ -4558,11 +4630,652 @@ h3 {
   }
 }
 
+
+
+/* Operational card polish */
+.product-form-panel,
+.product-list-panel,
+.category-panel,
+.scanner-panel,
+.cart-panel,
+.checkout-footer-panel,
+.metric-card,
+.product-card,
+.cart-item,
+.sale-history-item,
+.batch-card,
+.batch-row,
+.customer-inline-card,
+.promissory-pay-panel,
+.installment-toolbar,
+.installment-row,
+.mobile-total-panel,
+.mobile-action-panel,
+.mobile-cart-panel,
+.mobile-payment-panel {
+  isolation: isolate;
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow:
+    0 18px 52px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.product-form-panel,
+.product-list-panel,
+.category-panel,
+.scanner-panel,
+.cart-panel,
+.checkout-footer-panel,
+.mobile-total-panel,
+.mobile-action-panel,
+.mobile-cart-panel,
+.mobile-payment-panel {
+  background:
+    linear-gradient(145deg, rgba(198, 161, 91, 0.075), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    rgba(12, 12, 14, 0.90);
+}
+
+.product-form-panel::before,
+.product-list-panel::before,
+.category-panel::before,
+.scanner-panel::before,
+.cart-panel::before,
+.checkout-footer-panel::before {
+  content: '';
+  position: absolute;
+  inset: 16px auto 16px 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, rgba(243, 223, 168, 0.88), rgba(198, 161, 91, 0.34));
+  pointer-events: none;
+}
+
+.product-card,
+.cart-item,
+.sale-history-item,
+.batch-card,
+.batch-row,
+.installment-row {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.115);
+  border-left: 3px solid rgba(198, 161, 91, 0.52);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.024) 42%, rgba(0, 0, 0, 0.18)),
+    rgba(13, 13, 15, 0.92);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.product-list > .product-card:nth-child(even),
+.cart-list > .cart-item:nth-child(even),
+.sale-history-list > .sale-history-item:nth-child(even),
+.batch-table > .batch-row:nth-child(even),
+.installment-list > .installment-row:nth-child(even) {
+  background:
+    linear-gradient(145deg, rgba(198, 161, 91, 0.07), rgba(255, 255, 255, 0.026) 48%, rgba(0, 0, 0, 0.18)),
+    rgba(15, 14, 13, 0.93);
+}
+
+.product-card:hover,
+.cart-item:hover,
+.sale-history-item:hover,
+.batch-card:hover,
+.batch-row:hover,
+.installment-row:hover {
+  transform: translateY(-1px);
+  border-color: rgba(243, 223, 168, 0.36);
+  border-left-color: rgba(243, 223, 168, 0.90);
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.product-card-header,
+.cart-item-main,
+.sale-history-item {
+  position: relative;
+}
+
+.product-card h3,
+.cart-item-main strong,
+.sale-history-item strong {
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+}
+
+.product-card-code,
+.product-category-chip,
+.status-badge,
+.stock-chip,
+.product-card-grid div,
+.sales-summary-totals div,
+.customer-inline-card,
+.promissory-pay-panel,
+.installment-toolbar,
+.cash-difference-card {
+  border-color: rgba(255, 255, 255, 0.13);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.026)),
+    rgba(0, 0, 0, 0.16);
+}
+
+.product-card-grid div,
+.sales-summary-totals div,
+.metric-card {
+  border-top: 2px solid rgba(198, 161, 91, 0.42);
+}
+
+.metric-card {
+  background:
+    linear-gradient(145deg, rgba(198, 161, 91, 0.085), transparent 54%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(14, 14, 16, 0.90);
+}
+
+.category-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 3px solid rgba(198, 161, 91, 0.56);
+  background:
+    linear-gradient(145deg, rgba(198, 161, 91, 0.09), rgba(255, 255, 255, 0.035) 50%, rgba(0, 0, 0, 0.16)),
+    rgba(15, 15, 17, 0.92);
+  color: #fff;
+}
+
+.category-card:hover,
+.category-card--active {
+  border-color: rgba(243, 223, 168, 0.34);
+  border-left-color: rgba(243, 223, 168, 0.92);
+  background:
+    linear-gradient(145deg, rgba(198, 161, 91, 0.14), rgba(255, 255, 255, 0.045) 54%, rgba(0, 0, 0, 0.14)),
+    rgba(18, 17, 16, 0.94);
+}
+
+.category-icon,
+.product-card-grid span svg,
+.metric-card__label svg,
+.cart-item-main span svg,
+.cart-item-main small svg,
+.cart-price span svg,
+.sales-summary-totals span svg,
+.product-qr-copy span svg,
+.sale-history-item span svg {
+  width: 18px;
+  height: 18px;
+  padding: 4px;
+  border: 1px solid rgba(198, 161, 91, 0.25);
+  border-radius: 8px;
+  background: rgba(198, 161, 91, 0.10);
+  color: var(--color-gold-soft);
+  box-sizing: content-box;
+}
+
+.category-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 14px;
+}
+
+.category-icon svg {
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.section-header h2,
+.product-card h3,
+.qr-modal-header h2 {
+  letter-spacing: 0;
+}
+
+.category-card small,
+.product-card-meta,
+.sale-history-item small {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.022)),
+    rgba(0, 0, 0, 0.18);
+}
+
+.pagination-controls > span {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pagination-controls > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-controls strong {
+  min-width: 54px;
+  color: var(--color-gold-soft);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.pagination-controls .secondary-button {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.66rem;
+}
+
+.app-sidebar {
+  border-right-color: rgba(243, 223, 168, 0.18);
+  background:
+    linear-gradient(180deg, rgba(198, 161, 91, 0.10), transparent 34%),
+    rgba(7, 7, 8, 0.97);
+}
+
+.brand-block,
+.operator-card,
+.premium-status-card {
+  border-color: rgba(243, 223, 168, 0.18);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.brand-caption,
+.side-nav-copy span:not(.side-nav-icon),
+.operator-card span,
+.premium-status-card span {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.side-nav-button {
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.side-nav-button:hover {
+  border-color: rgba(243, 223, 168, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.side-nav-button--active {
+  border-color: rgba(243, 223, 168, 0.36);
+  background:
+    linear-gradient(135deg, rgba(243, 223, 168, 0.95), rgba(198, 161, 91, 0.92));
+  color: #080809;
+  box-shadow:
+    0 16px 42px rgba(198, 161, 91, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.side-nav-button--active .side-nav-copy span:not(.side-nav-icon) {
+  color: rgba(0, 0, 0, 0.62);
+  opacity: 1;
+}
+
+.side-nav-button--active .side-nav-icon {
+  background: rgba(0, 0, 0, 0.86);
+  color: #fff;
+}
+
+.side-nav-button strong,
+.operator-card strong,
+.premium-status-card strong {
+  color: inherit;
+}
+
 @media (max-width: 720px) {
-  .installment-toolbar,
-  .installment-row,
-  .notes-filter-form,
-  .promissory-pay-panel {
+  .pagination-controls {
+    display: grid;
+  }
+
+  .pagination-controls > div {
+    justify-content: space-between;
+  }
+}
+
+/* Off-white Payment Panel Overrides - Premium UI/UX */
+.sales-payment-panel {
+  background: linear-gradient(160deg, #fdfcfb 0%, #f6f5f0 100%) !important;
+  border: 1px solid rgba(198, 161, 91, 0.3) !important;
+  box-shadow: 
+    0 32px 80px rgba(0, 0, 0, 0.15), 
+    0 12px 30px rgba(198, 161, 91, 0.08),
+    inset 0 1px 0 #ffffff !important;
+  color: #1a1a1c !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top glow */
+.sales-payment-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(198, 161, 91, 0.6), transparent) !important;
+  display: block !important;
+  border-radius: 0 !important;
+  pointer-events: none;
+}
+
+.sales-payment-panel .section-header h2 {
+  color: #111113 !important;
+  text-shadow: none !important;
+}
+
+.sales-payment-panel .section-header p {
+  color: #666668 !important;
+}
+
+.sales-payment-panel .field-group label {
+  color: #555558 !important;
+  font-weight: 800 !important;
+}
+
+.sales-payment-panel .field-group input,
+.sales-payment-panel .field-group select {
+  background: #ffffff !important;
+  color: #1a1a1c !important;
+  border: 1px solid rgba(198, 161, 91, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), inset 0 2px 4px rgba(0, 0, 0, 0.01) !important;
+  transition: all 200ms ease !important;
+}
+
+.sales-payment-panel .field-group input:hover,
+.sales-payment-panel .field-group select:hover {
+  border-color: rgba(198, 161, 91, 0.45) !important;
+}
+
+.sales-payment-panel .field-group input:focus,
+.sales-payment-panel .field-group select:focus {
+  border-color: var(--color-gold) !important;
+  box-shadow: 0 0 0 4px rgba(198, 161, 91, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+.sales-payment-panel .field-group select option {
+  background: #ffffff !important;
+  color: #1a1a1c !important;
+}
+
+.sales-payment-panel .payment-total {
+  color: #111113 !important;
+}
+
+/* Maintain Promissory Box in off-white context */
+.sales-payment-panel .promissory-sale-box {
+  background: linear-gradient(145deg, rgba(198, 161, 91, 0.12) 0%, rgba(198, 161, 91, 0.03) 100%) !important;
+  border-color: rgba(198, 161, 91, 0.3) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+
+.sales-payment-panel .promissory-sale-box .section-header h2 {
+  color: #1a1a1c !important;
+}
+
+.sales-payment-panel .promissory-sale-box .section-header p {
+  color: #666668 !important;
+}
+
+.sales-payment-panel .customer-inline-card {
+  background: #ffffff !important;
+  border-color: rgba(198, 161, 91, 0.2) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.sales-payment-panel .customer-inline-card strong {
+  color: #1a1a1c !important;
+}
+
+.sales-payment-panel .customer-mini-form {
+  background: #ffffff !important;
+  border-color: rgba(198, 161, 91, 0.15) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03) !important;
+}
+
+.sales-payment-panel .customer-mini-form .secondary-button {
+  background: #fbfaf8 !important;
+  color: #1a1a1c !important;
+  border-color: rgba(198, 161, 91, 0.3) !important;
+}
+
+.sales-payment-panel .customer-mini-form .secondary-button:hover {
+  background: #f4f0e6 !important;
+  border-color: rgba(198, 161, 91, 0.5) !important;
+}
+
+.sales-payment-panel .installment-toolbar {
+  background: #ffffff !important;
+  border-color: rgba(198, 161, 91, 0.15) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+.sales-payment-panel .installment-toolbar strong {
+  color: #1a1a1c !important;
+}
+
+.sales-payment-panel .installment-row {
+  background: #ffffff !important;
+  border-color: rgba(198, 161, 91, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Cash Register Grid & Closing Panel */
+.cash-register-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(340px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .cash-register-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.cash-closing-panel {
+  background: linear-gradient(160deg, #fdfcfb 0%, #f6f5f0 100%) !important;
+  border: 1px solid rgba(198, 161, 91, 0.3) !important;
+  box-shadow: 
+    0 32px 80px rgba(0, 0, 0, 0.15), 
+    0 12px 30px rgba(198, 161, 91, 0.08),
+    inset 0 1px 0 #ffffff !important;
+  color: #1a1a1c !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.cash-closing-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(198, 161, 91, 0.6), transparent) !important;
+  display: block !important;
+  border-radius: 0 !important;
+  pointer-events: none;
+}
+
+.cash-closing-panel .section-header h2 {
+  color: #111113 !important;
+  text-shadow: none !important;
+}
+
+.cash-closing-panel .section-header p {
+  color: #666668 !important;
+}
+
+.cash-closing-panel .field-group label {
+  color: #555558 !important;
+  font-weight: 800 !important;
+}
+
+.cash-closing-panel .field-group input {
+  background: #ffffff !important;
+  color: #1a1a1c !important;
+  border: 1px solid rgba(198, 161, 91, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), inset 0 2px 4px rgba(0, 0, 0, 0.01) !important;
+  transition: all 200ms ease !important;
+}
+
+.cash-closing-panel .field-group input:focus {
+  border-color: var(--color-gold) !important;
+  box-shadow: 0 0 0 4px rgba(198, 161, 91, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+.cash-closing-panel .cash-difference-card {
+  background: #ffffff !important;
+  border-color: rgba(198, 161, 91, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04) !important;
+}
+
+.cash-closing-panel .cash-difference-card span {
+  color: #666668 !important;
+}
+
+.cash-closing-panel .cash-difference-card strong {
+  color: #1a1a1c !important;
+}
+
+.cash-closing-panel .sale-history-item {
+  background: #ffffff !important;
+  border-color: rgba(198, 161, 91, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+  color: #1a1a1c !important;
+}
+
+.cash-closing-panel .sale-history-item strong {
+  color: #111113 !important;
+  text-shadow: none !important;
+}
+
+.cash-closing-panel .sale-history-item small {
+  color: #666668 !important;
+}
+
+.cash-closing-panel .product-empty {
+  background: rgba(198, 161, 91, 0.04) !important;
+  border-color: rgba(198, 161, 91, 0.2) !important;
+  color: #555558 !important;
+}
+
+.cash-closing-panel .pagination-controls {
+  background: transparent !important;
+  border-color: rgba(198, 161, 91, 0.2) !important;
+}
+
+.cash-closing-panel .pagination-controls > span {
+  color: #666668 !important;
+}
+
+.cash-closing-panel .pagination-controls strong {
+  color: #111113 !important;
+}
+
+/* Professional Print Report for Cash Register */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  
+  .app-sidebar,
+  .workspace-header,
+  .quick-actions,
+  .page-header,
+  .cash-closing-panel,
+  .metric-grid,
+  .feedback-message,
+  .pagination-controls,
+  .product-form {
+    display: none !important;
+  }
+
+  .cash-register-grid {
+    display: block;
+  }
+  
+  .cash-register-report {
+    display: block !important;
+    width: 100%;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+  }
+  
+  .cash-register-report-header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+  }
+  
+  .cash-register-report-header h1 {
+    font-size: 24px;
+    margin: 0;
+  }
+  
+  .cash-register-report-header p {
+    font-size: 14px;
+    margin: 5px 0 0;
+    color: #444;
+  }
+  
+  .cash-register-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+  }
+  
+  .cash-register-report-table th,
+  .cash-register-report-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .cash-register-report-table th {
+    font-weight: bold;
+    color: #333;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+  
+  .cash-register-report-table td.value {
+    text-align: right;
+    font-weight: bold;
+  }
+  
+  .cash-register-report-section {
+    margin-bottom: 20px;
+  }
+  
+  .cash-register-report-section h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #000;
+    border-bottom: 1px dashed #999;
+    padding-bottom: 5px;
+  }
+}
+
+.cash-register-report {
+  display: none;
 }
