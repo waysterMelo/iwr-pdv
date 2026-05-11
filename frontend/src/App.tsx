@@ -6,6 +6,7 @@ import navHistory from './assets/generated/nav-history.png'
 import navProducts from './assets/generated/nav-products.png'
 import navSales from './assets/generated/nav-sales.png'
 import navUsers from './assets/generated/nav-users.png'
+import { AuditLogPage } from './pages/AuditLogPage'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 
 import { CustomerManagementPage } from './pages/CustomerManagementPage'
@@ -24,7 +25,7 @@ import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'users'
+type AppView = 'checkout' | 'cash-register' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'audit' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
 
 const menuImages: Record<AppView, string> = {
@@ -34,6 +35,7 @@ const menuImages: Record<AppView, string> = {
   loyalty: navUsers,
   customers: navUsers,
   history: navHistory,
+  audit: navHistory,
   products: navProducts,
   'product-edit': navProducts,
 
@@ -55,6 +57,7 @@ function App() {
     { id: 'loyalty', label: 'Fidelidade', eyebrow: 'Clientes' },
     { id: 'customers', label: 'Clientes', eyebrow: 'Cadastro' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
+    { id: 'audit', label: 'Auditoria', eyebrow: 'Admin', adminOnly: true },
     { id: 'products', label: 'Produtos', eyebrow: 'Estoque', adminOnly: true },
 
     { id: 'users', label: 'Usuarios', eyebrow: 'Acessos', adminOnly: true },
@@ -251,12 +254,19 @@ function App() {
           ))}
         </div>
 
+        {currentUser.passwordChangeRequired ? (
+          <div className="feedback-message feedback-message--warning">
+            Troque a senha padrao antes de operar em producao.
+          </div>
+        ) : null}
+
         {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
         {visibleView === 'cash-register' ? <CashRegisterPage /> : null}
         {visibleView === 'promissory-notes' ? <PromissoryNotesPage /> : null}
         {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
         {visibleView === 'customers' ? <CustomerManagementPage /> : null}
         {visibleView === 'history' ? <SalesHistoryPage /> : null}
+        {visibleView === 'audit' ? <AuditLogPage /> : null}
         {visibleView === 'products' ? (
           <ProductManagementPage
             onEditProduct={(productId) => {

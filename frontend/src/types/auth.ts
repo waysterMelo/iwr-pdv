@@ -5,6 +5,7 @@ export type AuthUser = {
   username: string
   displayName: string
   role: UserRole
+  passwordChangeRequired: boolean
 }
 
 export type LoginResponse = {
@@ -15,8 +16,19 @@ export type LoginResponse = {
 
 export type ManagedUser = AuthUser & {
   active: boolean
+  passwordChangeRequired: boolean
   createdAt: string
   updatedAt: string
+}
+
+export type ManagedUserPage = {
+  content: ManagedUser[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
 }
 
 export type UserCreatePayload = {

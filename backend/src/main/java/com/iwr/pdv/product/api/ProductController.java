@@ -1,5 +1,7 @@
 package com.iwr.pdv.product.api;
 
+import com.iwr.pdv.audit.application.AuditLogService;
+import com.iwr.pdv.audit.domain.AuditAction;
 import com.iwr.pdv.auth.domain.AppUser;
 import com.iwr.pdv.auth.infrastructure.AuthorizationService;
 import com.iwr.pdv.product.api.dto.ProductActivationRequest;
@@ -40,10 +42,16 @@ public class ProductController {
 
     private final ProductService productService;
     private final AuthorizationService authorizationService;
+    private final AuditLogService auditLogService;
 
-    public ProductController(ProductService productService, AuthorizationService authorizationService) {
+    public ProductController(
+            ProductService productService,
+            AuthorizationService authorizationService,
+            AuditLogService auditLogService
+    ) {
         this.productService = productService;
         this.authorizationService = authorizationService;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping
@@ -93,8 +101,13 @@ public class ProductController {
             )
     })
     public ProductResponse create(@Valid @RequestBody ProductRequest request, HttpServletRequest servletRequest) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
-        return productService.create(request);
+        AppUser actor = currentUser(servletRequest);
+        authorizationService.requireAuthenticated(actor);
+        ProductResponse response = productService.create(request);
+        auditLogService.log(AuditAction.PRODUCT_CREATED, actor, "PRODUCT", response.id(), "Product created: " + response.code() + ".");
+        auditLogService.log(AuditAction.PRODUCT_PRICE_CHANGED, actor, "PRODUCT", response.id(), "Initial price: " + response.price() + ".");
+        auditLogService.log(AuditAction.PRODUCT_STOCK_CHANGED, actor, "PRODUCT", response.id(), "Initial stock: " + response.stockQuantity() + ".");
+        return response;
     }
 
     @GetMapping
@@ -104,7 +117,7 @@ public class ProductController {
             @RequestParam(name = "search", required = false) String search,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
+        authorizationService.requireAuthenticated(currentUser(servletRequest));
         return productService.list(search);
     }
 
@@ -125,7 +138,7 @@ public class ProductController {
             @RequestParam(name = "direction", defaultValue = "desc") String direction,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
+        authorizationService.requireAuthenticated(currentUser(servletRequest));
         return productService.listPage(
                 search,
                 active,
@@ -148,7 +161,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
     public ProductResponse findById(@PathVariable Long productId, HttpServletRequest servletRequest) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
+        authorizationService.requireAuthenticated(currentUser(servletRequest));
         return productService.findById(productId);
     }
 
@@ -165,8 +178,33 @@ public class ProductController {
             @Valid @RequestBody ProductRequest request,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
-        return productService.update(productId, request);
+        AppUser actor = currentUser(servletRequest);
+        authorizationService.requireAuthenticated(actor);
+        ProductResponse before = productService.findById(productId);
+        ProductResponse response = productService.update(productId, request);
+        auditLogService.log(AuditAction.PRODUCT_UPDATED, actor, "PRODUCT", productId, "Product updated: " + response.code() + ".");
+
+        if (before.price().compareTo(response.price()) != 0) {
+            auditLogService.log(
+                    AuditAction.PRODUCT_PRICE_CHANGED,
+                    actor,
+                    "PRODUCT",
+                    productId,
+                    "Price changed from " + before.price() + " to " + response.price() + "."
+            );
+        }
+
+        if (!before.stockQuantity().equals(response.stockQuantity())) {
+            auditLogService.log(
+                    AuditAction.PRODUCT_STOCK_CHANGED,
+                    actor,
+                    "PRODUCT",
+                    productId,
+                    "Stock changed from " + before.stockQuantity() + " to " + response.stockQuantity() + "."
+            );
+        }
+
+        return response;
     }
 
     @PatchMapping("/{productId}/activation")
@@ -182,8 +220,11 @@ public class ProductController {
             @Valid @RequestBody ProductActivationRequest request,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
-        return productService.updateActivation(productId, request);
+        AppUser actor = currentUser(servletRequest);
+        authorizationService.requireAuthenticated(actor);
+        ProductResponse response = productService.updateActivation(productId, request);
+        auditLogService.log(AuditAction.PRODUCT_UPDATED, actor, "PRODUCT", productId, "Product activation updated to " + response.active() + ".");
+        return response;
     }
 
     @GetMapping(value = "/{productId}/barcode", produces = MediaType.IMAGE_PNG_VALUE)
@@ -200,7 +241,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
     public ResponseEntity<byte[]> generateBarcode(@PathVariable Long productId, HttpServletRequest servletRequest) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
+        authorizationService.requireAuthenticated(currentUser(servletRequest));
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .body(productService.generateBarcode(productId));
@@ -217,7 +258,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
     public ResponseEntity<String> generateLabel(@PathVariable Long productId, HttpServletRequest servletRequest) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
+        authorizationService.requireAuthenticated(currentUser(servletRequest));
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .body(productService.generateLabel(productId));
@@ -236,7 +277,7 @@ public class ProductController {
             @RequestParam List<Long> productIds,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
+        authorizationService.requireAuthenticated(currentUser(servletRequest));
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .body(productService.generateLabels(productIds));

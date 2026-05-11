@@ -90,6 +90,14 @@ public class PromissoryNoteController {
                 .body(promissoryNoteService.generatePrintableNote(noteId));
     }
 
+    @GetMapping(value = "/sale/{saleId}/print", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(summary = "Generate printable promissory notes for a sale")
+    public ResponseEntity<String> printBySale(@PathVariable Long saleId) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(promissoryNoteService.generatePrintableNotesForSale(saleId));
+    }
+
     private AppUser currentUser(HttpServletRequest request) {
         return (AppUser) request.getAttribute("authenticatedUser");
     }

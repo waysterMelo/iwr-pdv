@@ -1,5 +1,7 @@
 package com.iwr.pdv.sale.application;
 
+import com.iwr.pdv.audit.application.AuditLogService;
+import com.iwr.pdv.audit.domain.AuditAction;
 import com.iwr.pdv.auth.domain.AppUser;
 import com.iwr.pdv.cash.application.CashRegisterService;
 import com.iwr.pdv.cash.domain.CashRegister;
@@ -51,6 +53,7 @@ public class SaleServiceImpl implements SaleService {
     private final PromissoryNoteRepository promissoryNoteRepository;
     private final SaleMapper saleMapper;
     private final CashRegisterService cashRegisterService;
+    private final AuditLogService auditLogService;
     private final Clock clock;
 
     public SaleServiceImpl(
@@ -61,6 +64,7 @@ public class SaleServiceImpl implements SaleService {
             PromissoryNoteRepository promissoryNoteRepository,
             SaleMapper saleMapper,
             CashRegisterService cashRegisterService,
+            AuditLogService auditLogService,
             Clock clock
     ) {
         this.saleRepository = saleRepository;
@@ -70,6 +74,7 @@ public class SaleServiceImpl implements SaleService {
         this.promissoryNoteRepository = promissoryNoteRepository;
         this.saleMapper = saleMapper;
         this.cashRegisterService = cashRegisterService;
+        this.auditLogService = auditLogService;
         this.clock = clock;
     }
 
@@ -171,6 +176,14 @@ public class SaleServiceImpl implements SaleService {
                 .stream()
                 .map(item -> toStockMovement(item, sale.getId(), now, StockMovementType.SALE_CANCELLATION))
                 .toList());
+
+        auditLogService.log(
+                AuditAction.SALE_CANCELLED,
+                operator,
+                "SALE",
+                sale.getId(),
+                "Sale cancelled. Reason: " + request.reason().trim()
+        );
 
         return saleMapper.toResponse(sale);
     }

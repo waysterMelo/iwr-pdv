@@ -1,6 +1,7 @@
 package com.iwr.pdv.auth.application;
 
 import com.iwr.pdv.auth.api.dto.UserCreateRequest;
+import com.iwr.pdv.auth.api.dto.UserManagementPageResponse;
 import com.iwr.pdv.auth.api.dto.UserManagementResponse;
 import com.iwr.pdv.auth.api.dto.UserPasswordUpdateRequest;
 import com.iwr.pdv.auth.api.dto.UserUpdateRequest;
@@ -14,6 +15,9 @@ import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +44,22 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserManagementResponse> list() {
-        return userRepository.findAll()
-                .stream()
-                .sorted((left, right) -> left.getUsername().compareToIgnoreCase(right.getUsername()))
-                .map(authMapper::toManagementResponse)
-                .toList();
+    public UserManagementPageResponse list(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Page<AppUser> users = userRepository.findAll(
+                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.ASC, "username"))
+        );
+
+        return new UserManagementPageResponse(
+                users.getContent().stream().map(authMapper::toManagementResponse).toList(),
+                users.getNumber(),
+                users.getSize(),
+                users.getTotalElements(),
+                users.getTotalPages(),
+                users.isFirst(),
+                users.isLast()
+        );
     }
 
     @Override
@@ -61,10 +75,14 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(request.role());
         user.setActive(request.active());
+        user.setInvalidLoginAttempts(0);
+        user.setPasswordChangeRequired(true);
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
 
-        return authMapper.toManagementResponse(userRepository.save(user));
+        AppUser savedUser = userRepository.save(user);
+
+        return authMapper.toManagementResponse(savedUser);
     }
 
     @Override
@@ -81,7 +99,9 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setActive(request.active());
         user.setUpdatedAt(OffsetDateTime.now(clock));
 
-        return authMapper.toManagementResponse(userRepository.save(user));
+        AppUser savedUser = userRepository.save(user);
+
+        return authMapper.toManagementResponse(savedUser);
     }
 
     @Override
@@ -89,9 +109,14 @@ public class UserManagementServiceImpl implements UserManagementService {
     public UserManagementResponse updatePassword(Long userId, UserPasswordUpdateRequest request) {
         AppUser user = findUser(userId);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setPasswordChangeRequired(false);
+        user.setInvalidLoginAttempts(0);
+        user.setLockedUntil(null);
         user.setUpdatedAt(OffsetDateTime.now(clock));
 
-        return authMapper.toManagementResponse(userRepository.save(user));
+        AppUser savedUser = userRepository.save(user);
+
+        return authMapper.toManagementResponse(savedUser);
     }
 
     private AppUser findUser(Long userId) {

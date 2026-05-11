@@ -1,18 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   createUser,
-  getUsers,
+  getUsersPage,
   updateUser,
   updateUserPassword,
 } from '../services/authService'
-import type { ManagedUser, UserRole } from '../types/auth'
+import type { ManagedUser, ManagedUserPage, UserRole } from '../types/auth'
 import { getErrorMessage } from '../utils/errors'
 import { formatDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationControls } from '../components/PaginationControls'
-import { usePagination } from '../hooks/usePagination'
 
 type UserFormState = {
   username: string
@@ -28,6 +27,20 @@ const initialFormState: UserFormState = {
   password: '',
   role: 'OPERATOR',
   active: 'true',
+}
+
+const userPageSize = 6
+
+function buildEmptyUserPage(): ManagedUserPage {
+  return {
+    content: [],
+    page: 0,
+    size: userPageSize,
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+  }
 }
 
 function getRoleLabel(role: UserRole) {
@@ -66,24 +79,27 @@ function validateForm(form: UserFormState, editingUserId: number | null) {
 
 export function UserManagementPage() {
   const { notify } = useAppMessage()
-  const [users, setUsers] = useState<ManagedUser[]>([])
+  const [userPage, setUserPage] = useState<ManagedUserPage>(() => buildEmptyUserPage())
+  const [page, setPage] = useState(0)
   const [form, setForm] = useState<UserFormState>(initialFormState)
   const [editingUserId, setEditingUserId] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const userPagination = usePagination(users, 6)
+  const users = userPage.content
 
   useEffect(() => {
-    void loadUsers()
+    void loadUsers(0)
   }, [])
 
-  async function loadUsers() {
+  async function loadUsers(nextPage = page) {
     setIsLoading(true)
 
     try {
-      setUsers(await getUsers())
+      const response = await getUsersPage(nextPage, userPageSize)
+      setUserPage(response)
+      setPage(response.page)
       setErrorMessage(null)
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Nao foi possivel carregar usuarios.'))
@@ -164,7 +180,7 @@ export function UserManagementPage() {
       }
 
       resetForm(false)
-      await loadUsers()
+      await loadUsers(editingUserId === null ? 0 : page)
     } catch (error) {
       const message = getErrorMessage(error, 'Nao foi possivel salvar usuario.')
       setErrorMessage(message)
@@ -186,18 +202,18 @@ export function UserManagementPage() {
           title="Usuarios e permissoes"
           subtitle="Cadastre vendedores e administradores para controlar o acesso aos menus do PDV."
           metricLabel="Usuarios"
-          metricValue={String(users.length)}
+          metricValue={String(userPage.totalElements)}
           status="Controle ativo"
         />
 
         <div className="metric-grid metric-grid--3">
-          <Metric label="Usuarios" value={String(users.length)} />
-          <Metric label="Admins" value={String(users.filter((u) => u.role === 'ADMIN').length)} tone="gold" />
-          <Metric label="Vendedores" value={String(users.filter((u) => u.role === 'OPERATOR').length)} />
+          <Metric label="Usuarios" value={String(userPage.totalElements)} />
+          <Metric label="Admins na pagina" value={String(users.filter((u) => u.role === 'ADMIN').length)} tone="gold" />
+          <Metric label="Vendedores na pagina" value={String(users.filter((u) => u.role === 'OPERATOR').length)} />
         </div>
 
         <div className="content-grid">
-          <section className="product-form-panel">
+          <section className="product-form-panel product-form-panel--offwhite user-form-panel">
             <header className="section-header">
               <div>
                 <h2>{editingUserId === null ? 'Novo usuario' : 'Editar usuario'}</h2>
@@ -287,11 +303,11 @@ export function UserManagementPage() {
 
             {isLoading ? (
               <div className="product-empty">Carregando usuarios...</div>
-            ) : users.length === 0 ? (
+            ) : userPage.totalElements === 0 ? (
               <div className="product-empty">Nenhum usuario cadastrado.</div>
             ) : (
               <div className="product-list">
-                {userPagination.pageItems.map((user) => (
+                {users.map((user) => (
                   <article className="product-card" key={user.id}>
                     <div className="product-card-header">
                       <div>
@@ -328,11 +344,14 @@ export function UserManagementPage() {
                 ))}
                 <PaginationControls
                   itemLabel="usuarios"
-                  page={userPagination.page}
-                  pageSize={userPagination.pageSize}
-                  totalItems={userPagination.totalItems}
-                  totalPages={userPagination.totalPages}
-                  onPageChange={userPagination.setPage}
+                  page={userPage.page}
+                  pageSize={userPage.size}
+                  totalItems={userPage.totalElements}
+                  totalPages={userPage.totalPages}
+                  onPageChange={(nextPage) => {
+                    setPage(nextPage)
+                    void loadUsers(nextPage)
+                  }}
                 />
               </div>
             )}

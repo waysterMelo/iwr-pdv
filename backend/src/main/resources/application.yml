@@ -25,10 +25,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: ${MANAGEMENT_ENDPOINTS_INCLUDE:health,info}
   endpoint:
     health:
-      show-details: always
+      show-details: ${MANAGEMENT_HEALTH_SHOW_DETAILS:when-authorized}
 
 info:
   app:
@@ -44,7 +44,10 @@ app:
       display-name: ${DEFAULT_ADMIN_DISPLAY_NAME:Administrador}
 
 springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
   swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
     path: /swagger-ui.html
     operations-sorter: alpha
     tags-sorter: alpha

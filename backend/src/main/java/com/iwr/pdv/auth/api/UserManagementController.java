@@ -1,6 +1,9 @@
 package com.iwr.pdv.auth.api;
 
+import com.iwr.pdv.audit.application.AuditLogService;
+import com.iwr.pdv.audit.domain.AuditAction;
 import com.iwr.pdv.auth.api.dto.UserCreateRequest;
+import com.iwr.pdv.auth.api.dto.UserManagementPageResponse;
 import com.iwr.pdv.auth.api.dto.UserManagementResponse;
 import com.iwr.pdv.auth.api.dto.UserPasswordUpdateRequest;
 import com.iwr.pdv.auth.api.dto.UserUpdateRequest;
@@ -11,7 +14,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,20 +33,27 @@ public class UserManagementController {
 
     private final UserManagementService userManagementService;
     private final AuthorizationService authorizationService;
+    private final AuditLogService auditLogService;
 
     public UserManagementController(
             UserManagementService userManagementService,
-            AuthorizationService authorizationService
+            AuthorizationService authorizationService,
+            AuditLogService auditLogService
     ) {
         this.userManagementService = userManagementService;
         this.authorizationService = authorizationService;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping
-    @Operation(summary = "List users")
-    public List<UserManagementResponse> list(HttpServletRequest servletRequest) {
+    @Operation(summary = "List users with pagination")
+    public UserManagementPageResponse list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            HttpServletRequest servletRequest
+    ) {
         authorizationService.requireAdmin(currentUser(servletRequest));
-        return userManagementService.list();
+        return userManagementService.list(page, size);
     }
 
     @PostMapping
@@ -53,8 +63,11 @@ public class UserManagementController {
             @Valid @RequestBody UserCreateRequest request,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
-        return userManagementService.create(request);
+        AppUser actor = currentUser(servletRequest);
+        authorizationService.requireAdmin(actor);
+        UserManagementResponse response = userManagementService.create(request);
+        auditLogService.log(AuditAction.USER_CREATED, actor, "USER", response.id(), "User created: " + response.username() + ".");
+        return response;
     }
 
     @PutMapping("/{userId}")
@@ -64,8 +77,11 @@ public class UserManagementController {
             @Valid @RequestBody UserUpdateRequest request,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
-        return userManagementService.update(userId, request);
+        AppUser actor = currentUser(servletRequest);
+        authorizationService.requireAdmin(actor);
+        UserManagementResponse response = userManagementService.update(userId, request);
+        auditLogService.log(AuditAction.USER_UPDATED, actor, "USER", userId, "User updated: " + response.username() + ".");
+        return response;
     }
 
     @PatchMapping("/{userId}/password")
@@ -75,8 +91,11 @@ public class UserManagementController {
             @Valid @RequestBody UserPasswordUpdateRequest request,
             HttpServletRequest servletRequest
     ) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
-        return userManagementService.updatePassword(userId, request);
+        AppUser actor = currentUser(servletRequest);
+        authorizationService.requireAdmin(actor);
+        UserManagementResponse response = userManagementService.updatePassword(userId, request);
+        auditLogService.log(AuditAction.USER_PASSWORD_CHANGED, actor, "USER", userId, "Password updated.");
+        return response;
     }
 
     private AppUser currentUser(HttpServletRequest request) {

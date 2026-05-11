@@ -1,14 +1,14 @@
 package com.iwr.pdv.auth.application;
 
 import com.iwr.pdv.auth.api.dto.UserCreateRequest;
+import com.iwr.pdv.auth.api.dto.UserManagementPageResponse;
 import com.iwr.pdv.auth.api.dto.UserManagementResponse;
 import com.iwr.pdv.auth.api.dto.UserPasswordUpdateRequest;
 import com.iwr.pdv.auth.api.dto.UserUpdateRequest;
-import java.util.List;
 
 public interface UserManagementService {
 
-    List<UserManagementResponse> list();
+    UserManagementPageResponse list(int page, int size);
 
     UserManagementResponse create(UserCreateRequest request);
 

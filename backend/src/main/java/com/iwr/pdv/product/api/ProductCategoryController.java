@@ -31,7 +31,7 @@ public class ProductCategoryController {
     @GetMapping
     @Operation(summary = "List active product categories")
     public List<ProductCategoryResponse> list(HttpServletRequest servletRequest) {
-        authorizationService.requireAdmin(currentUser(servletRequest));
+        authorizationService.requireAuthenticated(currentUser(servletRequest));
         return categoryService.listActive();
     }
 

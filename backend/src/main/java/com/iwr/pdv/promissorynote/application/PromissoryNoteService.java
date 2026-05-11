@@ -20,4 +20,6 @@ public interface PromissoryNoteService {
     String exportCsv(PromissoryNoteStatus status, Long customerId, LocalDate startDate, LocalDate endDate, boolean dueToday);
 
     String generatePrintableNote(Long noteId);
+
+    String generatePrintableNotesForSale(Long saleId);
 }

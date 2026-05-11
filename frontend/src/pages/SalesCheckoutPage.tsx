@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { BadgeDollarSign, CalendarClock, Package, Percent, ReceiptText, UserRound, Barcode, ScanLine, CheckCircle2, Printer } from 'lucide-react'
+import { BadgeDollarSign, CalendarClock, Package, Percent, ReceiptText, UserRound, Barcode, CheckCircle2, Printer } from 'lucide-react'
 import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import { createCustomer, getCustomers } from '../services/customerService'
 import { getPromissoryNotesBySalePrintUrl } from '../services/promissoryNoteService'

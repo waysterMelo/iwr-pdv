@@ -9,6 +9,7 @@ public record UserManagementResponse(
         String displayName,
         UserRole role,
         Boolean active,
+        Boolean passwordChangeRequired,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {

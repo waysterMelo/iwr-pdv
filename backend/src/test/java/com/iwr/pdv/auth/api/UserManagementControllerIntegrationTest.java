@@ -122,7 +122,8 @@ class UserManagementControllerIntegrationTest {
         mockMvc.perform(get("/api/users")
                         .header("Authorization", adminAuthHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(3));
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.totalElements").value(3));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -185,7 +186,7 @@ class UserManagementControllerIntegrationTest {
 
         mockMvc.perform(get("/api/products")
                         .header("Authorization", sellerHeader))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/sales")
                         .header("Authorization", sellerHeader))

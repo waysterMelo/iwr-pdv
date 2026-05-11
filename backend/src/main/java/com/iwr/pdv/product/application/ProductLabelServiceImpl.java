@@ -46,9 +46,9 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       width: 50mm;
                       height: 30mm;
                       display: grid;
-                      grid-template-rows: 4mm 17.5mm 4.5mm;
-                      gap: 0.5mm;
-                      padding: 1mm 2mm;
+                      grid-template-rows: 6mm 17.8mm 4.2mm;
+                      gap: 0.25mm;
+                      padding: 0.5mm;
                       background: #fff;
                       border: 1px solid #d1d5db;
                     }
@@ -57,19 +57,25 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       display: flex;
                       align-items: center;
                       justify-content: space-between;
-                      gap: 2mm;
+                      gap: 1mm;
                       min-width: 0;
+                    }
+                    .label-header {
+                      justify-content: center;
+                      align-items: start;
                     }
                     .name {
                       width: 100%%;
                       min-width: 0;
                       overflow: hidden;
-                      font-size: 6pt;
-                      line-height: 1.05;
+                      display: -webkit-box;
+                      font-size: 5.2pt;
+                      line-height: 1.08;
                       font-weight: 700;
                       text-align: center;
-                      text-overflow: ellipsis;
-                      white-space: nowrap;
+                      overflow-wrap: anywhere;
+                      -webkit-box-orient: vertical;
+                      -webkit-line-clamp: 2;
                     }
                     .barcode-wrap {
                       display: grid;
@@ -78,8 +84,8 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       overflow: hidden;
                     }
                     .barcode-wrap img {
-                      width: 46mm;
-                      height: 17mm;
+                      width: 49mm;
+                      height: 17.8mm;
                       display: block;
                       object-fit: fill;
                       image-rendering: crisp-edges;
@@ -88,15 +94,14 @@ public class ProductLabelServiceImpl implements ProductLabelService {
                       flex: 1 1 auto;
                       min-width: 0;
                       overflow: hidden;
-                      font-size: 6.5pt;
+                      font-size: 6pt;
                       line-height: 1;
                       font-weight: 800;
-                      text-overflow: ellipsis;
                       white-space: nowrap;
                     }
                     .price {
                       flex: 0 0 auto;
-                      font-size: 11.5pt;
+                      font-size: 10.5pt;
                       line-height: 1;
                       font-weight: 900;
                     }

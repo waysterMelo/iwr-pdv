@@ -93,4 +93,28 @@ class AuthControllerIntegrationTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void shouldAuditInvalidLoginAndAllowAdminAuditQuery() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "admin",
+                                  "password": "wrong"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+
+        String token = authService.login(new LoginRequest("admin", "admin123")).token();
+
+        mockMvc.perform(get("/api/audit")
+                        .header("Authorization", "Bearer " + token)
+                        .param("username", "admin")
+                        .param("action", "LOGIN_FAILED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].action").value("LOGIN_FAILED"))
+                .andExpect(jsonPath("$.content[0].username").value("admin"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
 }

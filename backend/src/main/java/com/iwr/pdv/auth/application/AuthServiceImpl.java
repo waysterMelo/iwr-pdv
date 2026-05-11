@@ -1,5 +1,7 @@
 package com.iwr.pdv.auth.application;
 
+import com.iwr.pdv.audit.application.AuditLogService;
+import com.iwr.pdv.audit.domain.AuditAction;
 import com.iwr.pdv.auth.api.dto.LoginRequest;
 import com.iwr.pdv.auth.api.dto.LoginResponse;
 import com.iwr.pdv.auth.domain.AppUser;
@@ -26,11 +28,14 @@ public class AuthServiceImpl implements AuthService {
 
     private static final int TOKEN_BYTE_LENGTH = 48;
     private static final int SESSION_HOURS = 12;
+    private static final int MAX_INVALID_LOGIN_ATTEMPTS = 5;
+    private static final int LOGIN_LOCK_MINUTES = 15;
 
     private final AppUserRepository userRepository;
     private final AuthSessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthMapper authMapper;
+    private final AuditLogService auditLogService;
     private final Clock clock;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -39,27 +44,46 @@ public class AuthServiceImpl implements AuthService {
             AuthSessionRepository sessionRepository,
             PasswordEncoder passwordEncoder,
             AuthMapper authMapper,
+            AuditLogService auditLogService,
             Clock clock
     ) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
         this.passwordEncoder = passwordEncoder;
         this.authMapper = authMapper;
+        this.auditLogService = auditLogService;
         this.clock = clock;
     }
 
     @Override
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        AppUser user = userRepository.findByUsernameIgnoreCase(request.username().trim())
+        String username = request.username().trim();
+        AppUser user = userRepository.findByUsernameIgnoreCase(username)
                 .filter(foundUser -> Boolean.TRUE.equals(foundUser.getActive()))
-                .orElseThrow(() -> new AuthenticationFailedException("Invalid username or password."));
+                .orElse(null);
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (user == null) {
+            auditLogService.logAnonymous(AuditAction.LOGIN_FAILED, username, "AUTH", null, "Invalid username.");
             throw new AuthenticationFailedException("Invalid username or password.");
         }
 
         OffsetDateTime now = OffsetDateTime.now(clock);
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
+            auditLogService.log(AuditAction.LOGIN_FAILED, user, "AUTH", user.getId(), "User temporarily locked.");
+            throw new AuthenticationFailedException("User is temporarily locked. Try again later.");
+        }
+
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            registerInvalidLogin(user, now);
+            auditLogService.log(AuditAction.LOGIN_FAILED, user, "AUTH", user.getId(), "Invalid password.");
+            throw new AuthenticationFailedException("Invalid username or password.");
+        }
+
+        user.setInvalidLoginAttempts(0);
+        user.setLockedUntil(null);
+        user.setUpdatedAt(now);
+
         String token = generateToken();
         AuthSession session = new AuthSession();
         session.setUser(user);
@@ -70,6 +94,7 @@ public class AuthServiceImpl implements AuthService {
 
         sessionRepository.deleteByExpiresAtBefore(now);
         AuthSession savedSession = sessionRepository.save(session);
+        auditLogService.log(AuditAction.LOGIN_SUCCESS, user, "AUTH", user.getId(), "Login successful.");
 
         return new LoginResponse(token, savedSession.getExpiresAt(), authMapper.toResponse(user));
     }
@@ -107,7 +132,21 @@ public class AuthServiceImpl implements AuthService {
         }
 
         sessionRepository.findByTokenHash(hashToken(token.trim()))
-                .ifPresent(sessionRepository::delete);
+                .ifPresent(session -> {
+                    AppUser user = session.getUser();
+                    sessionRepository.delete(session);
+                    auditLogService.log(AuditAction.LOGOUT, user, "AUTH", user.getId(), "Logout successful.");
+                });
+    }
+
+    private void registerInvalidLogin(AppUser user, OffsetDateTime now) {
+        int attempts = user.getInvalidLoginAttempts() == null ? 1 : user.getInvalidLoginAttempts() + 1;
+        user.setInvalidLoginAttempts(attempts);
+        user.setUpdatedAt(now);
+
+        if (attempts >= MAX_INVALID_LOGIN_ATTEMPTS) {
+            user.setLockedUntil(now.plusMinutes(LOGIN_LOCK_MINUTES));
+        }
     }
 
     private String generateToken() {

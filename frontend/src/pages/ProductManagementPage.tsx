@@ -6,7 +6,6 @@ import {
   Boxes,
   CircleSlash,
   Clock3,
-  Grid3X3,
   Package,
   PackageCheck,
   Barcode,
@@ -115,7 +114,7 @@ function getCategoryIcon(icon: string): LucideIcon {
     tag: Tag,
   }
 
-  return icons[icon] ?? Grid3X3
+  return icons[icon] ?? Boxes
 }
 
 function getStockStatusLabel(product: Product, lowStockThreshold: number) {
@@ -169,7 +168,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null)
   const [formSuccessMessage, setFormSuccessMessage] = useState<string | null>(null)
   const [listErrorMessage, setListErrorMessage] = useState<string | null>(null)
-  const [isProductsLoading, setIsProductsLoading] = useState(true)
+  const [isProductsLoading, setIsProductsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [busyProductId, setBusyProductId] = useState<number | null>(null)
   const [selectedBarcodeProduct, setSelectedBarcodeProduct] = useState<Product | null>(null)
@@ -190,6 +189,14 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
   const selectedCategory = categories.find((category) => String(category.id) === filters.categoryId) ?? null
 
   async function loadProducts(nextFilters: ProductPageFilters, nextPage: number, signal?: AbortSignal) {
+    if (!nextFilters.categoryId) {
+      setProductPage(buildEmptyProductPage(nextFilters.size))
+      setSelectedProductIds(new Set())
+      setIsProductsLoading(false)
+      setListErrorMessage(null)
+      return
+    }
+
     setIsProductsLoading(true)
 
     try {
@@ -386,18 +393,6 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
           </header>
 
           <div className="category-card-grid">
-            <button
-              className={!filters.categoryId ? 'category-card category-card--active' : 'category-card'}
-              type="button"
-              onClick={() => updateFilter('categoryId', '')}
-            >
-              <span className="category-icon">
-                <Grid3X3 size={20} strokeWidth={2.2} aria-hidden="true" />
-              </span>
-              <strong>Todas</strong>
-              <small>{productPage.totalElements} produto(s)</small>
-            </button>
-
             {categories.map((category) => (
               (() => {
                 const CategoryIcon = getCategoryIcon(category.icon)
@@ -426,7 +421,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
         </section>
 
         <div className="content-grid">
-          <section className="product-form-panel product-form-panel--new-product">
+          <section className="product-form-panel product-form-panel--new-product product-form-panel--offwhite">
             <header className="section-header product-form-header">
               <div>
                 <h2>Novo produto</h2>
@@ -544,7 +539,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
             <header className="section-header">
               <div>
                 <h2>Produtos cadastrados</h2>
-                <p>Use filtros combinados para encontrar produtos, controlar ruptura e imprimir etiquetas.</p>
+                <p>Selecione uma categoria para carregar produtos e aplicar os demais filtros.</p>
               </div>
             </header>
 
@@ -567,7 +562,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   value={filters.categoryId}
                   onChange={(event) => updateFilter('categoryId', event.target.value)}
                 >
-                  <option value="">Todas</option>
+                  <option value="">Escolha uma categoria</option>
                   {categories.map((category) => (
                     <option value={category.id} key={category.id}>
                       {category.name}
@@ -686,7 +681,9 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
 
             <div className="inventory-result-bar">
               <span>
-                {isProductsLoading
+                {!filters.categoryId
+                  ? 'Selecione uma categoria para carregar os produtos.'
+                  : isProductsLoading
                   ? 'Atualizando listagem...'
                   : `${productPage.totalElements} produto(s) encontrados${
                       selectedCategory ? ` em ${selectedCategory.name}` : ''
@@ -728,7 +725,9 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
             ) : null}
 
             <div className="product-list">
-              {isProductsLoading ? (
+              {!filters.categoryId ? (
+                <div className="product-empty">Selecione uma categoria para visualizar os produtos.</div>
+              ) : isProductsLoading ? (
                 <div className="product-empty">Carregando produtos...</div>
               ) : products.length === 0 ? (
                 <div className="product-empty">Nenhum produto encontrado para os filtros atuais.</div>

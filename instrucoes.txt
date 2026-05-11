@@ -1,899 +1,1119 @@
-# Design System — IWR Atelier PDV
+# Plano de Ação — IWR PDV
 
-## 1. Conceito visual
+## Objetivo geral
 
-O sistema deve transmitir a sensação de uma operação de loja premium, com estética de boutique de moda, acabamento editorial e atmosfera de luxo discreto.
-
-A interface deve parecer sofisticada, mas continuar operacional. O usuário precisa vender, cadastrar produtos, controlar caixa e consultar histórico com rapidez. O visual deve ajudar a operação, não virar enfeite pesado.
-
-**Direção estética:** dark premium, moda de luxo, preto profundo, branco elegante, dourado refinado, cards com profundidade, bordas suaves e detalhes luminosos.
+Transformar o IWR PDV de um **MVP operacional avançado** em um sistema **pronto para produção, implantação em cliente real e futura comercialização**.
 
 ---
 
-## 2. Personalidade da interface
+# Fase 1 — Blindagem do Sistema
 
-A aplicação deve comunicar:
+## Objetivo
 
-* Luxo discreto
-* Confiança
-* Organização
-* Agilidade operacional
-* Exclusividade
-* Controle financeiro e comercial
-* Atendimento de boutique
+Impedir erro operacional, fraude, acesso indevido e riscos básicos de produção.
 
-Evitar aparência de sistema genérico, planilha, painel administrativo básico ou dashboard muito colorido.
+## Entregas principais
 
----
+### 1. Auditoria global
 
-## 3. Paleta de cores
+Registrar eventos importantes do sistema:
 
-### Cores principais
+* abertura de caixa;
+* fechamento de caixa;
+* sangria;
+* suprimento;
+* alteração de produto;
+* alteração de preço;
+* ajuste de estoque;
+* cancelamento de venda;
+* baixa de nota promissória;
+* criação/alteração de usuário;
+* alteração de senha;
+* login/logout;
+* tentativa de acesso negado.
 
-| Nome              |                      Hex | Uso                                                  |
-| ----------------- | -----------------------: | ---------------------------------------------------- |
-| Preto absoluto    |                `#070708` | Sidebar, fundo principal escuro                      |
-| Preto premium     |                `#0A0A0B` | Background geral da aplicação                        |
-| Grafite profundo  |                `#101012` | Cards e painéis principais                           |
-| Grafite elevado   |                `#111113` | Superfícies secundárias                              |
-| Dourado principal |                `#C6A15B` | Destaques, botões principais, linhas, estados ativos |
-| Dourado claro     |                `#F3DFA8` | Textos especiais e badges premium                    |
-| Branco            |                `#FFFFFF` | Textos principais e botões contrastantes             |
-| Branco suave      | `rgba(255,255,255,0.58)` | Textos secundários                                   |
-| Branco apagado    | `rgba(255,255,255,0.35)` | Labels, hints e descrições fracas                    |
+### 2. Permissões fortes no backend
 
-### Cores de estado
+Garantir que a segurança não dependa apenas do frontend.
 
-| Estado      |                  Cor base | Uso                                             |
-| ----------- | ------------------------: | ----------------------------------------------- |
-| Sucesso     | `emerald-400` / `#34D399` | Caixa aberto, usuário ativo, estoque disponível |
-| Alerta      |   `amber-400` / `#FBBF24` | Estoque baixo, atenção operacional              |
-| Erro/Perigo |     `red-400` / `#F87171` | Sem estoque, cancelar venda, ação destrutiva    |
+Perfis definidos:
 
-### Regras de uso
+* ADMIN;
+* OPERADOR.
 
-* O dourado deve ser usado como acento, nunca como fundo dominante da aplicação inteira.
-* O fundo principal deve permanecer escuro.
-* Branco puro deve ser reservado para títulos, botões de alto contraste e informações essenciais.
-* Textos de apoio devem usar branco com opacidade entre 35% e 60%.
-* Evitar azul, roxo, verde forte ou cores neon fora dos estados necessários.
+Regras iniciais:
 
----
+* OPERADOR pode vender;
+* OPERADOR pode abrir, movimentar e fechar caixa;
+* OPERADOR pode cadastrar produtos;
+* OPERADOR pode alterar estoque;
+* OPERADOR pode alterar preço de produtos;
+* OPERADOR pode consultar clientes e promissórias operacionais;
+* OPERADOR não pode gerenciar usuários;
+* OPERADOR não pode alterar configurações gerais do sistema;
+* OPERADOR não pode acessar rotinas administrativas sensíveis, como backup, parâmetros globais e permissões;
+* ADMIN pode acessar tudo, revisar auditoria, gerenciar usuários, configurar o sistema e corrigir operações críticas.
 
-## 4. Tipografia
+### 3. Revisão de login e sessão
 
-### Estilo usado no modelo
+Melhorias:
 
-O modelo usa uma combinação entre fonte serifada para títulos e fonte sans-serif para interface.
+* expiração de sessão;
+* logout real;
+* bloqueio após muitas tentativas;
+* troca obrigatória da senha padrão;
+* remoção de credenciais padrão em produção.
 
-### Títulos principais
+### 4. Proteção de endpoints técnicos
 
-**Fonte sugerida:** serifada editorial.
+Restringir em produção:
 
-Opções:
+* Swagger;
+* Actuator;
+* API docs;
+* health detalhado.
 
-* Playfair Display
-* Cormorant Garamond
-* Libre Baskerville
-* Bodoni Moda
+## Resultado esperado
 
-Uso:
+Sistema mais seguro, rastreável e preparado para operar com múltiplos usuários.
 
-* Nome da marca
-* Títulos grandes das telas
-* Valores financeiros em destaque
-* Métricas principais
+## Prioridade
 
-Exemplo visual:
-
-```css
-font-family: 'Playfair Display', serif;
-letter-spacing: -0.06em;
-line-height: 0.95;
-```
-
-### Interface e textos operacionais
-
-**Fonte sugerida:** sans-serif limpa e moderna.
-
-Opções:
-
-* Inter
-* Satoshi
-* Manrope
-* Geist
-* Plus Jakarta Sans
-
-Uso:
-
-* Menus
-* Botões
-* Labels
-* Formulários
-* Tabelas
-* Descrições
-
-Exemplo visual:
-
-```css
-font-family: 'Inter', sans-serif;
-```
-
-### Hierarquia recomendada
-
-| Elemento         |     Tamanho |             Peso | Observação           |
-| ---------------- | ----------: | ---------------: | -------------------- |
-| Título da página | 56px a 72px | Regular/Semibold | Serifado, elegante   |
-| Título de card   | 28px a 32px | Regular/Semibold | Serifado             |
-| Métrica grande   | 32px a 48px |          Regular | Serifado             |
-| Texto comum      | 14px a 16px |          400/500 | Sans-serif           |
-| Label            | 10px a 11px |          800/900 | Uppercase e espaçado |
-| Botão            |        11px |          800/900 | Uppercase e espaçado |
+Altíssima.
 
 ---
 
-## 5. Espaçamentos e grid
+# Fase 2 — Caixa Profissional
 
-### Layout geral
+## Objetivo
 
-* Sidebar desktop: `320px`
-* Conteúdo desktop: margem esquerda de `320px`
-* Padding lateral desktop: `48px` a `80px`
-* Padding mobile: `20px`
-* Gap padrão entre blocos: `24px`
-* Gap entre campos: `16px`
-* Padding de cards: `24px` a `28px`
+Transformar o caixa em um módulo confiável para operação diária, conferência e prestação de contas.
 
-### Bordas
+## Entregas principais
 
-A interface usa cantos grandes para reforçar o visual premium.
+### 1. Histórico de caixas fechados
 
-| Elemento         |          Radius |
-| ---------------- | --------------: |
-| Cards principais | `28px` a `30px` |
-| Cards internos   | `22px` a `24px` |
-| Botões           | `16px` a `18px` |
-| Inputs           |          `16px` |
-| Badges           |         `999px` |
+Criar tela para consultar:
 
----
+* caixa por data;
+* operador;
+* status;
+* valor inicial;
+* total vendido;
+* total em dinheiro;
+* total Pix;
+* total cartão;
+* total promissória;
+* sangrias;
+* suprimentos;
+* diferença de caixa.
 
-## 6. Background e profundidade
+### 2. Relatório de fechamento
 
-### Fundo principal
+Gerar relatório com:
 
-Usar preto com gradientes radiais sutis.
+* resumo por forma de pagamento;
+* movimentações manuais;
+* vendas vinculadas;
+* diferença entre esperado e declarado;
+* operador responsável;
+* data/hora de abertura e fechamento.
 
-```css
-background:
-  radial-gradient(circle at 78% 4%, rgba(198,161,91,0.18), transparent 28%),
-  radial-gradient(circle at 45% 90%, rgba(255,255,255,0.06), transparent 28%),
-  linear-gradient(135deg, #0A0A0B, #121214 45%, #070707);
-```
+### 3. Motivo obrigatório para diferença
 
-### Grid sutil de fundo
+Se houver diferença no fechamento:
 
-Usar uma malha quase invisível para dar sensação tecnológica e refinada.
+* exigir motivo;
+* registrar na auditoria;
+* destacar no relatório.
 
-```css
-background-image:
-  linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px),
-  linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px);
-background-size: 54px 54px;
-opacity: 0.055;
-```
+### 4. Reabertura controlada
 
-### Sombras
+Permitir reabertura somente para ADMIN.
 
-Cards devem ter sombras grandes e suaves.
+Registrar:
 
-```css
-box-shadow: 0 30px 110px rgba(0,0,0,0.43);
-```
+* quem reabriu;
+* motivo;
+* data/hora;
+* alterações realizadas.
 
-Barra final ou elementos fixos:
+### 5. Bloqueios operacionais
 
-```css
-box-shadow: 0 26px 100px rgba(0,0,0,0.62);
-```
+Garantir:
 
----
+* caixa fechado não recebe movimentação;
+* caixa fechado não recebe baixa de promissória;
+* venda não fecha sem caixa aberto;
+* operador pode fechar caixa conforme regra operacional definida;
+* ADMIN pode revisar e corrigir operações de caixa quando necessário.
 
-## 7. Sidebar
+## Resultado esperado
 
-### Estrutura
+Caixa com comportamento profissional, confiável para loja e controle financeiro.
 
-A sidebar deve ter:
+## Prioridade
 
-* Bloco de marca no topo
-* Status da operação
-* Menu com ícone, grupo, nome e descrição curta
-* Usuário logado no rodapé
-
-### Largura
-
-```css
-width: 320px;
-```
-
-### Fundo
-
-```css
-background: rgba(7,7,8,0.94);
-backdrop-filter: blur(24px);
-border-right: 1px solid rgba(255,255,255,0.10);
-```
-
-### Item de menu ativo
-
-O item ativo deve ser branco com texto preto, criando contraste forte.
-
-```css
-background: #FFFFFF;
-color: #000000;
-box-shadow: 0 20px 60px rgba(255,255,255,0.12);
-```
-
-Adicionar uma barra dourada à esquerda:
-
-```css
-background: #C6A15B;
-width: 4px;
-border-radius: 0 999px 999px 0;
-```
-
-### Item inativo
-
-```css
-color: rgba(255,255,255,0.66);
-background: transparent;
-```
-
-Hover:
-
-```css
-background: rgba(255,255,255,0.055);
-color: #FFFFFF;
-```
+Alta.
 
 ---
 
-## 8. Navegação mobile
+# Fase 4 — Painel do Admin: Vendas e Recebíveis
 
-No mobile, a sidebar vira uma navegação inferior fixa.
+## Objetivo
 
-### Estrutura
+Criar um módulo simples para o ADMIN enxergar rapidamente **quanto vendeu**, **quanto recebeu** e **quanto ainda tem para receber**, sem criar contas a pagar nem financeiro pesado.
 
-* 5 botões: Vendas, Caixa, Histórico, Produtos, Usuários
-* Fundo preto translúcido
-* Botão ativo dourado com texto preto
+## Entregas principais
 
-```css
-position: fixed;
-bottom: 12px;
-left: 12px;
-right: 12px;
-background: rgba(7,7,8,0.90);
-backdrop-filter: blur(20px);
-border: 1px solid rgba(255,255,255,0.10);
-border-radius: 24px;
-```
+### 1. Visão geral do dia
 
----
+Criar painel com:
 
-## 9. Cards e painéis
+* total vendido no dia;
+* total recebido no dia;
+* total vendido em dinheiro;
+* total vendido em Pix;
+* total vendido em cartão;
+* total vendido em promissória;
+* quantidade de vendas;
+* ticket médio;
+* total de descontos concedidos.
 
-### Card principal
+### 2. Valores a receber
 
-```css
-background: rgba(16,16,18,0.78);
-border: 1px solid rgba(255,255,255,0.10);
-border-radius: 30px;
-padding: 24px;
-box-shadow: 0 30px 110px rgba(0,0,0,0.43);
-backdrop-filter: blur(20px);
-```
+Mostrar para o ADMIN:
 
-### Detalhe dourado superior
+* total em aberto de promissórias;
+* total vencendo hoje;
+* total vencido;
+* total a vencer nos próximos 7 dias;
+* total a vencer nos próximos 30 dias;
+* clientes com maior valor em aberto.
 
-Todo painel importante pode ter uma linha dourada sutil no topo.
+### 3. Consulta por data
 
-```css
-height: 1px;
-background: linear-gradient(to right, transparent, rgba(198,161,91,0.70), transparent);
-```
+Permitir filtrar:
 
-### Glow decorativo
+* hoje;
+* ontem;
+* semana atual;
+* mês atual;
+* período personalizado.
 
-```css
-background: rgba(198,161,91,0.10);
-filter: blur(48px);
-```
+O ADMIN deve conseguir responder rapidamente:
 
-### Uso correto
+* quanto vendeu em determinado dia;
+* quanto recebeu em determinado dia;
+* quanto ficou em promissória;
+* quanto ainda está pendente de recebimento.
 
-Usar cards para:
+### 4. Lista de recebíveis
 
-* Formulários
-* Carrinho da venda
-* Resumo de pagamento
-* Produtos cadastrados
-* Detalhes de venda
-* Usuários cadastrados
+Criar uma visão simples com:
 
-Evitar cards dentro de cards em excesso. Quando necessário, usar card interno mais simples e com menos sombra.
+* cliente;
+* venda vinculada;
+* valor da parcela;
+* vencimento;
+* status;
+* forma de baixa, quando pago;
+* caixa vinculado, quando recebido.
 
----
+### 5. Resumo por forma de pagamento
 
-## 10. Botões
+Separar vendas e recebimentos por:
 
-### Botão primário
+* dinheiro;
+* Pix;
+* cartão de débito;
+* cartão de crédito;
+* nota promissória.
 
-Uso: ação principal da tela.
+### 6. Relatório simples para impressão ou PDF
 
-Exemplos:
+Gerar relatório administrativo com:
 
-* Finalizar venda
-* Cadastrar produto
-* Fechar caixa
-* Cadastrar usuário
+* período selecionado;
+* total vendido;
+* total recebido;
+* total em aberto;
+* total vencido;
+* resumo por forma de pagamento;
+* lista resumida de promissórias em aberto.
 
-```css
-background: #C6A15B;
-color: #080809;
-border-radius: 16px;
-font-size: 11px;
-font-weight: 900;
-letter-spacing: 0.18em;
-text-transform: uppercase;
-box-shadow: 0 18px 60px rgba(198,161,91,0.28);
-```
+## O que não será prioridade agora
 
-Hover:
+Não será necessário neste momento:
 
-```css
-transform: translateY(-2px);
-background: #E0C077;
-box-shadow: 0 22px 75px rgba(198,161,91,0.35);
-```
+* contas a pagar;
+* despesas;
+* plano de contas;
+* DRE;
+* conciliação bancária;
+* financeiro completo;
+* controle de fornecedores;
+* centro de custo.
 
-### Botão branco / alto contraste
+## Resultado esperado
 
-Uso: ação crítica positiva em barra final.
+ADMIN consegue acompanhar vendas e recebíveis de forma rápida, simples e útil para lojas pequenas de roupas.
 
-```css
-background: #FFFFFF;
-color: #000000;
-```
+## Prioridade
 
-### Botão ghost
-
-Uso: ações secundárias.
-
-```css
-background: rgba(255,255,255,0.035);
-border: 1px solid rgba(255,255,255,0.10);
-color: #FFFFFF;
-```
-
-Hover:
-
-```css
-border-color: rgba(198,161,91,0.55);
-background: rgba(198,161,91,0.10);
-```
-
-### Botão destrutivo
-
-Uso: cancelar venda, excluir, desativar.
-
-```css
-background: rgba(248,113,113,0.10);
-border: 1px solid rgba(248,113,113,0.30);
-color: #FECACA;
-```
+Muito alta para valor prático do sistema.
 
 ---
 
-## 11. Inputs e formulários
+# Fase 5 — Promissórias Profissionais
 
-### Campo padrão
+## Objetivo
 
-```css
-height: 52px;
-border-radius: 16px;
-border: 1px solid rgba(255,255,255,0.10);
-background: rgba(0,0,0,0.30);
-color: rgba(255,255,255,0.80);
-padding: 0 16px;
-box-shadow: inset 0 2px 10px rgba(0,0,0,0.40);
-```
+Transformar notas promissórias em um diferencial competitivo do sistema.
 
-### Label
+## Entregas principais
 
-```css
-font-size: 10px;
-font-weight: 900;
-letter-spacing: 0.24em;
-text-transform: uppercase;
-color: rgba(255,255,255,0.45);
-```
+### 1. Pagamento parcial
 
-### Focus
+Permitir:
 
-```css
-border-color: rgba(198,161,91,0.70);
-```
+* baixar parte da parcela;
+* manter saldo restante;
+* registrar histórico de pagamentos;
+* emitir recibo parcial.
 
-### Regras UX
+### 2. Juros e multa
 
-* Labels sempre acima do campo.
-* Placeholders devem ser exemplos reais: `Ex.: Vestido midi floral`.
-* Campos monetários devem mostrar `R$ 0,00`.
-* Campos de busca devem ter ícone.
-* Selects devem ter seta discreta.
-* Formulários devem ter botão principal largo em telas menores.
+Configurar:
 
----
+* multa fixa ou percentual;
+* juros diário/mensal;
+* tolerância de vencimento;
+* cálculo automático do valor atualizado.
 
-## 12. Badges
+### 3. Renegociação
 
-Badges são usados para status e metadados.
+Permitir:
 
-### Badge premium
+* selecionar parcelas em aberto;
+* cancelar parcelas antigas;
+* gerar novas parcelas;
+* registrar motivo;
+* manter histórico da renegociação.
 
-```css
-border: 1px solid rgba(198,161,91,0.45);
-background: rgba(198,161,91,0.12);
-color: #F3DFA8;
-```
+### 4. Histórico de cobrança
 
-### Badge sucesso
+Registrar ações:
 
-```css
-border: 1px solid rgba(52,211,153,0.30);
-background: rgba(52,211,153,0.10);
-color: #6EE7B7;
-```
+* ligação realizada;
+* mensagem enviada;
+* cliente prometeu pagar;
+* cliente não respondeu;
+* acordo feito;
+* cobrança presencial.
 
-### Badge alerta
+### 5. Cobrança via WhatsApp
 
-```css
-border: 1px solid rgba(251,191,36,0.30);
-background: rgba(251,191,36,0.10);
-color: #FCD34D;
-```
+Gerar mensagem pronta com:
 
-### Badge perigo
+* nome do cliente;
+* valor;
+* vencimento;
+* dias em atraso;
+* dados da loja;
+* chave Pix opcional.
 
-```css
-border: 1px solid rgba(248,113,113,0.30);
-background: rgba(248,113,113,0.10);
-color: #FCA5A5;
-```
+### 6. Relatório de inadimplência
 
-### Regra
+Separar por faixas:
 
-Badges devem ser pequenos, uppercase e com tracking alto.
+* vence hoje;
+* 1 a 7 dias vencido;
+* 8 a 15 dias vencido;
+* 16 a 30 dias vencido;
+* acima de 30 dias.
 
----
+### 7. Recibo de pagamento
 
-## 13. Métricas
+Gerar recibo para:
 
-### Card de métrica
+* pagamento total;
+* pagamento parcial;
+* renegociação.
 
-```css
-border-radius: 24px;
-border: 1px solid rgba(255,255,255,0.10);
-background: rgba(255,255,255,0.035);
-padding: 20px;
-```
+## Resultado esperado
 
-### Métrica dourada
+Módulo de promissórias forte para comércio popular, lojas de bairro, moda, material de construção e vendas fiadas.
 
-Usar para total financeiro, status principal ou indicador mais importante.
+## Prioridade
 
-```css
-border-color: rgba(198,161,91,0.25);
-background: rgba(198,161,91,0.08);
-```
-
-### Métrica de perigo
-
-Usar para ruptura, estoque zerado e diferença negativa.
-
-```css
-border-color: rgba(248,113,113,0.20);
-background: rgba(248,113,113,0.08);
-```
+Alta, especialmente por ser um diferencial comercial.
 
 ---
 
-## 14. Tabelas, listas e cards operacionais
+# Fase 6 — Backup, Implantação e Produção
 
-O modelo evita tabelas secas quando a operação precisa de leitura rápida. Sempre que possível, transformar linhas em cards ricos.
+## Objetivo
 
-### Produto cadastrado
+Garantir segurança dos dados e operação confiável no cliente.
 
-Cada produto deve exibir:
+## Entregas principais
 
-* Nome
-* Código
-* Status de estoque
-* Status ativo/inativo
-* Preço
-* Estoque
-* Total em estoque
-* Data de atualização
-* QR Code
-* Ações: copiar, baixar, editar, etiqueta
+### 1. Backup automático
 
-### Venda no histórico
+Criar rotina para:
 
-Cada venda deve exibir:
+* backup diário do PostgreSQL;
+* retenção dos últimos backups;
+* pasta configurável;
+* log de sucesso/falha.
 
-* Número da venda
-* Valor total
-* Status
-* Forma de pagamento
-* Data/hora
-* Vendedor
+### 2. Backup manual
 
-### Usuário
+No painel ADMIN:
 
-Cada usuário deve exibir:
+* botão gerar backup;
+* baixar backup;
+* visualizar último backup.
 
-* Nome
-* Login
-* Nível
-* Status
-* Criado em
-* Atualizado em
-* Ações: editar e permissões
+### 3. Restore documentado
 
----
+Criar procedimento para restaurar banco:
 
-## 15. Padrão das telas
+* ambiente local;
+* ambiente cliente;
+* ambiente de teste.
 
-### Estrutura geral de cada tela
+### 4. Checklist de produção
 
-1. Header da página
-2. Ações rápidas
-3. Métricas principais
-4. Conteúdo principal em cards
-5. Ação final ou confirmação quando necessário
+Adicionar checklist para:
 
----
+* senha admin alterada;
+* Swagger bloqueado;
+* backup ativo;
+* impressora testada;
+* leitor testado;
+* usuários criados;
+* permissões revisadas;
+* caixa teste realizado;
+* venda teste realizada;
+* cancelamento teste realizado.
 
-## 16. Tela Vendas
+### 5. Logs de erro
 
-### Objetivo UX
+Criar logs para:
 
-Vender rápido com leitura de código, mínimo atrito e confirmação clara.
+* erro no backend;
+* falha de banco;
+* falha de autenticação;
+* erro ao finalizar venda;
+* erro em baixa de promissória.
 
-### Blocos
+## Resultado esperado
 
-* Header com status do caixa
-* Ações rápidas: Nova venda, Imprimir última, Buscar produto
-* Campo de leitura de código
-* Feedback de produto localizado
-* Pagamento
-* Resumo da venda
-* Carrinho
-* Barra fixa de finalização
+Sistema mais seguro para instalação real e suporte técnico.
 
-### Regras
+## Prioridade
 
-* O total deve estar sempre visível.
-* O botão de finalizar venda deve ter destaque máximo.
-* O carrinho deve permitir alterar quantidade sem sair da tela.
-* Feedback após leitura deve ser imediato: produto localizado, estoque disponível e horário da leitura.
+Obrigatória antes de vender.
 
 ---
 
-## 17. Tela Caixa
+# Sprints completos para execução
 
-### Objetivo UX
+## Visão geral
 
-Dar segurança operacional para abertura, movimentação e fechamento do caixa.
+O projeto será organizado em **5 sprints principais**, mantendo o foco em lojas pequenas de roupas e evitando complexidade desnecessária.
 
-### Blocos
+A ordem recomendada é:
 
-* Header com status do caixa
-* Ações rápidas: Registrar sangria, Imprimir resumo, Fechar caixa
-* Métricas: total vendido, dinheiro esperado, movimentações
-* Resumo por forma de pagamento
-* Registro de movimentação
-* Fechamento com diferença calculada
-
-### Regras
-
-* Diferença zero deve aparecer como sucesso.
-* Diferença negativa ou positiva deve usar estado de alerta.
-* Fechamento só deve parecer disponível quando dinheiro contado estiver preenchido.
+1. Sprint 1 — Blindagem do Sistema;
+2. Sprint 2 — Caixa Profissional;
+3. Sprint 3 — Painel do Admin: Vendas e Recebíveis;
+4. Sprint 4 — Promissórias Avançadas;
+5. Sprint 5 — Backup, Implantação e Produção.
 
 ---
 
-## 18. Tela Histórico
+# Sprint 1 — Blindagem do Sistema
 
-### Objetivo UX
+## Objetivo
 
-Permitir auditoria rápida e reimpressão de recibos.
+Aumentar a segurança, rastreabilidade e controle do sistema antes de evoluir novas funcionalidades.
 
-### Blocos
+## Resultado esperado
 
-* Header com total listado
-* Filtros por período e pagamento
-* Lista de vendas
-* Detalhe da venda selecionada
-* Ações: imprimir e cancelar
+Ao final da sprint, o sistema deve registrar ações importantes, aplicar permissões corretamente no backend e reduzir riscos básicos de produção.
 
-### Regras
+## Escopo funcional
 
-* A venda selecionada deve ter destaque visual.
-* O detalhe deve mudar sem abrir nova página.
-* Cancelar venda deve usar botão destrutivo.
+### 1. Auditoria global
 
----
+Criar estrutura para registrar ações relevantes do sistema.
 
-## 19. Tela Produtos
+Eventos mínimos:
 
-### Objetivo UX
+* login realizado;
+* logout realizado;
+* tentativa de login inválida;
+* criação de usuário;
+* alteração de usuário;
+* alteração de senha;
+* abertura de caixa;
+* fechamento de caixa;
+* sangria;
+* suprimento;
+* criação de produto;
+* alteração de produto;
+* alteração de preço;
+* alteração de estoque;
+* cancelamento de venda;
+* baixa de nota promissória;
+* tentativa de acesso negado.
 
-Cadastrar, buscar, controlar estoque e gerar etiquetas rapidamente.
+### 2. Permissões no backend
 
-### Blocos
+Manter apenas dois perfis:
 
-* Header com valor em estoque
-* Ações rápidas: novo produto, gerar etiquetas, filtrar estoque
-* Métricas de estoque
-* Formulário de novo produto
-* Filtros combinados
-* Cards de produtos
+* ADMIN;
+* OPERADOR.
 
-### Regras
+Regras:
 
-* Produto sem estoque deve ter badge vermelho.
-* Estoque baixo deve ter badge âmbar.
-* Produtos ativos devem ter badge verde.
-* QR Code deve ficar visualmente destacado.
-* Etiqueta deve ser ação principal dentro do card do produto.
+* ADMIN acessa tudo;
+* OPERADOR pode vender;
+* OPERADOR pode abrir, movimentar e fechar caixa;
+* OPERADOR pode cadastrar e editar produtos;
+* OPERADOR pode alterar preço e estoque;
+* OPERADOR pode consultar clientes e promissórias operacionais;
+* OPERADOR não pode gerenciar usuários;
+* OPERADOR não pode acessar auditoria;
+* OPERADOR não pode acessar backup;
+* OPERADOR não pode alterar configurações sensíveis.
 
----
+### 3. Segurança de login
 
-## 20. Tela Usuários
+Implementar ou revisar:
 
-### Objetivo UX
+* expiração de sessão/token;
+* logout removendo sessão/token;
+* bloqueio temporário após muitas tentativas de login inválidas;
+* troca obrigatória da senha padrão no primeiro acesso;
+* remoção de senha padrão em ambiente de produção.
 
-Controlar permissões sem confusão.
+### 4. Proteção de endpoints técnicos
 
-### Blocos
+Restringir em produção:
 
-* Header com total de usuários
-* Métricas: usuários, admins, vendedores
-* Formulário de novo usuário
-* Bloco explicativo de regra de acesso
-* Cards de usuários cadastrados
+* Swagger;
+* Actuator;
+* API Docs;
+* health detalhado.
 
-### Regras
+## Backend — tarefas técnicas
 
-* Administrador e vendedor devem ter distinção clara.
-* A regra de acesso deve estar visível perto do formulário.
-* Permissões deve ser ação separada de Editar.
+* Criar migration Flyway para tabela `audit_log`.
+* Criar entidade `AuditLog`.
+* Criar repository `AuditLogRepository`.
+* Criar service `AuditLogService`.
+* Criar enum de ações auditáveis.
+* Integrar auditoria nos serviços principais.
+* Revisar filtros/interceptors de autenticação.
+* Garantir validação de role no backend.
+* Criar endpoint ADMIN para consulta de auditoria.
+* Criar filtros por data, usuário, ação e entidade.
+* Adicionar proteção de endpoints técnicos por profile ou variável de ambiente.
 
----
+## Frontend — tarefas técnicas
 
-## 21. Microinterações
+* Criar tela simples de auditoria para ADMIN.
+* Criar filtros de auditoria.
+* Esconder menu de auditoria para OPERADOR.
+* Melhorar mensagens de acesso negado.
+* Adicionar aviso de troca obrigatória de senha, se aplicável.
 
-### Hover
+## Critérios de aceite
 
-Elementos clicáveis sobem levemente:
+* Ao fazer login, o sistema registra evento de auditoria.
+* Ao errar login, o sistema registra tentativa inválida.
+* Ao abrir caixa, fechar caixa, movimentar caixa, alterar produto ou cancelar venda, o sistema registra auditoria.
+* OPERADOR não consegue acessar rotas administrativas pelo frontend nem chamando API diretamente.
+* ADMIN consegue consultar auditoria por período.
+* Swagger e Actuator não ficam abertos livremente em produção.
+* Senhas padrão não devem ser aceitas em produção sem troca obrigatória.
 
-```css
-transform: translateY(-2px);
-```
+## Entregáveis
 
-### Transições
-
-```css
-transition: all 200ms ease;
-```
-
-### Feedback visual
-
-* Produto encontrado: badge verde
-* Estoque baixo: badge âmbar
-* Sem estoque: badge vermelho
-* Venda finalizada: feedback verde
-* Erro de validação: borda vermelha e mensagem curta abaixo do campo
-
----
-
-## 22. Responsividade
-
-### Desktop
-
-* Sidebar fixa à esquerda
-* Conteúdo com grid em 2 colunas quando fizer sentido
-* Cards largos e métricas em linha
-
-### Tablet
-
-* Sidebar pode continuar se houver espaço ou virar topo compacto
-* Grids reduzem para 2 colunas
-
-### Mobile
-
-* Sidebar some
-* Menu inferior aparece
-* Cards ocupam 100% da largura
-* Botões principais ficam largos
-* Barra de finalização fica acima do menu inferior
-
----
-
-## 23. Acessibilidade
-
-* Contraste forte entre fundo e texto.
-* Botões com área de clique confortável.
-* Não depender apenas de cor para status: usar texto no badge.
-* Inputs sempre com label.
-* Ações destrutivas devem ter confirmação.
-* Fontes pequenas só para labels, nunca para conteúdo essencial.
+* Tabela de auditoria criada.
+* Serviço de auditoria funcionando.
+* Regras de permissão aplicadas no backend.
+* Tela de auditoria para ADMIN.
+* Proteção básica de endpoints técnicos.
+* Documentação curta das permissões.
 
 ---
 
-## 24. Tokens CSS recomendados
+# Sprint 2 — Caixa Profissional
 
-```css
-:root {
-  --color-bg: #0A0A0B;
-  --color-bg-deep: #070708;
-  --color-surface: #101012;
-  --color-surface-2: #111113;
-  --color-gold: #C6A15B;
-  --color-gold-light: #F3DFA8;
-  --color-white: #FFFFFF;
+## Objetivo
 
-  --text-primary: rgba(255,255,255,1);
-  --text-secondary: rgba(255,255,255,0.58);
-  --text-muted: rgba(255,255,255,0.35);
+Melhorar o controle de caixa para operação real em loja pequena, com histórico, fechamento confiável e rastreabilidade.
 
-  --border-soft: rgba(255,255,255,0.10);
-  --border-gold: rgba(198,161,91,0.35);
+## Resultado esperado
 
-  --radius-card: 30px;
-  --radius-inner: 24px;
-  --radius-button: 16px;
-  --radius-pill: 999px;
+Ao final da sprint, o ADMIN deve conseguir consultar caixas fechados, imprimir/conferir fechamento e identificar diferenças de caixa.
 
-  --shadow-card: 0 30px 110px rgba(0,0,0,0.43);
-  --shadow-gold: 0 18px 60px rgba(198,161,91,0.28);
+## Escopo funcional
 
-  --sidebar-width: 320px;
-}
-```
+### 1. Histórico de caixas
+
+Criar tela para consultar caixas por:
+
+* data de abertura;
+* data de fechamento;
+* operador;
+* status;
+* diferença de caixa.
+
+Exibir:
+
+* número do caixa;
+* operador de abertura;
+* operador de fechamento;
+* valor inicial;
+* total vendido;
+* dinheiro esperado;
+* dinheiro declarado;
+* diferença;
+* sangrias;
+* suprimentos;
+* total por forma de pagamento.
+
+### 2. Relatório de fechamento
+
+Gerar relatório com:
+
+* dados do caixa;
+* vendas vinculadas;
+* resumo por forma de pagamento;
+* movimentações manuais;
+* diferença de caixa;
+* motivo da diferença;
+* data/hora de abertura e fechamento.
+
+### 3. Motivo de diferença
+
+Quando houver diferença entre valor esperado e declarado:
+
+* exigir motivo;
+* salvar motivo no caixa;
+* registrar auditoria;
+* mostrar no relatório.
+
+### 4. Bloqueios operacionais
+
+Garantir:
+
+* caixa fechado não recebe sangria;
+* caixa fechado não recebe suprimento;
+* caixa fechado não recebe baixa de promissória;
+* caixa fechado não recebe venda;
+* venda não fecha sem caixa aberto.
+
+### 5. Reabertura controlada
+
+Permitir reabertura somente para ADMIN.
+
+Registrar:
+
+* usuário que reabriu;
+* motivo;
+* data/hora;
+* auditoria.
+
+## Backend — tarefas técnicas
+
+* Revisar entidade/tabela de caixa.
+* Adicionar campo `closingDifferenceReason`, se ainda não existir.
+* Adicionar endpoint de listagem paginada de caixas.
+* Adicionar filtros por data, status e operador.
+* Criar endpoint de relatório de fechamento.
+* Criar regra para exigir motivo quando houver diferença.
+* Criar endpoint de reabertura apenas para ADMIN.
+* Garantir transações nas operações de caixa.
+* Garantir bloqueios para caixa fechado.
+* Registrar auditoria nas operações de caixa.
+
+## Frontend — tarefas técnicas
+
+* Criar tela `Histórico de Caixas`.
+* Criar filtros por período, status e operador.
+* Criar detalhe do caixa.
+* Criar botão para imprimir/baixar relatório.
+* Criar campo de motivo no fechamento quando houver diferença.
+* Criar ação de reabertura apenas para ADMIN.
+* Melhorar mensagens de erro do caixa.
+
+## Critérios de aceite
+
+* ADMIN consegue ver caixas fechados por período.
+* ADMIN consegue abrir o detalhe de um caixa fechado.
+* Sistema exige motivo se o dinheiro contado for diferente do esperado.
+* Caixa fechado não aceita nova movimentação.
+* Caixa fechado não aceita venda.
+* Caixa fechado não aceita baixa de promissória.
+* Reabertura só funciona para ADMIN.
+* Relatório de fechamento mostra vendas, pagamentos, sangrias, suprimentos e diferença.
+
+## Entregáveis
+
+* Histórico de caixas.
+* Relatório de fechamento.
+* Campo de motivo para diferença.
+* Bloqueios operacionais reforçados.
+* Reabertura controlada por ADMIN.
 
 ---
 
-## 25. Classes utilitárias sugeridas
+# Sprint 3 — Painel do Admin: Vendas e Recebíveis
 
-```css
-.premium-surface {
-  background: rgba(16,16,18,0.78);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 30px;
-  box-shadow: 0 30px 110px rgba(0,0,0,0.43);
-  backdrop-filter: blur(20px);
-}
+## Objetivo
 
-.gold-line::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(198,161,91,0.70), transparent);
-}
+Criar um painel simples para o ADMIN acompanhar vendas e valores a receber, sem criar módulo de contas a pagar ou financeiro completo.
 
-.premium-button {
-  background: #C6A15B;
-  color: #080809;
-  border-radius: 16px;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  box-shadow: 0 18px 60px rgba(198,161,91,0.28);
-  transition: all 200ms ease;
-}
+## Resultado esperado
 
-.premium-button:hover {
-  transform: translateY(-2px);
-  background: #E0C077;
-}
+Ao final da sprint, o ADMIN deve conseguir responder rapidamente:
 
-.premium-input {
-  height: 52px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.30);
-  color: rgba(255,255,255,0.80);
-  padding: 0 16px;
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.40);
-}
+* quanto vendeu hoje;
+* quanto recebeu hoje;
+* quanto vendeu em determinado dia;
+* quanto tem em promissórias abertas;
+* quanto está vencido;
+* quanto vai vencer nos próximos dias.
 
-.premium-input:focus {
-  outline: none;
-  border-color: rgba(198,161,91,0.70);
-}
-```
+## Escopo funcional
+
+### 1. Dashboard administrativo
+
+Criar painel com cards:
+
+* total vendido no dia;
+* total recebido no dia;
+* quantidade de vendas;
+* ticket médio;
+* total de descontos;
+* total em promissórias abertas;
+* total vencido;
+* total vencendo hoje.
+
+### 2. Filtro por período
+
+Permitir filtros:
+
+* hoje;
+* ontem;
+* semana atual;
+* mês atual;
+* período personalizado.
+
+### 3. Resumo por forma de pagamento
+
+Exibir vendas por:
+
+* dinheiro;
+* Pix;
+* cartão de débito;
+* cartão de crédito;
+* nota promissória.
+
+### 4. Recebíveis
+
+Exibir:
+
+* total em aberto;
+* total vencido;
+* total vencendo hoje;
+* total a vencer em 7 dias;
+* total a vencer em 30 dias;
+* clientes com maior valor em aberto.
+
+### 5. Lista simples de recebíveis
+
+Colunas:
+
+* cliente;
+* venda;
+* parcela;
+* valor;
+* vencimento;
+* status;
+* forma de baixa;
+* caixa vinculado.
+
+### 6. Relatório simples
+
+Permitir impressão ou PDF com:
+
+* período selecionado;
+* total vendido;
+* total recebido;
+* resumo por pagamento;
+* total em aberto;
+* total vencido;
+* lista resumida de promissórias pendentes.
+
+## Backend — tarefas técnicas
+
+* Criar endpoint `/api/admin/dashboard/summary`.
+* Criar endpoint `/api/admin/dashboard/payment-methods`.
+* Criar endpoint `/api/admin/dashboard/receivables`.
+* Criar endpoint `/api/admin/dashboard/report`.
+* Implementar filtros por período.
+* Garantir acesso apenas para ADMIN.
+* Otimizar queries agregadas.
+* Validar timezone/data local da loja.
+
+## Frontend — tarefas técnicas
+
+* Criar menu `Admin` ou `Painel Admin`.
+* Criar tela de dashboard.
+* Criar cards de indicadores.
+* Criar filtro rápido por período.
+* Criar tabela de recebíveis.
+* Criar resumo por forma de pagamento.
+* Criar botão de impressão/PDF.
+* Esconder tela para OPERADOR.
+
+## Critérios de aceite
+
+* ADMIN visualiza vendas do dia.
+* ADMIN filtra vendas por período.
+* ADMIN visualiza total recebido por forma de pagamento.
+* ADMIN visualiza total em aberto de promissórias.
+* ADMIN visualiza total vencido.
+* ADMIN visualiza vencimentos próximos.
+* OPERADOR não acessa o painel.
+* Relatório simples pode ser impresso ou exportado.
+
+## Entregáveis
+
+* Painel Admin.
+* Cards de vendas e recebíveis.
+* Filtro por período.
+* Resumo por forma de pagamento.
+* Lista de recebíveis.
+* Relatório administrativo simples.
 
 ---
 
-## 26. Checklist para aplicar no sistema real
+# Sprint 4 — Promissórias Avançadas
 
-* [ ] Criar variáveis CSS do tema premium.
-* [ ] Trocar fundo branco por fundo preto premium com gradiente.
-* [ ] Refazer sidebar com largura de 320px.
-* [ ] Adicionar item ativo branco com barra dourada.
-* [ ] Padronizar cards com radius grande e sombra suave.
-* [ ] Padronizar botões primário, ghost, branco e destrutivo.
-* [ ] Padronizar inputs com labels uppercase.
-* [ ] Criar badges de status.
-* [ ] Transformar listagens secas em cards quando possível.
-* [ ] Adicionar ações rápidas no topo das telas.
-* [ ] Criar navegação mobile inferior.
-* [ ] Garantir que a barra de finalizar venda fique fixa.
-* [ ] Adicionar feedback visual para produto encontrado, erro e sucesso.
-* [ ] Conferir contraste e legibilidade.
-* [ ] Testar em desktop, tablet e mobile.
+## Objetivo
+
+Evoluir o módulo de promissórias para lidar melhor com recebimentos parciais, atrasos, cobrança e renegociação.
+
+## Resultado esperado
+
+Ao final da sprint, o sistema deve permitir controlar melhor valores em aberto e histórico de cobrança de clientes.
+
+## Escopo funcional
+
+### 1. Pagamento parcial
+
+Permitir:
+
+* baixar valor parcial da parcela;
+* manter saldo restante;
+* registrar data do pagamento;
+* registrar forma de pagamento;
+* vincular pagamento ao caixa aberto;
+* gerar recibo parcial.
+
+### 2. Histórico de pagamentos da parcela
+
+Para cada promissória, exibir:
+
+* pagamentos realizados;
+* valor pago;
+* saldo restante;
+* operador;
+* caixa vinculado;
+* data/hora.
+
+### 3. Juros e multa
+
+Implementar configuração simples:
+
+* multa percentual opcional;
+* juros diário opcional;
+* valor atualizado da parcela;
+* opção de cobrar ou ignorar juros na baixa.
+
+### 4. Histórico de cobrança
+
+Registrar ações manuais:
+
+* ligação realizada;
+* mensagem enviada;
+* cliente prometeu pagar;
+* cliente não respondeu;
+* acordo feito;
+* cobrança presencial;
+* observação livre.
+
+### 5. Cobrança via WhatsApp
+
+Gerar mensagem pronta com:
+
+* nome do cliente;
+* valor em aberto;
+* vencimento;
+* dias de atraso;
+* nome da loja;
+* chave Pix opcional.
+
+### 6. Relatório de inadimplência
+
+Separar por faixas:
+
+* vence hoje;
+* 1 a 7 dias vencido;
+* 8 a 15 dias vencido;
+* 16 a 30 dias vencido;
+* acima de 30 dias.
+
+### 7. Renegociação simples
+
+Permitir:
+
+* selecionar promissórias em aberto;
+* gerar novas parcelas;
+* cancelar parcelas antigas como renegociadas;
+* registrar motivo;
+* manter vínculo com a renegociação.
+
+## Backend — tarefas técnicas
+
+* Criar tabela de pagamentos de promissórias.
+* Criar tabela de histórico de cobrança.
+* Criar tabela ou campos para renegociação.
+* Ajustar status da promissória para suportar pagamento parcial.
+* Criar endpoints de pagamento parcial.
+* Criar endpoint de histórico de pagamentos.
+* Criar endpoint de histórico de cobrança.
+* Criar endpoint de renegociação.
+* Criar cálculo de saldo restante.
+* Criar cálculo de juros/multa.
+* Garantir que pagamento de promissória exige caixa aberto.
+* Registrar auditoria em pagamentos, cobranças e renegociações.
+
+## Frontend — tarefas técnicas
+
+* Ajustar tela de promissórias para mostrar saldo pago/saldo restante.
+* Criar modal de pagamento parcial.
+* Criar histórico de pagamentos da parcela.
+* Criar histórico de cobrança.
+* Criar botão de cobrança via WhatsApp.
+* Criar tela ou fluxo de renegociação.
+* Criar relatório de inadimplência.
+* Criar recibo parcial.
+
+## Critérios de aceite
+
+* Sistema permite pagar parte da parcela.
+* Parcela parcialmente paga mantém saldo em aberto.
+* Pagamento parcial entra no caixa aberto.
+* Histórico de pagamento aparece no detalhe da promissória.
+* ADMIN/OPERADOR consegue registrar cobrança feita.
+* Sistema gera mensagem de WhatsApp para cobrança.
+* Relatório separa vencidos por faixa de atraso.
+* Renegociação cancela parcelas antigas e cria novas parcelas com vínculo.
+
+## Entregáveis
+
+* Pagamento parcial.
+* Histórico de pagamentos.
+* Histórico de cobrança.
+* Juros/multa simples.
+* Cobrança via WhatsApp.
+* Relatório de inadimplência.
+* Renegociação simples.
 
 ---
 
-## 27. Prompt para aplicar no sistema existente
+# Sprint 5 — Backup, Implantação e Produção
 
-Use este prompt com sua equipe ou IA de programação:
+## Objetivo
 
-```text
-Você deve redesenhar a interface existente do sistema IWR Atelier PDV mantendo a estrutura funcional atual das telas, sem alterar regras de negócio, endpoints, banco de dados, nomes de funções críticas ou fluxos principais.
+Preparar o sistema para instalação segura, suporte e operação real em loja pequena.
 
-Aplique o Design System Premium IWR Atelier PDV descrito abaixo.
+## Resultado esperado
 
-Objetivo visual:
-Transformar o sistema em uma interface dark premium inspirada em boutiques de moda de luxo, com estética preto, branco e dourado, visual sofisticado, sidebar moderna, cards ricos em detalhes, profundidade visual, gradientes sutis e forte hierarquia operacional.
+Ao final da sprint, o sistema deve ter rotina de backup, checklist de implantação e documentação mínima para suporte.
 
-Telas que devem ser preservadas estruturalmente:
-1. Vendas / Caixa com leitura por código
-2. Abertura e fechamento de caixa
-3. Histórico de vendas
-4. Gestão completa de produtos
-5. Usuários e permissões
+## Escopo funcional
 
-Regras obrigatórias:
-- Manter a estrutura funcional das telas.
-- Melhorar apenas UI, UX, responsividade e organização visual.
-- Não remover funcionalidades existentes.
-- Não alterar lógica de backend.
-- Não quebrar integrações existentes.
-- Não trocar nomes de rotas ou funções sem necessidade.
-- Substituir alertas simples por feedbacks visuais premium.
-- Criar componentes reutilizáveis: Sidebar, Button, Card, MetricCard, Badge, Input, PageHeader, QuickActions, MobileNav.
-- Usar tema preto, branco e dourado.
-- Aplicar responsividade desktop e mobile.
-- Evitar visual genérico de dashboard.
+### 1. Backup automático
 
-Componentes principais:
-- Sidebar fixa desktop com 320px.
-- Menu inferior no mobile.
-- Header grande por tela com título, descrição, status e métrica principal.
-- Cards com fundo escuro translúcido, borda suave, radius grande e glow dourado sutil.
-- Botão primário dourado.
-- Botão secundário ghost.
-- Botão destrutivo vermelho discreto.
-- Inputs escuros com label uppercase.
-- Badges para status.
-- Métricas em cards.
+Criar rotina para:
 
-A experiência deve priorizar operação rápida, leitura clara e aparência premium.
+* backup diário do PostgreSQL;
+* retenção configurável;
+* pasta configurável;
+* log de sucesso ou falha;
+* alerta visual no painel ADMIN quando backup falhar.
+
+### 2. Backup manual
+
+No painel ADMIN:
+
+* botão para gerar backup;
+* exibir data/hora do último backup;
+* permitir baixar backup;
+* mostrar status do último backup.
+
+### 3. Restore documentado
+
+Criar documentação para:
+
+* restaurar banco local;
+* restaurar banco em cliente;
+* validar dados restaurados.
+
+### 4. Checklist de produção
+
+Criar checklist final contendo:
+
+* senha admin alterada;
+* usuários criados;
+* permissões revisadas;
+* Swagger bloqueado;
+* Actuator restrito;
+* backup ativo;
+* impressora testada;
+* leitor/câmera testado;
+* venda teste realizada;
+* cancelamento teste realizado;
+* caixa teste aberto e fechado;
+* promissória teste criada e baixada.
+
+### 5. Logs de erro
+
+Melhorar logs para:
+
+* erro no backend;
+* falha de banco;
+* falha de autenticação;
+* erro ao finalizar venda;
+* erro ao cancelar venda;
+* erro em baixa de promissória;
+* erro de backup.
+
+### 6. Pacote de instalação
+
+Organizar arquivos para entrega:
+
+* `.env.example`;
+* instruções de instalação;
+* comandos Docker;
+* comandos de backup;
+* procedimento de atualização.
+
+## Backend — tarefas técnicas
+
+* Criar serviço de backup.
+* Criar endpoint ADMIN para backup manual.
+* Criar endpoint ADMIN para status do backup.
+* Configurar pasta de backup por variável de ambiente.
+* Configurar retenção por variável de ambiente.
+* Criar logs estruturados.
+* Revisar Docker Compose para produção local.
+* Criar `.env.example`.
+
+## Frontend — tarefas técnicas
+
+* Criar tela ADMIN de backup/status.
+* Mostrar último backup.
+* Mostrar falha de backup.
+* Criar botão gerar backup.
+* Criar botão baixar backup.
+* Criar tela ou seção de checklist de implantação.
+
+## Documentação
+
+Criar ou atualizar:
+
+* `README.md`;
+* `CHECKLIST_IMPLANTACAO.md`;
+* `MANUAL_OPERACIONAL.md`;
+* guia de backup e restauração;
+* guia de atualização do sistema.
+
+## Critérios de aceite
+
+* ADMIN consegue gerar backup manual.
+* Sistema registra data/hora do último backup.
+* Sistema mostra erro quando backup falha.
+* Existe documentação clara de restore.
+* Existe checklist final de produção.
+* Ambiente sobe com Docker usando `.env`.
+* Swagger/Actuator não ficam expostos em produção.
+
+## Entregáveis
+
+* Backup automático.
+* Backup manual.
+* Tela de status de backup.
+* Guia de restore.
+* Checklist de produção.
+* Logs revisados.
+* Pacote mínimo de implantação.
+
+---
+
+# Priorização final
+
+## Prioridade imediata
+
+1. Sprint 1 — Blindagem do Sistema;
+2. Sprint 2 — Caixa Profissional;
+3. Sprint 3 — Painel do Admin.
+
+Essas três entregas deixam o sistema muito mais confiável para uso real.
+
+## Prioridade intermediária
+
+4. Sprint 4 — Promissórias Avançadas.
+
+Essa sprint aumenta o valor do sistema para lojas que vendem fiado ou parcelado no papel.
+
+## Prioridade obrigatória antes de entregar para cliente
+
+5. Sprint 5 — Backup, Implantação e Produção.
+
+Essa sprint reduz risco de perda de dados e facilita instalação/suporte.
+
+---
+
+# Roadmap resumido para a equipe
+
+| Sprint   | Tema         | Foco                                        | Prioridade  |
+| -------- | ------------ | ------------------------------------------- | ----------- |
+| Sprint 1 | Blindagem    | Auditoria, permissões e segurança           | Altíssima   |
+| Sprint 2 | Caixa        | Histórico, fechamento e bloqueios           | Alta        |
+| Sprint 3 | Painel Admin | Vendas e valores a receber                  | Muito alta  |
+| Sprint 4 | Promissórias | Pagamento parcial, cobrança e inadimplência | Alta        |
+| Sprint 5 | Produção     | Backup, checklist e implantação             | Obrigatória |
+
+---
+
+# Decisão recomendada
+
+Começar pela **Sprint 1 — Blindagem do Sistema**.
+
+Motivo:
+
+Antes de expandir funcionalidades, o sistema precisa estar seguro, rastreável e preparado para operar com mais de um usuário.
+
+Depois, seguir para **Sprint 2 — Caixa Profissional**, porque o caixa é o coração operacional do PDV.

@@ -5,12 +5,15 @@ import com.iwr.pdv.cash.api.dto.CashMovementRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterCloseRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterOpenRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterResponse;
+import com.iwr.pdv.cash.application.CashRegisterReportService;
 import com.iwr.pdv.cash.application.CashRegisterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,9 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class CashRegisterController {
 
     private final CashRegisterService cashRegisterService;
+    private final CashRegisterReportService reportService;
 
-    public CashRegisterController(CashRegisterService cashRegisterService) {
+    public CashRegisterController(CashRegisterService cashRegisterService, CashRegisterReportService reportService) {
         this.cashRegisterService = cashRegisterService;
+        this.reportService = reportService;
     }
 
     @PostMapping("/open")
@@ -66,6 +71,20 @@ public class CashRegisterController {
             HttpServletRequest servletRequest
     ) {
         return cashRegisterService.close(cashRegisterId, request, currentUser(servletRequest));
+    }
+
+    @GetMapping("/current/report")
+    @Operation(summary = "Download the current cash register report as PDF")
+    public ResponseEntity<byte[]> downloadReport() {
+        return cashRegisterService.current()
+                .map(cashRegister -> {
+                    byte[] pdfBytes = reportService.generateReport(cashRegister);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_PDF);
+                    headers.setContentDispositionFormData("attachment", "relatorio-caixa.pdf");
+                    return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+                })
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     private AppUser currentUser(HttpServletRequest request) {

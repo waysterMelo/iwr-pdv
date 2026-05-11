@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -17,9 +18,11 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String SESSION_COOKIE_NAME = "IWR_PDV_SESSION";
 
     private final AuthService authService;
+    private final Environment environment;
 
-    public AuthInterceptor(AuthService authService) {
+    public AuthInterceptor(AuthService authService, Environment environment) {
         this.authService = authService;
+        this.environment = environment;
     }
 
     @Override
@@ -49,11 +52,21 @@ public class AuthInterceptor implements HandlerInterceptor {
         String path = request.getRequestURI();
 
         return "OPTIONS".equalsIgnoreCase(request.getMethod())
-                || path.equals("/health")
-                || path.startsWith("/actuator")
-                || path.startsWith("/swagger-ui")
-                || path.startsWith("/v3/api-docs")
+                || (!isProductionProfile() && path.equals("/health"))
+                || (!isProductionProfile() && path.startsWith("/actuator"))
+                || (!isProductionProfile() && path.startsWith("/swagger-ui"))
+                || (!isProductionProfile() && path.startsWith("/v3/api-docs"))
                 || path.equals("/api/auth/login");
+    }
+
+    private boolean isProductionProfile() {
+        for (String profile : environment.getActiveProfiles()) {
+            if ("prod".equalsIgnoreCase(profile) || "production".equalsIgnoreCase(profile)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private String extractToken(HttpServletRequest request) {

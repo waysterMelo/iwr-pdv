@@ -6,6 +6,7 @@ public record UserResponse(
         Long id,
         String username,
         String displayName,
-        UserRole role
+        UserRole role,
+        Boolean passwordChangeRequired
 ) {
 }

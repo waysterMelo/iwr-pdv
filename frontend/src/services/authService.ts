@@ -2,6 +2,7 @@ import type {
   AuthUser,
   LoginResponse,
   ManagedUser,
+  ManagedUserPage,
   UserCreatePayload,
   UserPasswordUpdatePayload,
   UserUpdatePayload,
@@ -31,7 +32,25 @@ export async function logout() {
 }
 
 export async function getUsers() {
-  return get<ManagedUser[]>('/api/users')
+  return (await getUsersPage(0, 50)).content
+}
+
+export async function getUsersPage(page = 0, size = 6) {
+  const response = await get<ManagedUserPage | ManagedUser[]>(`/api/users?page=${page}&size=${size}`)
+
+  if (Array.isArray(response)) {
+    return {
+      content: response,
+      page: 0,
+      size,
+      totalElements: response.length,
+      totalPages: response.length > 0 ? 1 : 0,
+      first: true,
+      last: true,
+    }
+  }
+
+  return response
 }
 
 export async function createUser(payload: UserCreatePayload) {

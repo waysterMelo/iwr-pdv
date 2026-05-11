@@ -1,5 +1,7 @@
 package com.iwr.pdv.cash.application;
 
+import com.iwr.pdv.audit.application.AuditLogService;
+import com.iwr.pdv.audit.domain.AuditAction;
 import com.iwr.pdv.auth.domain.AppUser;
 import com.iwr.pdv.cash.api.dto.CashMovementRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterCloseRequest;
@@ -35,6 +37,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final CashMovementRepository cashMovementRepository;
     private final SaleRepository saleRepository;
     private final CashRegisterMapper cashRegisterMapper;
+    private final AuditLogService auditLogService;
     private final Clock clock;
 
     public CashRegisterServiceImpl(
@@ -42,12 +45,14 @@ public class CashRegisterServiceImpl implements CashRegisterService {
             CashMovementRepository cashMovementRepository,
             SaleRepository saleRepository,
             CashRegisterMapper cashRegisterMapper,
+            AuditLogService auditLogService,
             Clock clock
     ) {
         this.cashRegisterRepository = cashRegisterRepository;
         this.cashMovementRepository = cashMovementRepository;
         this.saleRepository = saleRepository;
         this.cashRegisterMapper = cashRegisterMapper;
+        this.auditLogService = auditLogService;
         this.clock = clock;
     }
 
@@ -66,7 +71,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         cashRegister.setOpenedAt(now);
         cashRegister.setCreatedAt(now);
 
-        return toResponse(cashRegisterRepository.save(cashRegister));
+        CashRegister savedCashRegister = cashRegisterRepository.save(cashRegister);
+        auditLogService.log(
+                AuditAction.CASH_REGISTER_OPENED,
+                operator,
+                "CASH_REGISTER",
+                savedCashRegister.getId(),
+                "Opening amount: " + savedCashRegister.getOpeningAmount() + "."
+        );
+
+        return toResponse(savedCashRegister);
     }
 
     @Override
@@ -82,7 +96,14 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         movement.setPaymentMethod(PaymentMethod.CASH);
         movement.setOperator(operator);
         movement.setCreatedAt(OffsetDateTime.now(clock));
-        cashMovementRepository.save(movement);
+        CashMovement savedMovement = cashMovementRepository.save(movement);
+        auditLogService.log(
+                AuditAction.CASH_MOVEMENT_CREATED,
+                operator,
+                "CASH_MOVEMENT",
+                savedMovement.getId(),
+                request.type() + " amount: " + request.amount() + ". Reason: " + request.reason().trim()
+        );
 
         return toResponse(cashRegister);
     }
@@ -110,7 +131,18 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         cashRegister.setExpectedCashAmount(expectedCashAmount);
         cashRegister.setCashDifference(request.declaredCashAmount().subtract(expectedCashAmount));
 
-        return toResponse(cashRegisterRepository.save(cashRegister));
+        CashRegister savedCashRegister = cashRegisterRepository.save(cashRegister);
+        auditLogService.log(
+                AuditAction.CASH_REGISTER_CLOSED,
+                operator,
+                "CASH_REGISTER",
+                savedCashRegister.getId(),
+                "Declared: " + savedCashRegister.getDeclaredCashAmount()
+                        + ". Expected: " + savedCashRegister.getExpectedCashAmount()
+                        + ". Difference: " + savedCashRegister.getCashDifference() + "."
+        );
+
+        return toResponse(savedCashRegister);
     }
 
     @Override

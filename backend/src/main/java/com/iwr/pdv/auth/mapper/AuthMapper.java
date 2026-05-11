@@ -13,7 +13,8 @@ public class AuthMapper {
                 user.getId(),
                 user.getUsername(),
                 user.getDisplayName(),
-                user.getRole()
+                user.getRole(),
+                user.getPasswordChangeRequired()
         );
     }
 
@@ -24,6 +25,7 @@ public class AuthMapper {
                 user.getDisplayName(),
                 user.getRole(),
                 user.getActive(),
+                user.getPasswordChangeRequired(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
