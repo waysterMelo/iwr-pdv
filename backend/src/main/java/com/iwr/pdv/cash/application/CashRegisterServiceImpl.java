@@ -6,6 +6,8 @@ import com.iwr.pdv.auth.domain.AppUser;
 import com.iwr.pdv.cash.api.dto.CashMovementRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterCloseRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterOpenRequest;
+import com.iwr.pdv.cash.api.dto.CashRegisterPageResponse;
+import com.iwr.pdv.cash.api.dto.CashRegisterReopenRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterResponse;
 import com.iwr.pdv.cash.domain.CashMovement;
 import com.iwr.pdv.cash.domain.CashMovementRepository;
@@ -22,11 +24,16 @@ import com.iwr.pdv.sale.domain.SaleRepository;
 import com.iwr.pdv.sale.domain.SaleStatus;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -129,7 +136,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         cashRegister.setClosedAt(OffsetDateTime.now(clock));
         cashRegister.setDeclaredCashAmount(request.declaredCashAmount());
         cashRegister.setExpectedCashAmount(expectedCashAmount);
-        cashRegister.setCashDifference(request.declaredCashAmount().subtract(expectedCashAmount));
+        BigDecimal cashDifference = request.declaredCashAmount().subtract(expectedCashAmount);
+        cashRegister.setCashDifference(cashDifference);
+
+        String closingDifferenceReason = request.closingDifferenceReason() == null
+                ? null
+                : request.closingDifferenceReason().trim();
+        if (cashDifference.compareTo(BigDecimal.ZERO) != 0 && (closingDifferenceReason == null || closingDifferenceReason.isBlank())) {
+            throw new BusinessRuleException("Closing difference reason is required when cash difference is not zero.");
+        }
+        cashRegister.setClosingDifferenceReason(closingDifferenceReason);
 
         CashRegister savedCashRegister = cashRegisterRepository.save(cashRegister);
         auditLogService.log(
@@ -139,10 +155,88 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 savedCashRegister.getId(),
                 "Declared: " + savedCashRegister.getDeclaredCashAmount()
                         + ". Expected: " + savedCashRegister.getExpectedCashAmount()
-                        + ". Difference: " + savedCashRegister.getCashDifference() + "."
+                        + ". Difference: " + savedCashRegister.getCashDifference()
+                        + (closingDifferenceReason == null ? "." : ". Reason: " + closingDifferenceReason + ".")
         );
 
         return toResponse(savedCashRegister);
+    }
+
+    @Override
+    @Transactional
+    public CashRegisterResponse reopen(Long cashRegisterId, CashRegisterReopenRequest request, AppUser operator) {
+        CashRegister cashRegister = cashRegisterRepository.findById(cashRegisterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cash register not found for id " + cashRegisterId + "."));
+
+        if (cashRegister.getStatus() == CashRegisterStatus.OPEN) {
+            throw new BusinessRuleException("Cash register is already open.");
+        }
+
+        if (cashRegisterRepository.findFirstByStatusOrderByOpenedAtDesc(CashRegisterStatus.OPEN).isPresent()) {
+            throw new BusinessRuleException("Close the currently open cash register before reopening another one.");
+        }
+
+        String reason = request.reason().trim();
+        cashRegister.setStatus(CashRegisterStatus.OPEN);
+        cashRegister.setDeclaredCashAmount(null);
+        cashRegister.setExpectedCashAmount(null);
+        cashRegister.setCashDifference(null);
+        cashRegister.setClosingDifferenceReason(null);
+        cashRegister.setClosedBy(null);
+        cashRegister.setClosedAt(null);
+        cashRegister.setReopenedBy(operator);
+        cashRegister.setReopenedAt(OffsetDateTime.now(clock));
+        cashRegister.setReopenReason(reason);
+
+        CashRegister savedCashRegister = cashRegisterRepository.save(cashRegister);
+        auditLogService.log(
+                AuditAction.CASH_REGISTER_OPENED,
+                operator,
+                "CASH_REGISTER",
+                savedCashRegister.getId(),
+                "Cash register reopened. Reason: " + reason + "."
+        );
+
+        return toResponse(savedCashRegister);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CashRegisterPageResponse list(
+            LocalDate openedStartDate,
+            LocalDate openedEndDate,
+            LocalDate closedStartDate,
+            LocalDate closedEndDate,
+            CashRegisterStatus status,
+            Long operatorId,
+            Boolean withDifference,
+            int page,
+            int size
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Page<CashRegister> cashRegisterPage = cashRegisterRepository.findAll(
+                buildSpecification(openedStartDate, openedEndDate, closedStartDate, closedEndDate, status, operatorId, withDifference),
+                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "openedAt"))
+        );
+
+        return new CashRegisterPageResponse(
+                cashRegisterPage.getContent().stream().map(this::toResponse).toList(),
+                cashRegisterPage.getNumber(),
+                cashRegisterPage.getSize(),
+                cashRegisterPage.getTotalElements(),
+                cashRegisterPage.getTotalPages(),
+                cashRegisterPage.isFirst(),
+                cashRegisterPage.isLast()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CashRegisterResponse findById(Long cashRegisterId) {
+        return cashRegisterRepository.findById(cashRegisterId)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Cash register not found for id " + cashRegisterId + "."));
     }
 
     @Override
@@ -217,9 +311,11 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Transactional(readOnly = true)
     public CashRegisterResponse toResponse(CashRegister cashRegister) {
         CashTotals totals = calculateTotals(cashRegister);
+        List<Sale> sales = saleRepository.findByCashRegisterIdAndStatus(cashRegister.getId(), SaleStatus.COMPLETED);
         return cashRegisterMapper.toResponse(
                 cashRegister,
                 cashMovementRepository.findByCashRegisterIdOrderByCreatedAtDesc(cashRegister.getId()),
+                sales,
                 totals.totalsByPaymentMethod(),
                 totals.cashInAmount(),
                 totals.cashOutAmount()
@@ -252,6 +348,70 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         }
 
         return new CashTotals(totalsByPaymentMethod, cashInAmount, cashOutAmount);
+    }
+
+    private Specification<CashRegister> buildSpecification(
+            LocalDate openedStartDate,
+            LocalDate openedEndDate,
+            LocalDate closedStartDate,
+            LocalDate closedEndDate,
+            CashRegisterStatus status,
+            Long operatorId,
+            Boolean withDifference
+    ) {
+        return (root, query, criteriaBuilder) -> {
+            java.util.ArrayList<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+
+            if (openedStartDate != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("openedAt"), OffsetDateTime.of(
+                        openedStartDate,
+                        java.time.LocalTime.MIN,
+                        clock.getZone().getRules().getOffset(OffsetDateTime.now(clock).toInstant())
+                )));
+            }
+
+            if (openedEndDate != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("openedAt"), OffsetDateTime.of(
+                        openedEndDate,
+                        java.time.LocalTime.MAX,
+                        clock.getZone().getRules().getOffset(OffsetDateTime.now(clock).toInstant())
+                )));
+            }
+
+            if (closedStartDate != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("closedAt"), OffsetDateTime.of(
+                        closedStartDate,
+                        java.time.LocalTime.MIN,
+                        clock.getZone().getRules().getOffset(OffsetDateTime.now(clock).toInstant())
+                )));
+            }
+
+            if (closedEndDate != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("closedAt"), OffsetDateTime.of(
+                        closedEndDate,
+                        java.time.LocalTime.MAX,
+                        clock.getZone().getRules().getOffset(OffsetDateTime.now(clock).toInstant())
+                )));
+            }
+
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+
+            if (operatorId != null) {
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.equal(root.get("openedBy").get("id"), operatorId),
+                        criteriaBuilder.equal(root.get("closedBy").get("id"), operatorId)
+                ));
+            }
+
+            if (Boolean.TRUE.equals(withDifference)) {
+                predicates.add(criteriaBuilder.isNotNull(root.get("cashDifference")));
+                predicates.add(criteriaBuilder.notEqual(root.get("cashDifference"), BigDecimal.ZERO));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
     }
 
     private record CashTotals(

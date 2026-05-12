@@ -7,6 +7,8 @@ import navProducts from './assets/generated/nav-products.png'
 import navSales from './assets/generated/nav-sales.png'
 import navUsers from './assets/generated/nav-users.png'
 import { AuditLogPage } from './pages/AuditLogPage'
+import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { CashRegisterHistoryPage } from './pages/CashRegisterHistoryPage'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 
 import { CustomerManagementPage } from './pages/CustomerManagementPage'
@@ -25,12 +27,14 @@ import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'audit' | 'users'
+type AppView = 'checkout' | 'cash-register' | 'cash-history' | 'admin-dashboard' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'audit' | 'users'
 type MobileView = 'home' | 'sale' | 'cash-register'
 
 const menuImages: Record<AppView, string> = {
   checkout: navSales,
   'cash-register': navCashRegister,
+  'cash-history': navCashRegister,
+  'admin-dashboard': navHistory,
   'promissory-notes': navHistory,
   loyalty: navUsers,
   customers: navUsers,
@@ -53,6 +57,8 @@ function App() {
   const allMenuItems: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
     { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
+    { id: 'cash-history', label: 'Hist. Caixa', eyebrow: 'Operacao' },
+    { id: 'admin-dashboard', label: 'Painel Admin', eyebrow: 'Admin', adminOnly: true },
     { id: 'promissory-notes', label: 'Notas', eyebrow: 'Promissorias' },
     { id: 'loyalty', label: 'Fidelidade', eyebrow: 'Clientes' },
     { id: 'customers', label: 'Clientes', eyebrow: 'Cadastro' },
@@ -262,6 +268,8 @@ function App() {
 
         {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
         {visibleView === 'cash-register' ? <CashRegisterPage /> : null}
+        {visibleView === 'cash-history' ? <CashRegisterHistoryPage /> : null}
+        {visibleView === 'admin-dashboard' ? <AdminDashboardPage /> : null}
         {visibleView === 'promissory-notes' ? <PromissoryNotesPage /> : null}
         {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
         {visibleView === 'customers' ? <CustomerManagementPage /> : null}

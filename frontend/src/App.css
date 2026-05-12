@@ -4776,6 +4776,126 @@ h3 {
     rgba(14, 14, 16, 0.90);
 }
 
+/* Admin dashboard */
+
+.admin-dashboard-container {
+  gap: 18px;
+}
+
+.admin-dashboard-filter-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-dashboard-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-dashboard-secondary-metrics {
+  margin-top: -4px;
+}
+
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 16px;
+}
+
+.admin-dashboard-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-payment-list,
+.admin-top-customers,
+.admin-receivable-table {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-payment-row,
+.admin-top-customer,
+.admin-receivable-row,
+.admin-receivable-head {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.admin-payment-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.admin-payment-row div,
+.admin-top-customer {
+  min-width: 0;
+}
+
+.admin-payment-row span,
+.admin-top-customer span,
+.admin-receivable-row span,
+.admin-receivable-head span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-payment-row span,
+.admin-top-customer span {
+  color: #fff;
+  font-weight: 800;
+}
+
+.admin-payment-row strong,
+.admin-top-customer strong,
+.admin-receivable-row strong {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.admin-payment-row small,
+.admin-top-customer small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.72rem;
+}
+
+.admin-receivable-head,
+.admin-receivable-row {
+  grid-template-columns: minmax(160px, 1.3fr) 80px 90px 120px 90px 110px;
+}
+
+.admin-receivable-head {
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1120px) {
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-receivable-table {
+    overflow-x: auto;
+  }
+
+  .admin-receivable-head,
+  .admin-receivable-row {
+    min-width: 760px;
+  }
+}
+
 .metric-card {
   display: grid;
   align-content: space-between;
@@ -5036,6 +5156,225 @@ h3 {
   box-shadow: none;
 }
 
+.checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.checkbox-field input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-gold);
+}
+
+.cash-history-filter-panel {
+  padding: 22px;
+  border-radius: 16px;
+}
+
+.cash-history-grid {
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.25fr);
+  gap: 18px;
+}
+
+.cash-history-list-panel,
+.cash-history-detail-panel {
+  border-radius: 16px;
+}
+
+.cash-history-list {
+  gap: 7px;
+}
+
+.cash-history-row {
+  min-height: 60px;
+  padding: 11px 13px;
+  border-left-width: 3px;
+}
+
+.cash-history-row span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cash-history-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.64rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.cash-history-status--open {
+  border-color: rgba(92, 214, 166, 0.28);
+  background: rgba(92, 214, 166, 0.1);
+  color: #aee8cf;
+}
+
+.cash-history-detail {
+  gap: 10px;
+}
+
+.cash-history-summary-card {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  border-left-color: rgba(198, 161, 91, 0.78);
+}
+
+.cash-history-kpi-grid,
+.cash-history-payment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cash-history-kpi-grid div,
+.cash-history-payment-grid div,
+.cash-history-timeline div {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.cash-history-kpi-grid span,
+.cash-history-payment-grid span,
+.cash-history-timeline span {
+  display: block;
+  margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cash-history-kpi-grid strong,
+.cash-history-payment-grid strong,
+.cash-history-timeline strong {
+  display: block;
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cash-history-payment-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.cash-history-payment-panel h3,
+.cash-history-subheader h3 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+}
+
+.cash-history-payment-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.cash-history-timeline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cash-history-sales-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.cash-history-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cash-history-subheader span {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cash-history-sales-list {
+  display: grid;
+  gap: 7px;
+}
+
+.cash-history-sale-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid rgba(198, 161, 91, 0.48);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.032);
+}
+
+.cash-history-sale-row span {
+  display: block;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.cash-history-sale-row strong {
+  display: block;
+  margin-top: 4px;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.cash-history-sale-row small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cash-history-timeline small {
+  display: block;
+  overflow: hidden;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .category-card {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-left: 3px solid rgba(198, 161, 91, 0.56);
@@ -5251,6 +5590,20 @@ h3 {
   .history-container .sale-history-item strong {
     grid-row: auto;
     grid-column: auto;
+  }
+
+  .cash-history-grid,
+  .cash-history-summary-card,
+  .cash-history-kpi-grid,
+  .cash-history-payment-grid,
+  .cash-history-timeline,
+  .cash-history-sale-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cash-history-sale-row small {
+    text-align: left;
+    white-space: normal;
   }
 
   .audit-log-row {

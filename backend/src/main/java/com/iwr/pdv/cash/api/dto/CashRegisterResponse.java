@@ -2,6 +2,7 @@ package com.iwr.pdv.cash.api.dto;
 
 import com.iwr.pdv.auth.api.dto.UserResponse;
 import com.iwr.pdv.cash.domain.CashRegisterStatus;
+import com.iwr.pdv.sale.api.dto.SaleResponse;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -14,6 +15,7 @@ public record CashRegisterResponse(
         BigDecimal declaredCashAmount,
         BigDecimal expectedCashAmount,
         BigDecimal cashDifference,
+        String closingDifferenceReason,
         BigDecimal totalSalesAmount,
         BigDecimal cashSalesAmount,
         BigDecimal cashInAmount,
@@ -21,8 +23,12 @@ public record CashRegisterResponse(
         Map<String, BigDecimal> totalsByPaymentMethod,
         UserResponse openedBy,
         UserResponse closedBy,
+        UserResponse reopenedBy,
         OffsetDateTime openedAt,
         OffsetDateTime closedAt,
+        OffsetDateTime reopenedAt,
+        String reopenReason,
+        List<SaleResponse> sales,
         List<CashMovementResponse> movements
 ) {
 }

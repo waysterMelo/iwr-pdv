@@ -54,6 +54,11 @@ public class CashRegisterReportService {
                 document.add(new Paragraph("Fechamento: " + cashRegister.closedAt().format(DATE_FORMAT), normalFont));
                 document.add(new Paragraph("Operador Fechamento: " + (cashRegister.closedBy() != null ? cashRegister.closedBy().displayName() : "-"), normalFont));
             }
+            if (cashRegister.reopenedAt() != null) {
+                document.add(new Paragraph("Reabertura: " + cashRegister.reopenedAt().format(DATE_FORMAT), normalFont));
+                document.add(new Paragraph("Operador Reabertura: " + (cashRegister.reopenedBy() != null ? cashRegister.reopenedBy().displayName() : "-"), normalFont));
+                document.add(new Paragraph("Motivo Reabertura: " + valueOrDash(cashRegister.reopenReason()), normalFont));
+            }
             
             document.add(new Paragraph(" ")); // spacer
 
@@ -88,6 +93,11 @@ public class CashRegisterReportService {
                 
                 balanceTable.addCell(createCell("Diferenca (Quebra de Caixa)", boldFont));
                 balanceTable.addCell(createRightCell(formatCurrency(cashRegister.cashDifference()), normalFont));
+
+                if (cashRegister.cashDifference() != null && cashRegister.cashDifference().compareTo(BigDecimal.ZERO) != 0) {
+                    balanceTable.addCell(createCell("Motivo da Diferenca", boldFont));
+                    balanceTable.addCell(createCell(valueOrDash(cashRegister.closingDifferenceReason()), normalFont));
+                }
             }
 
             document.add(balanceTable);
@@ -108,6 +118,33 @@ public class CashRegisterReportService {
                 });
                 
                 document.add(paymentTable);
+                document.add(new Paragraph(" "));
+            }
+
+            if (cashRegister.sales() != null && !cashRegister.sales().isEmpty()) {
+                Paragraph salesTitle = new Paragraph("Vendas Vinculadas", subtitleFont);
+                salesTitle.setSpacingAfter(10);
+                document.add(salesTitle);
+
+                PdfPTable salesTable = new PdfPTable(5);
+                salesTable.setWidthPercentage(100);
+                salesTable.setWidths(new float[]{1f, 2f, 1.5f, 1f, 1.5f});
+
+                salesTable.addCell(createHeaderCell("Venda", boldFont));
+                salesTable.addCell(createHeaderCell("Data/Hora", boldFont));
+                salesTable.addCell(createHeaderCell("Pagamento", boldFont));
+                salesTable.addCell(createHeaderCell("Itens", boldFont));
+                salesTable.addCell(createHeaderCell("Total", boldFont));
+
+                for (com.iwr.pdv.sale.api.dto.SaleResponse sale : cashRegister.sales()) {
+                    salesTable.addCell(createCell("#" + sale.id(), normalFont));
+                    salesTable.addCell(createCell(sale.soldAt().format(DATE_FORMAT), normalFont));
+                    salesTable.addCell(createCell(translatePaymentMethod(sale.paymentMethod().name()), normalFont));
+                    salesTable.addCell(createRightCell(String.valueOf(sale.totalItems()), normalFont));
+                    salesTable.addCell(createRightCell(formatCurrency(sale.totalAmount()), normalFont));
+                }
+
+                document.add(salesTable);
                 document.add(new Paragraph(" "));
             }
 
@@ -147,6 +184,10 @@ public class CashRegisterReportService {
     private String formatCurrency(BigDecimal value) {
         if (value == null) return CURRENCY_FORMAT.format(BigDecimal.ZERO);
         return CURRENCY_FORMAT.format(value);
+    }
+
+    private String valueOrDash(String value) {
+        return value == null || value.isBlank() ? "-" : value;
     }
     
     private String translatePaymentMethod(String method) {

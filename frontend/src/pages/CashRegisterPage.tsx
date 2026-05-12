@@ -25,6 +25,7 @@ export function CashRegisterPage() {
   const [movementAmount, setMovementAmount] = useState('')
   const [movementReason, setMovementReason] = useState('')
   const [declaredCashAmount, setDeclaredCashAmount] = useState('')
+  const [closingDifferenceReason, setClosingDifferenceReason] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
   const [isLoading, setIsLoading] = useState(true)
@@ -120,8 +121,9 @@ export function CashRegisterPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await closeCashRegister(cashRegister.id, Number(declaredCashAmount))
+      const response = await closeCashRegister(cashRegister.id, Number(declaredCashAmount), closingDifferenceReason)
       setCashRegister(response)
+      setClosingDifferenceReason('')
       showMessage('Caixa fechado com sucesso.', 'success')
     } catch (error) {
       showMessage(getErrorMessage(error, 'Nao foi possivel fechar o caixa.'), 'error')
@@ -341,6 +343,17 @@ export function CashRegisterPage() {
                       <span>Diferenca</span>
                       <strong>{formatCurrency(closingDifference)}</strong>
                     </div>
+                    {closingDifference !== 0 ? (
+                      <div className="field-group field-group--full">
+                        <label htmlFor="closingDifferenceReason">Motivo da diferenca</label>
+                        <input
+                          id="closingDifferenceReason"
+                          value={closingDifferenceReason}
+                          onChange={(event) => setClosingDifferenceReason(event.target.value)}
+                          placeholder="Ex.: Falta conferida na gaveta"
+                        />
+                      </div>
+                    ) : null}
                   </div>
                   <button className="action-button" type="submit" disabled={isSubmitting}>
                     Fechar caixa

@@ -17,6 +17,7 @@ import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
 import com.iwr.pdv.sale.domain.StockMovementRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -133,16 +134,73 @@ class CashRegisterControllerIntegrationTest {
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cashSalesAmount").value(50.00))
-                .andExpect(jsonPath("$.expectedCashAmount").value(160.00));
+                .andExpect(jsonPath("$.expectedCashAmount").value(160.00))
+                .andExpect(jsonPath("$.sales.length()").value(1))
+                .andExpect(jsonPath("$.sales[0].paymentMethod").value("CASH"))
+                .andExpect(jsonPath("$.sales[0].totalAmount").value(50.00));
 
         mockMvc.perform(post("/api/cash-register/{cashRegisterId}/close", cashRegisterId)
                         .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"declaredCashAmount\":155.00}"))
+                        .content("{\"declaredCashAmount\":155.00,\"closingDifferenceReason\":\"Falta conferida no fechamento\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CLOSED"))
                 .andExpect(jsonPath("$.expectedCashAmount").value(160.00))
-                .andExpect(jsonPath("$.cashDifference").value(-5.00));
+                .andExpect(jsonPath("$.cashDifference").value(-5.00))
+                .andExpect(jsonPath("$.closingDifferenceReason").value("Falta conferida no fechamento"))
+                .andExpect(jsonPath("$.sales.length()").value(1));
+    }
+
+    @Test
+    void shouldRequireDifferenceReasonAndAllowAdminHistoryReportAndReopen() throws Exception {
+        String openJson = mockMvc.perform(post("/api/cash-register/open")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingAmount\":80.00}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long cashRegisterId = objectMapper.readTree(openJson).path("id").asLong();
+        Long operatorId = objectMapper.readTree(openJson).path("openedBy").path("id").asLong();
+
+        mockMvc.perform(post("/api/cash-register/{cashRegisterId}/close", cashRegisterId)
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"declaredCashAmount\":75.00}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Closing difference reason is required when cash difference is not zero."));
+
+        mockMvc.perform(post("/api/cash-register/{cashRegisterId}/close", cashRegisterId)
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"declaredCashAmount\":75.00,\"closingDifferenceReason\":\"Divergencia conferida\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CLOSED"))
+                .andExpect(jsonPath("$.closingDifferenceReason").value("Divergencia conferida"));
+
+        mockMvc.perform(get("/api/cash-register")
+                        .header("Authorization", authHeader)
+                        .param("closedStartDate", LocalDate.now().toString())
+                        .param("closedEndDate", LocalDate.now().toString())
+                        .param("status", "CLOSED")
+                        .param("operatorId", String.valueOf(operatorId))
+                        .param("withDifference", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(cashRegisterId));
+
+        mockMvc.perform(get("/api/cash-register/{cashRegisterId}/report", cashRegisterId)
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/cash-register/{cashRegisterId}/reopen", cashRegisterId)
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Corrigir conferencia\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OPEN"))
+                .andExpect(jsonPath("$.reopenReason").value("Corrigir conferencia"));
     }
 
     @Test

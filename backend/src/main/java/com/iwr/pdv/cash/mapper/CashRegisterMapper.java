@@ -6,6 +6,8 @@ import com.iwr.pdv.cash.api.dto.CashRegisterResponse;
 import com.iwr.pdv.cash.domain.CashMovement;
 import com.iwr.pdv.cash.domain.CashRegister;
 import com.iwr.pdv.sale.domain.PaymentMethod;
+import com.iwr.pdv.sale.domain.Sale;
+import com.iwr.pdv.sale.mapper.SaleMapper;
 import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.List;
@@ -16,14 +18,17 @@ import org.springframework.stereotype.Component;
 public class CashRegisterMapper {
 
     private final AuthMapper authMapper;
+    private final SaleMapper saleMapper;
 
-    public CashRegisterMapper(AuthMapper authMapper) {
+    public CashRegisterMapper(AuthMapper authMapper, SaleMapper saleMapper) {
         this.authMapper = authMapper;
+        this.saleMapper = saleMapper;
     }
 
     public CashRegisterResponse toResponse(
             CashRegister cashRegister,
             List<CashMovement> movements,
+            List<Sale> sales,
             Map<PaymentMethod, BigDecimal> totalsByPaymentMethod,
             BigDecimal cashInAmount,
             BigDecimal cashOutAmount
@@ -43,6 +48,7 @@ public class CashRegisterMapper {
                 cashRegister.getDeclaredCashAmount(),
                 expectedCashAmount,
                 cashRegister.getCashDifference(),
+                cashRegister.getClosingDifferenceReason(),
                 totalSalesAmount,
                 cashSalesAmount,
                 cashInAmount,
@@ -50,8 +56,12 @@ public class CashRegisterMapper {
                 toStringKeyMap(totalsByPaymentMethod),
                 authMapper.toResponse(cashRegister.getOpenedBy()),
                 cashRegister.getClosedBy() == null ? null : authMapper.toResponse(cashRegister.getClosedBy()),
+                cashRegister.getReopenedBy() == null ? null : authMapper.toResponse(cashRegister.getReopenedBy()),
                 cashRegister.getOpenedAt(),
                 cashRegister.getClosedAt(),
+                cashRegister.getReopenedAt(),
+                cashRegister.getReopenReason(),
+                sales.stream().map(saleMapper::toResponse).toList(),
                 movements.stream().map(this::toMovementResponse).toList()
         );
     }

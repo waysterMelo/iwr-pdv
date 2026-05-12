@@ -39,6 +39,9 @@ public class CashRegister {
     @Column(name = "cash_difference", precision = 12, scale = 2)
     private BigDecimal cashDifference;
 
+    @Column(name = "closing_difference_reason", length = 240)
+    private String closingDifferenceReason;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "opened_by_user_id", nullable = false)
     private AppUser openedBy;
@@ -47,11 +50,21 @@ public class CashRegister {
     @JoinColumn(name = "closed_by_user_id")
     private AppUser closedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reopened_by_user_id")
+    private AppUser reopenedBy;
+
     @Column(name = "opened_at", nullable = false)
     private OffsetDateTime openedAt;
 
     @Column(name = "closed_at")
     private OffsetDateTime closedAt;
+
+    @Column(name = "reopened_at")
+    private OffsetDateTime reopenedAt;
+
+    @Column(name = "reopen_reason", length = 240)
+    private String reopenReason;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -104,6 +117,14 @@ public class CashRegister {
         this.cashDifference = cashDifference;
     }
 
+    public String getClosingDifferenceReason() {
+        return closingDifferenceReason;
+    }
+
+    public void setClosingDifferenceReason(String closingDifferenceReason) {
+        this.closingDifferenceReason = closingDifferenceReason;
+    }
+
     public AppUser getOpenedBy() {
         return openedBy;
     }
@@ -120,6 +141,14 @@ public class CashRegister {
         this.closedBy = closedBy;
     }
 
+    public AppUser getReopenedBy() {
+        return reopenedBy;
+    }
+
+    public void setReopenedBy(AppUser reopenedBy) {
+        this.reopenedBy = reopenedBy;
+    }
+
     public OffsetDateTime getOpenedAt() {
         return openedAt;
     }
@@ -134,6 +163,22 @@ public class CashRegister {
 
     public void setClosedAt(OffsetDateTime closedAt) {
         this.closedAt = closedAt;
+    }
+
+    public OffsetDateTime getReopenedAt() {
+        return reopenedAt;
+    }
+
+    public void setReopenedAt(OffsetDateTime reopenedAt) {
+        this.reopenedAt = reopenedAt;
+    }
+
+    public String getReopenReason() {
+        return reopenReason;
+    }
+
+    public void setReopenReason(String reopenReason) {
+        this.reopenReason = reopenReason;
     }
 
     public OffsetDateTime getCreatedAt() {
