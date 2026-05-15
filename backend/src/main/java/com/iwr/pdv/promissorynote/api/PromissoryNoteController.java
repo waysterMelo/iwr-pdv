@@ -1,7 +1,12 @@
 package com.iwr.pdv.promissorynote.api;
 
 import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventRequest;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteDelinquencyRangeResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentRequest;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteRenegotiationRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteResponse;
 import com.iwr.pdv.promissorynote.application.PromissoryNoteService;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteStatus;
@@ -65,6 +70,60 @@ public class PromissoryNoteController {
             HttpServletRequest servletRequest
     ) {
         return promissoryNoteService.pay(noteId, request, currentUser(servletRequest));
+    }
+
+    @GetMapping("/{noteId}/payments")
+    @Operation(summary = "List payments registered for a promissory note")
+    public List<PromissoryNotePaymentResponse> payments(@PathVariable Long noteId) {
+        return promissoryNoteService.payments(noteId);
+    }
+
+    @GetMapping(value = "/payments/{paymentId}/receipt", produces = MediaType.TEXT_HTML_VALUE)
+    @Operation(summary = "Generate a payment receipt")
+    public ResponseEntity<String> paymentReceipt(@PathVariable Long paymentId) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(promissoryNoteService.generatePaymentReceipt(paymentId));
+    }
+
+    @PostMapping("/{noteId}/collection-events")
+    @Operation(summary = "Register a collection action for a promissory note")
+    public PromissoryNoteCollectionEventResponse addCollectionEvent(
+            @PathVariable Long noteId,
+            @Valid @RequestBody PromissoryNoteCollectionEventRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return promissoryNoteService.addCollectionEvent(noteId, request, currentUser(servletRequest));
+    }
+
+    @GetMapping("/{noteId}/collection-events")
+    @Operation(summary = "List collection actions for a promissory note")
+    public List<PromissoryNoteCollectionEventResponse> collectionEvents(@PathVariable Long noteId) {
+        return promissoryNoteService.collectionEvents(noteId);
+    }
+
+    @GetMapping("/{noteId}/whatsapp-message")
+    @Operation(summary = "Generate a WhatsApp collection message")
+    public String whatsappMessage(
+            @PathVariable Long noteId,
+            @RequestParam(required = false) String pixKey
+    ) {
+        return promissoryNoteService.whatsappMessage(noteId, pixKey);
+    }
+
+    @GetMapping("/delinquency-report")
+    @Operation(summary = "Return overdue receivables grouped by delay range")
+    public List<PromissoryNoteDelinquencyRangeResponse> delinquencyReport() {
+        return promissoryNoteService.delinquencyReport();
+    }
+
+    @PostMapping("/renegotiations")
+    @Operation(summary = "Renegotiate open promissory notes and generate new installments")
+    public List<PromissoryNoteResponse> renegotiate(
+            @Valid @RequestBody PromissoryNoteRenegotiationRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return promissoryNoteService.renegotiate(request, currentUser(servletRequest));
     }
 
     @GetMapping(value = "/export.csv", produces = "text/csv")

@@ -1,5 +1,7 @@
-package com.iwr.pdv.admin.dashboard.api;
+package com.iwr.pdv.promissorynote.api;
 
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -38,7 +40,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class AdminDashboardControllerIntegrationTest {
+class PromissoryNoteControllerIntegrationTest {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -62,10 +64,10 @@ class AdminDashboardControllerIntegrationTest {
     private PromissoryNoteRepository promissoryNoteRepository;
 
     @Autowired
-    private PromissoryNotePaymentRepository promissoryNotePaymentRepository;
+    private PromissoryNotePaymentRepository paymentRepository;
 
     @Autowired
-    private PromissoryNoteCollectionEventRepository promissoryNoteCollectionEventRepository;
+    private PromissoryNoteCollectionEventRepository collectionEventRepository;
 
     @Autowired
     private StockMovementRepository stockMovementRepository;
@@ -101,37 +103,10 @@ class AdminDashboardControllerIntegrationTest {
     }
 
     @Test
-    void shouldReturnAdminDashboardSummaryPaymentMethodsReceivablesAndReport() throws Exception {
-        Product cashProduct = productRepository.save(buildProduct("Vestido Admin", "ADM-001", new BigDecimal("110.00"), 5));
-        Product pixProduct = productRepository.save(buildProduct("Blusa Admin", "ADM-002", new BigDecimal("50.00"), 5));
-        Product promissoryProduct = productRepository.save(buildProduct("Conjunto Admin", "ADM-003", new BigDecimal("80.00"), 5));
-        Customer customer = customerRepository.save(buildCustomer("Cliente Painel"));
+    void shouldHandlePartialPaymentsCollectionWhatsappDelinquencyAndRenegotiation() throws Exception {
+        Product product = productRepository.save(buildProduct("Conjunto Fiado", "PROM-001", new BigDecimal("80.00"), 5));
+        Customer customer = customerRepository.save(buildCustomer("Cliente Promissoria"));
         LocalDate today = LocalDate.now(clock);
-
-        mockMvc.perform(post("/api/sales")
-                        .header("Authorization", authHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "items": [{"productId": %d, "quantity": 1}],
-                                  "paymentMethod": "CASH",
-                                  "discountAmount": 10.00,
-                                  "amountReceived": 100.00
-                                }
-                                """.formatted(cashProduct.getId())))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(post("/api/sales")
-                        .header("Authorization", authHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "items": [{"productId": %d, "quantity": 1}],
-                                  "paymentMethod": "PIX",
-                                  "discountAmount": 0
-                                }
-                                """.formatted(pixProduct.getId())))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/sales")
                         .header("Authorization", authHeader)
@@ -147,61 +122,81 @@ class AdminDashboardControllerIntegrationTest {
                                     {"dueDate": "%s", "amount": 40.00}
                                   ]
                                 }
-                                """.formatted(promissoryProduct.getId(), customer.getId(), today, today.plusDays(10))))
+                                """.formatted(product.getId(), customer.getId(), today, today.plusDays(10))))
                 .andExpect(status().isCreated());
 
-        PromissoryNote firstNote = promissoryNoteRepository.findAll()
+        PromissoryNote overdueNote = promissoryNoteRepository.findAll()
                 .stream()
                 .filter(note -> note.getInstallmentNumber() == 1)
                 .findFirst()
                 .orElseThrow();
+        overdueNote.setDueDate(today.minusDays(10));
+        overdueNote = promissoryNoteRepository.save(overdueNote);
+        PromissoryNote futureNote = promissoryNoteRepository.findAll()
+                .stream()
+                .filter(note -> note.getInstallmentNumber() == 2)
+                .findFirst()
+                .orElseThrow();
 
-        mockMvc.perform(post("/api/promissory-notes/{noteId}/payments", firstNote.getId())
+        mockMvc.perform(post("/api/promissory-notes/{noteId}/payments", overdueNote.getId())
                         .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"paymentMethod\":\"PIX\"}"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/api/admin/dashboard/summary")
-                        .header("Authorization", authHeader)
-                        .param("startDate", today.toString())
-                        .param("endDate", today.toString()))
+                        .content("{\"paymentMethod\":\"PIX\",\"amount\":20.00,\"chargeInterestAndPenalty\":true}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalSold").value(230.00))
-                .andExpect(jsonPath("$.totalReceived").value(190.00))
-                .andExpect(jsonPath("$.totalDiscounts").value(10.00))
-                .andExpect(jsonPath("$.saleCount").value(3))
-                .andExpect(jsonPath("$.averageTicket").value(76.67))
-                .andExpect(jsonPath("$.openReceivables").value(40.00))
-                .andExpect(jsonPath("$.dueNext30DaysReceivables").value(40.00));
+                .andExpect(jsonPath("$.status").value("PARTIALLY_PAID"))
+                .andExpect(jsonPath("$.paidAmount").value(20.00))
+                .andExpect(jsonPath("$.remainingAmount").value(20.00));
 
-        mockMvc.perform(get("/api/admin/dashboard/payment-methods")
-                        .header("Authorization", authHeader)
-                        .param("startDate", today.toString())
-                        .param("endDate", today.toString()))
+        mockMvc.perform(get("/api/promissory-notes/{noteId}/payments", overdueNote.getId())
+                        .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].paymentMethod").value("CASH"))
-                .andExpect(jsonPath("$[0].soldAmount").value(100.00))
-                .andExpect(jsonPath("$[1].paymentMethod").value("PIX"))
-                .andExpect(jsonPath("$[1].receivedAmount").value(90.00))
-                .andExpect(jsonPath("$[4].paymentMethod").value("PROMISSORY_NOTE"))
-                .andExpect(jsonPath("$[4].soldAmount").value(80.00));
+                .andExpect(jsonPath("$[0].amount").value(20.00))
+                .andExpect(jsonPath("$[0].totalReceived").value(22.00))
+                .andExpect(jsonPath("$[0].cashRegisterId").isNumber());
 
-        mockMvc.perform(get("/api/admin/dashboard/receivables")
+        mockMvc.perform(post("/api/promissory-notes/{noteId}/collection-events", overdueNote.getId())
                         .header("Authorization", authHeader)
-                        .param("startDate", today.toString())
-                        .param("endDate", today.plusDays(30).toString()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"action\":\"PROMISED_PAYMENT\",\"comment\":\"Cliente prometeu pagar sexta\",\"promisedPaymentDate\":\"%s\"}"
+                                .formatted(today.plusDays(3))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.openAmount").value(40.00))
-                .andExpect(jsonPath("$.items.length()").value(1))
-                .andExpect(jsonPath("$.items[0].customerName").value("Cliente Painel"))
-                .andExpect(jsonPath("$.topCustomers[0].openAmount").value(40.00));
+                .andExpect(jsonPath("$.action").value("PROMISED_PAYMENT"));
 
-        mockMvc.perform(get("/api/admin/dashboard/report")
+        mockMvc.perform(get("/api/promissory-notes/{noteId}/collection-events", overdueNote.getId())
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].comment").value("Cliente prometeu pagar sexta"));
+
+        mockMvc.perform(get("/api/promissory-notes/{noteId}/whatsapp-message", overdueNote.getId())
                         .header("Authorization", authHeader)
-                        .param("startDate", today.toString())
-                        .param("endDate", today.toString()))
-                .andExpect(status().isOk());
+                        .param("pixKey", "11999999999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(startsWith("Ola, Cliente Promissoria")));
+
+        mockMvc.perform(get("/api/promissory-notes/delinquency-report")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[2].range").value("8 a 15 dias vencido"))
+                .andExpect(jsonPath("$[2].amount").value(20.00))
+                .andExpect(jsonPath("$[2].count").value(greaterThan(0)));
+
+        mockMvc.perform(post("/api/promissory-notes/renegotiations")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "noteIds": [%d],
+                                  "reason": "Cliente solicitou novo prazo",
+                                  "installments": [
+                                    {"dueDate": "%s", "amount": 20.00},
+                                    {"dueDate": "%s", "amount": 20.00}
+                                  ]
+                                }
+                                """.formatted(futureNote.getId(), today.plusDays(20), today.plusDays(40))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].status").value("PENDING"))
+                .andExpect(jsonPath("$[0].amount").value(20.00));
     }
 
     private Product buildProduct(String name, String code, BigDecimal price, int stockQuantity) {
@@ -212,19 +207,19 @@ class AdminDashboardControllerIntegrationTest {
         product.setPrice(price);
         product.setStockQuantity(stockQuantity);
         product.setActive(true);
-        product.setCreatedAt(OffsetDateTime.now());
-        product.setUpdatedAt(OffsetDateTime.now());
+        product.setCreatedAt(OffsetDateTime.now(clock));
+        product.setUpdatedAt(OffsetDateTime.now(clock));
         return product;
     }
 
     private Customer buildCustomer(String name) {
         Customer customer = new Customer();
         customer.setName(name);
-        customer.setCpf("99988877766");
+        customer.setCpf("11122233344");
         customer.setPhone("11999999999");
         customer.setActive(true);
-        customer.setCreatedAt(OffsetDateTime.now());
-        customer.setUpdatedAt(OffsetDateTime.now());
+        customer.setCreatedAt(OffsetDateTime.now(clock));
+        customer.setUpdatedAt(OffsetDateTime.now(clock));
         return customer;
     }
 
@@ -237,15 +232,15 @@ class AdminDashboardControllerIntegrationTest {
                     category.setName("Vestidos");
                     category.setIcon("dress");
                     category.setActive(true);
-                    category.setCreatedAt(OffsetDateTime.now());
-                    category.setUpdatedAt(OffsetDateTime.now());
+                    category.setCreatedAt(OffsetDateTime.now(clock));
+                    category.setUpdatedAt(OffsetDateTime.now(clock));
                     return categoryRepository.save(category);
                 });
     }
 
     private void cleanDatabase() {
-        promissoryNoteCollectionEventRepository.deleteAll();
-        promissoryNotePaymentRepository.deleteAll();
+        collectionEventRepository.deleteAll();
+        paymentRepository.deleteAll();
         stockMovementRepository.deleteAll();
         promissoryNoteRepository.deleteAll();
         saleRepository.deleteAll();

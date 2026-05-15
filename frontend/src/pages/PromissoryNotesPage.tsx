@@ -1,18 +1,42 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { AlertCircle, CalendarClock, CheckCircle2, FileDown, Printer, ReceiptText, Search } from 'lucide-react'
+import {
+  AlertCircle,
+  CalendarClock,
+  CheckCircle2,
+  FileDown,
+  MessageCircle,
+  Printer,
+  ReceiptText,
+  Search,
+} from 'lucide-react'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationControls } from '../components/PaginationControls'
 import { getCustomers } from '../services/customerService'
 import {
   getPromissoryNotePrintUrl,
+  getPromissoryNoteCollectionEvents,
+  getPromissoryNotePayments,
   getPromissoryNotes,
   getPromissoryNotesDueToday,
   getPromissoryNotesExportUrl,
+  getPromissoryPaymentReceiptUrl,
+  getPromissoryDelinquencyReport,
+  getPromissoryWhatsappMessage,
   payPromissoryNote,
+  addPromissoryNoteCollectionEvent,
+  renegotiatePromissoryNotes,
 } from '../services/promissoryNoteService'
 import type { Customer } from '../types/customer'
-import type { PromissoryNote, PromissoryNoteFilters, PromissoryNoteStatus } from '../types/promissoryNote'
+import type {
+  PromissoryNote,
+  PromissoryNoteCollectionAction,
+  PromissoryNoteCollectionEvent,
+  PromissoryNoteDelinquencyRange,
+  PromissoryNoteFilters,
+  PromissoryNotePayment,
+  PromissoryNoteStatus,
+} from '../types/promissoryNote'
 import type { PaymentMethod } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
@@ -22,9 +46,21 @@ import { maskCpf, maskPhone } from '../utils/masks'
 
 const statusLabels: Record<PromissoryNoteStatus, string> = {
   PENDING: 'Pendente',
+  PARTIALLY_PAID: 'Parcial',
   PAID: 'Pago',
   OVERDUE: 'Vencido',
   CANCELLED: 'Cancelado',
+  RENEGOTIATED: 'Renegociado',
+}
+
+const collectionActionLabels: Record<PromissoryNoteCollectionAction, string> = {
+  CALL_MADE: 'Ligacao realizada',
+  MESSAGE_SENT: 'Mensagem enviada',
+  PROMISED_PAYMENT: 'Promessa de pagamento',
+  NO_RESPONSE: 'Sem resposta',
+  AGREEMENT_MADE: 'Acordo realizado',
+  IN_PERSON_COLLECTION: 'Cobranca presencial',
+  NOTE: 'Observacao',
 }
 
 const paymentLabels: Record<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>, string> = {
@@ -54,8 +90,23 @@ export function PromissoryNotesPage() {
   const [listMode, setListMode] = useState<'due-today' | 'custom'>('due-today')
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>>('CASH')
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [chargeInterestAndPenalty, setChargeInterestAndPenalty] = useState(false)
+  const [payments, setPayments] = useState<PromissoryNotePayment[]>([])
+  const [collectionEvents, setCollectionEvents] = useState<PromissoryNoteCollectionEvent[]>([])
+  const [delinquencyReport, setDelinquencyReport] = useState<PromissoryNoteDelinquencyRange[]>([])
+  const [collectionAction, setCollectionAction] = useState<PromissoryNoteCollectionAction>('MESSAGE_SENT')
+  const [collectionComment, setCollectionComment] = useState('')
+  const [promisedPaymentDate, setPromisedPaymentDate] = useState('')
+  const [renegotiationReason, setRenegotiationReason] = useState('')
+  const [renegotiationFirstAmount, setRenegotiationFirstAmount] = useState('')
+  const [renegotiationFirstDueDate, setRenegotiationFirstDueDate] = useState('')
+  const [renegotiationSecondAmount, setRenegotiationSecondAmount] = useState('')
+  const [renegotiationSecondDueDate, setRenegotiationSecondDueDate] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isPaying, setIsPaying] = useState(false)
+  const [isRegisteringCollection, setIsRegisteringCollection] = useState(false)
+  const [isRenegotiating, setIsRenegotiating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const printFrameRef = useRef<HTMLIFrameElement>(null)
 
@@ -84,13 +135,13 @@ export function PromissoryNotesPage() {
   }, [filteredNotes, selectedNote])
 
   const metrics = useMemo(() => {
-    const openNotes = notes.filter((note) => note.status !== 'PAID')
+    const openNotes = notes.filter((note) => !['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(note.status))
     const today = getLocalToday()
     return {
-      openAmount: openNotes.reduce((sum, note) => sum + note.amount, 0),
-      overdueAmount: notes.filter((note) => note.status === 'OVERDUE').reduce((sum, note) => sum + note.amount, 0),
-      dueTodayAmount: openNotes.filter((note) => note.dueDate === today).reduce((sum, note) => sum + note.amount, 0),
-      paidAmount: notes.filter((note) => note.status === 'PAID').reduce((sum, note) => sum + note.amount, 0),
+      openAmount: openNotes.reduce((sum, note) => sum + note.remainingAmount, 0),
+      overdueAmount: notes.filter((note) => note.status === 'OVERDUE').reduce((sum, note) => sum + note.remainingAmount, 0),
+      dueTodayAmount: openNotes.filter((note) => note.dueDate === today).reduce((sum, note) => sum + note.remainingAmount, 0),
+      paidAmount: notes.reduce((sum, note) => sum + note.paidAmount, 0),
       openCount: openNotes.length,
     }
   }, [notes])
@@ -125,14 +176,65 @@ export function PromissoryNotesPage() {
     }
   }, [])
 
+  const loadDelinquencyReport = useCallback(async () => {
+    try {
+      const response = await getPromissoryDelinquencyReport()
+      setDelinquencyReport(response)
+    } catch {
+      setDelinquencyReport([])
+    }
+  }, [])
+
+  const refreshCurrentList = useCallback(async () => {
+    if (listMode === 'due-today') {
+      await loadDueToday()
+    } else {
+      await loadNotes(filters)
+    }
+    await loadDelinquencyReport()
+  }, [filters, listMode, loadDelinquencyReport, loadDueToday, loadNotes])
+
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void loadDueToday()
+      void loadDelinquencyReport()
       getCustomers().then(setCustomers).catch(() => setCustomers([]))
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [loadDueToday])
+  }, [loadDelinquencyReport, loadDueToday])
+
+  useEffect(() => {
+    if (!selectedNote) {
+      setPayments([])
+      setCollectionEvents([])
+      return
+    }
+
+    setPaymentAmount(selectedNote.remainingAmount > 0 ? String(selectedNote.remainingAmount) : '')
+    setRenegotiationFirstAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
+    setRenegotiationSecondAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
+
+    let isCurrent = true
+    Promise.all([
+      getPromissoryNotePayments(selectedNote.id),
+      getPromissoryNoteCollectionEvents(selectedNote.id),
+    ])
+      .then(([nextPayments, nextEvents]) => {
+        if (!isCurrent) return
+        setPayments(nextPayments)
+        setCollectionEvents(nextEvents)
+      })
+      .catch(() => {
+        if (!isCurrent) return
+        setPayments([])
+        setCollectionEvents([])
+      })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [selectedNote])
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -141,10 +243,11 @@ export function PromissoryNotesPage() {
       } else {
         void loadNotes(filters)
       }
+      void loadDelinquencyReport()
     }, 60_000)
 
     return () => window.clearInterval(intervalId)
-  }, [listMode, loadDueToday, loadNotes, filters])
+  }, [listMode, loadDelinquencyReport, loadDueToday, loadNotes, filters])
 
   function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -157,6 +260,7 @@ export function PromissoryNotesPage() {
     setFilters(nextFilters)
     setListMode('custom')
     void loadNotes(nextFilters)
+    void loadDelinquencyReport()
   }
 
   function clearFilters() {
@@ -165,6 +269,7 @@ export function PromissoryNotesPage() {
     setFilters(nextFilters)
     setListMode('custom')
     void loadNotes(nextFilters)
+    void loadDelinquencyReport()
   }
 
   function showDueToday() {
@@ -172,15 +277,26 @@ export function PromissoryNotesPage() {
     setFilters({})
     setListMode('due-today')
     void loadDueToday()
+    void loadDelinquencyReport()
   }
 
   async function handlePay() {
-    if (!selectedNote || selectedNote.status === 'PAID') return
+    if (!selectedNote || ['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(selectedNote.status)) return
+
+    const amount = paymentAmount ? Number(paymentAmount) : undefined
+    if (amount !== undefined && (!Number.isFinite(amount) || amount <= 0)) {
+      notify({
+        type: 'error',
+        title: 'Valor invalido',
+        message: 'Informe um valor de pagamento maior que zero.',
+      })
+      return
+    }
 
     const confirmed = await confirm({
       type: 'warning',
       title: 'Baixar nota?',
-      message: `Registrar recebimento de ${formatCurrency(selectedNote.amount)} no caixa aberto?`,
+      message: `Registrar recebimento de ${formatCurrency(amount ?? selectedNote.remainingAmount)} no caixa aberto?`,
       confirmLabel: 'Baixar',
       cancelLabel: 'Voltar',
     })
@@ -189,16 +305,12 @@ export function PromissoryNotesPage() {
     setIsPaying(true)
 
     try {
-      const paidNote = await payPromissoryNote(selectedNote.id, paymentMethod)
+      const paidNote = await payPromissoryNote(selectedNote.id, paymentMethod, amount, chargeInterestAndPenalty)
       setSelectedNote(paidNote)
-      if (listMode === 'due-today') {
-        await loadDueToday()
-      } else {
-        await loadNotes(filters)
-      }
+      await refreshCurrentList()
       notify({
         type: 'success',
-        title: 'Nota baixada',
+        title: paidNote.status === 'PAID' ? 'Nota baixada' : 'Pagamento parcial',
         message: `Parcela #${paidNote.id} registrada no caixa.`,
       })
     } catch (error) {
@@ -209,6 +321,115 @@ export function PromissoryNotesPage() {
       })
     } finally {
       setIsPaying(false)
+    }
+  }
+
+  async function handleCollectionEvent() {
+    if (!selectedNote) return
+
+    setIsRegisteringCollection(true)
+    try {
+      const event = await addPromissoryNoteCollectionEvent(
+        selectedNote.id,
+        collectionAction,
+        collectionComment,
+        promisedPaymentDate,
+      )
+      setCollectionEvents((current) => [event, ...current])
+      setCollectionComment('')
+      setPromisedPaymentDate('')
+      notify({
+        type: 'success',
+        title: 'Cobranca registrada',
+        message: collectionActionLabels[event.action],
+      })
+    } catch (error) {
+      notify({
+        type: 'error',
+        title: 'Nao foi possivel registrar',
+        message: getErrorMessage(error, 'Revise os dados da cobranca.'),
+      })
+    } finally {
+      setIsRegisteringCollection(false)
+    }
+  }
+
+  async function handleWhatsappMessage() {
+    if (!selectedNote) return
+
+    try {
+      const message = await getPromissoryWhatsappMessage(selectedNote.id)
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      notify({
+        type: 'error',
+        title: 'Mensagem indisponivel',
+        message: getErrorMessage(error, 'Nao foi possivel gerar a mensagem.'),
+      })
+    }
+  }
+
+  async function handleRenegotiate() {
+    if (!selectedNote || ['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(selectedNote.status)) return
+
+    const installments = [
+      { dueDate: renegotiationFirstDueDate, amount: Number(renegotiationFirstAmount) },
+      { dueDate: renegotiationSecondDueDate, amount: Number(renegotiationSecondAmount) },
+    ].filter((installment) => installment.dueDate && Number.isFinite(installment.amount) && installment.amount > 0)
+
+    if (!renegotiationReason.trim() || installments.length === 0) {
+      notify({
+        type: 'error',
+        title: 'Renegociacao incompleta',
+        message: 'Informe motivo, vencimento e valor de pelo menos uma parcela.',
+      })
+      return
+    }
+
+    const total = installments.reduce((sum, installment) => sum + installment.amount, 0)
+    if (total < selectedNote.remainingAmount) {
+      notify({
+        type: 'error',
+        title: 'Total insuficiente',
+        message: 'A renegociacao deve cobrir o saldo em aberto.',
+      })
+      return
+    }
+
+    const confirmed = await confirm({
+      type: 'warning',
+      title: 'Renegociar nota?',
+      message: `A nota atual sera marcada como renegociada e novas parcelas somando ${formatCurrency(total)} serao criadas.`,
+      confirmLabel: 'Renegociar',
+      cancelLabel: 'Voltar',
+    })
+    if (!confirmed) return
+
+    setIsRenegotiating(true)
+    try {
+      const newNotes = await renegotiatePromissoryNotes({
+        noteIds: [selectedNote.id],
+        reason: renegotiationReason.trim(),
+        installments,
+      })
+      setRenegotiationReason('')
+      setRenegotiationFirstDueDate('')
+      setRenegotiationSecondDueDate('')
+      await refreshCurrentList()
+      setSelectedNote(newNotes[0] ?? null)
+      notify({
+        type: 'success',
+        title: 'Renegociacao concluida',
+        message: `${newNotes.length} nova(s) parcela(s) criada(s).`,
+      })
+    } catch (error) {
+      notify({
+        type: 'error',
+        title: 'Nao foi possivel renegociar',
+        message: getErrorMessage(error, 'Revise as parcelas informadas.'),
+      })
+    } finally {
+      setIsRenegotiating(false)
     }
   }
 
@@ -231,6 +452,26 @@ export function PromissoryNotesPage() {
           <Metric label="Recebido" value={formatCurrency(metrics.paidAmount)} tone="success" icon={CheckCircle2} />
         </div>
 
+        {delinquencyReport.length > 0 ? (
+          <section className="scanner-panel promissory-summary-panel">
+            <header className="section-header">
+              <div>
+                <h2>Inadimplencia</h2>
+                <p>Saldo aberto por faixa de atraso.</p>
+              </div>
+            </header>
+            <div className="promissory-mini-grid">
+              {delinquencyReport.map((range) => (
+                <div className="promissory-mini-card" key={range.range}>
+                  <span>{range.range}</span>
+                  <strong>{formatCurrency(range.amount)}</strong>
+                  <small>{range.count} parcela(s)</small>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <section className="scanner-panel">
           <div className="qr-modal-actions">
             <button className="action-button" type="button" onClick={showDueToday} disabled={isLoading}>
@@ -251,9 +492,11 @@ export function PromissoryNotesPage() {
               >
                 <option value="">Todos</option>
                 <option value="PENDING">Pendentes</option>
+                <option value="PARTIALLY_PAID">Parciais</option>
                 <option value="OVERDUE">Vencidos</option>
                 <option value="PAID">Pagos</option>
                 <option value="CANCELLED">Cancelados</option>
+                <option value="RENEGOTIATED">Renegociados</option>
               </select>
             </div>
             <div className="field-group">
@@ -332,7 +575,7 @@ export function PromissoryNotesPage() {
                     onClick={() => setSelectedNote(note)}
                   >
                     <span><CalendarClock size={14} strokeWidth={2.3} aria-hidden="true" />Vence {formatDate(note.dueDate)}</span>
-                    <strong>{formatCurrency(note.amount)}</strong>
+                    <strong>{formatCurrency(note.remainingAmount)}</strong>
                     <small>
                       {note.customer.name} - {statusLabels[note.status]} - Parcela {note.installmentNumber}/{note.totalInstallments}
                     </small>
@@ -374,14 +617,33 @@ export function PromissoryNotesPage() {
                     </small>
                   </div>
                   <div className="cart-price">
-                    <span>Valor</span>
-                    <strong>{formatCurrency(selectedNote.amount)}</strong>
+                    <span>Saldo</span>
+                    <strong>{formatCurrency(selectedNote.remainingAmount)}</strong>
+                  </div>
+                  <div className="cart-price">
+                    <span>Pago</span>
+                    <strong>{formatCurrency(selectedNote.paidAmount)}</strong>
                   </div>
                   <div className="cart-price">
                     <span>Vencimento</span>
                     <strong>{formatDate(selectedNote.dueDate)}</strong>
                   </div>
                 </article>
+
+                <div className="promissory-mini-grid">
+                  <div className="promissory-mini-card">
+                    <span>Valor original</span>
+                    <strong>{formatCurrency(selectedNote.amount)}</strong>
+                  </div>
+                  <div className="promissory-mini-card">
+                    <span>Atualizado</span>
+                    <strong>{formatCurrency(selectedNote.updatedAmount)}</strong>
+                  </div>
+                  <div className="promissory-mini-card">
+                    <span>Atraso</span>
+                    <strong>{selectedNote.daysOverdue} dia(s)</strong>
+                  </div>
+                </div>
 
                 {selectedNote.status === 'PAID' ? (
                   <div className="feedback-message feedback-message--success">
@@ -390,6 +652,10 @@ export function PromissoryNotesPage() {
                 ) : selectedNote.status === 'CANCELLED' ? (
                   <div className="feedback-message feedback-message--warning">
                     Nota cancelada junto com a venda #{selectedNote.saleId}.
+                  </div>
+                ) : selectedNote.status === 'RENEGOTIATED' ? (
+                  <div className="feedback-message feedback-message--warning">
+                    Nota substituida por renegociacao.
                   </div>
                 ) : (
                   <div className="promissory-pay-panel">
@@ -405,8 +671,27 @@ export function PromissoryNotesPage() {
                         ))}
                       </select>
                     </div>
+                    <div className="field-group">
+                      <label htmlFor="payAmount">Valor recebido</label>
+                      <input
+                        id="payAmount"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={paymentAmount}
+                        onChange={(event) => setPaymentAmount(event.target.value)}
+                      />
+                    </div>
+                    <label className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={chargeInterestAndPenalty}
+                        onChange={(event) => setChargeInterestAndPenalty(event.target.checked)}
+                      />
+                      Cobrar multa e juros
+                    </label>
                     <button className="action-button" type="button" disabled={isPaying} onClick={() => void handlePay()}>
-                      {isPaying ? 'Baixando...' : 'Baixar no caixa'}
+                      {isPaying ? 'Baixando...' : 'Registrar pagamento'}
                     </button>
                   </div>
                 )}
@@ -422,7 +707,169 @@ export function PromissoryNotesPage() {
                   <a className="icon-link" href={getPromissoryNotePrintUrl(selectedNote.id)} target="_blank" rel="noreferrer">
                     Abrir modelo
                   </a>
+                  <button className="secondary-button" type="button" onClick={() => void handleWhatsappMessage()}>
+                    <MessageCircle size={14} strokeWidth={2.3} aria-hidden="true" />WhatsApp
+                  </button>
                 </div>
+
+                <section className="promissory-detail-section">
+                  <header className="section-header">
+                    <div>
+                      <h2>Pagamentos</h2>
+                      <p>{payments.length} registro(s).</p>
+                    </div>
+                  </header>
+                  {payments.length === 0 ? (
+                    <div className="product-empty">Nenhum pagamento registrado.</div>
+                  ) : (
+                    <div className="promissory-history-list">
+                      {payments.map((payment) => (
+                        <div className="promissory-history-item" key={payment.id}>
+                          <div>
+                            <strong>{formatCurrency(payment.amount)}</strong>
+                            <small>
+                              {paymentLabels[payment.paymentMethod]} - {formatNullableDateTime(payment.paidAt)}
+                            </small>
+                          </div>
+                          <div>
+                            <span>Total recebido</span>
+                            <strong>{formatCurrency(payment.totalReceived)}</strong>
+                          </div>
+                          <a className="icon-link" href={getPromissoryPaymentReceiptUrl(payment.id)} target="_blank" rel="noreferrer">
+                            Recibo
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section className="promissory-detail-section">
+                  <header className="section-header">
+                    <div>
+                      <h2>Cobranca</h2>
+                      <p>Historico de contato com o cliente.</p>
+                    </div>
+                  </header>
+                  <div className="promissory-form-grid">
+                    <div className="field-group">
+                      <label htmlFor="collectionAction">Acao</label>
+                      <select
+                        id="collectionAction"
+                        value={collectionAction}
+                        onChange={(event) => setCollectionAction(event.target.value as PromissoryNoteCollectionAction)}
+                      >
+                        {Object.entries(collectionActionLabels).map(([value, label]) => (
+                          <option value={value} key={value}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="field-group">
+                      <label htmlFor="promisedPaymentDate">Promessa</label>
+                      <input
+                        id="promisedPaymentDate"
+                        type="date"
+                        value={promisedPaymentDate}
+                        onChange={(event) => setPromisedPaymentDate(event.target.value)}
+                      />
+                    </div>
+                    <div className="field-group promissory-grid-wide">
+                      <label htmlFor="collectionComment">Comentario</label>
+                      <input
+                        id="collectionComment"
+                        value={collectionComment}
+                        onChange={(event) => setCollectionComment(event.target.value)}
+                        placeholder="Resumo do contato"
+                      />
+                    </div>
+                    <button className="secondary-button" type="button" disabled={isRegisteringCollection} onClick={() => void handleCollectionEvent()}>
+                      {isRegisteringCollection ? 'Registrando...' : 'Registrar cobranca'}
+                    </button>
+                  </div>
+                  {collectionEvents.length === 0 ? (
+                    <div className="product-empty">Nenhuma cobranca registrada.</div>
+                  ) : (
+                    <div className="promissory-history-list">
+                      {collectionEvents.map((event) => (
+                        <div className="promissory-history-item" key={event.id}>
+                          <div>
+                            <strong>{collectionActionLabels[event.action]}</strong>
+                            <small>
+                              {formatNullableDateTime(event.createdAt)}
+                              {event.promisedPaymentDate ? ` - Promessa ${formatDate(event.promisedPaymentDate)}` : ''}
+                            </small>
+                          </div>
+                          <span>{event.comment || '-'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                {!['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(selectedNote.status) ? (
+                  <section className="promissory-detail-section">
+                    <header className="section-header">
+                      <div>
+                        <h2>Renegociacao</h2>
+                        <p>Gere novas parcelas para substituir o saldo atual.</p>
+                      </div>
+                    </header>
+                    <div className="promissory-form-grid">
+                      <div className="field-group promissory-grid-wide">
+                        <label htmlFor="renegotiationReason">Motivo</label>
+                        <input
+                          id="renegotiationReason"
+                          value={renegotiationReason}
+                          onChange={(event) => setRenegotiationReason(event.target.value)}
+                          placeholder="Ex.: acordo com cliente"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label htmlFor="renegotiationFirstDueDate">1o vencimento</label>
+                        <input
+                          id="renegotiationFirstDueDate"
+                          type="date"
+                          value={renegotiationFirstDueDate}
+                          onChange={(event) => setRenegotiationFirstDueDate(event.target.value)}
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label htmlFor="renegotiationFirstAmount">1o valor</label>
+                        <input
+                          id="renegotiationFirstAmount"
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={renegotiationFirstAmount}
+                          onChange={(event) => setRenegotiationFirstAmount(event.target.value)}
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label htmlFor="renegotiationSecondDueDate">2o vencimento</label>
+                        <input
+                          id="renegotiationSecondDueDate"
+                          type="date"
+                          value={renegotiationSecondDueDate}
+                          onChange={(event) => setRenegotiationSecondDueDate(event.target.value)}
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label htmlFor="renegotiationSecondAmount">2o valor</label>
+                        <input
+                          id="renegotiationSecondAmount"
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={renegotiationSecondAmount}
+                          onChange={(event) => setRenegotiationSecondAmount(event.target.value)}
+                        />
+                      </div>
+                      <button className="secondary-button" type="button" disabled={isRenegotiating} onClick={() => void handleRenegotiate()}>
+                        {isRenegotiating ? 'Renegociando...' : 'Renegociar'}
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
 
                 <iframe
                   className="promissory-print-frame"

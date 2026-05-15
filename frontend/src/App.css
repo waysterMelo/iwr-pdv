@@ -4561,13 +4561,97 @@ h3 {
 
 .promissory-pay-panel {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.7fr) auto auto;
   gap: 14px;
   align-items: end;
   padding: 16px;
   border: 1px solid rgba(198, 161, 91, 0.24);
   border-radius: 18px;
   background: rgba(198, 161, 91, 0.08);
+}
+
+.checkbox-row {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-gold);
+}
+
+.promissory-summary-panel {
+  margin-bottom: 18px;
+}
+
+.promissory-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.promissory-mini-card,
+.promissory-history-item,
+.promissory-detail-section {
+  border: 1px solid rgba(198, 161, 91, 0.18);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.promissory-mini-card {
+  padding: 14px;
+}
+
+.promissory-mini-card span,
+.promissory-history-item span,
+.promissory-mini-card small,
+.promissory-history-item small {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.promissory-mini-card strong,
+.promissory-history-item strong {
+  display: block;
+  color: var(--color-text);
+  margin-top: 4px;
+}
+
+.promissory-detail-section {
+  padding: 16px;
+}
+
+.promissory-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.promissory-grid-wide {
+  grid-column: span 2;
+}
+
+.promissory-history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.promissory-history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
 }
 
 .customer-dropdown {
@@ -4627,6 +4711,16 @@ h3 {
 @media (max-width: 1180px) {
   .notes-filter-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .promissory-pay-panel,
+  .promissory-form-grid,
+  .promissory-history-item {
+    grid-template-columns: 1fr;
+  }
+
+  .promissory-grid-wide {
+    grid-column: auto;
   }
 }
 

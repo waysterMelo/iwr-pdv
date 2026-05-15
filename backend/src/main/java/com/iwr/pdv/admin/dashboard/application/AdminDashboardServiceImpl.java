@@ -6,6 +6,8 @@ import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardReceivablesResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardSummaryResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardTopCustomerResponse;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
+import com.iwr.pdv.promissorynote.domain.PromissoryNotePayment;
+import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteStatus;
 import com.iwr.pdv.sale.domain.PaymentMethod;
@@ -45,33 +47,40 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final List<PromissoryNoteStatus> OPEN_STATUSES = List.of(PromissoryNoteStatus.PENDING, PromissoryNoteStatus.OVERDUE);
+    private static final List<PromissoryNoteStatus> OPEN_STATUSES = List.of(
+            PromissoryNoteStatus.PENDING,
+            PromissoryNoteStatus.PARTIALLY_PAID,
+            PromissoryNoteStatus.OVERDUE
+    );
 
     private final SaleRepository saleRepository;
     private final PromissoryNoteRepository promissoryNoteRepository;
+    private final PromissoryNotePaymentRepository promissoryNotePaymentRepository;
     private final Clock clock;
 
     public AdminDashboardServiceImpl(
             SaleRepository saleRepository,
             PromissoryNoteRepository promissoryNoteRepository,
+            PromissoryNotePaymentRepository promissoryNotePaymentRepository,
             Clock clock
     ) {
         this.saleRepository = saleRepository;
         this.promissoryNoteRepository = promissoryNoteRepository;
+        this.promissoryNotePaymentRepository = promissoryNotePaymentRepository;
         this.clock = clock;
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AdminDashboardSummaryResponse summary(LocalDate startDate, LocalDate endDate) {
         Period period = resolvePeriod(startDate, endDate);
         List<Sale> completedSales = completedSales(period);
-        List<PromissoryNote> paidNotes = paidNotes(period);
+        List<PromissoryNotePayment> notePayments = notePayments(period);
         List<PromissoryNote> openNotes = openNotes();
         LocalDate today = LocalDate.now(clock);
 
         BigDecimal totalSold = sumSales(completedSales);
-        BigDecimal totalReceived = sumReceivedSales(completedSales).add(sumNotes(paidNotes));
+        BigDecimal totalReceived = sumReceivedSales(completedSales).add(sumNotePayments(notePayments));
         long saleCount = completedSales.size();
 
         return new AdminDashboardSummaryResponse(
@@ -100,23 +109,23 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     public List<AdminDashboardPaymentMethodResponse> paymentMethods(LocalDate startDate, LocalDate endDate) {
         Period period = resolvePeriod(startDate, endDate);
         List<Sale> completedSales = completedSales(period);
-        List<PromissoryNote> paidNotes = paidNotes(period);
+        List<PromissoryNotePayment> notePayments = notePayments(period);
 
         return java.util.Arrays.stream(PaymentMethod.values())
                 .map(method -> new AdminDashboardPaymentMethodResponse(
                         method,
                         sumSalesByMethod(completedSales, method),
-                        sumReceivedByMethod(completedSales, paidNotes, method),
+                        sumReceivedByMethod(completedSales, notePayments, method),
                         completedSales.stream().filter(sale -> sale.getPaymentMethod() == method).count(),
                         method == PaymentMethod.PROMISSORY_NOTE
                                 ? 0
-                                : paidNotes.stream().filter(note -> note.getPaymentMethod() == method).count()
+                                : notePayments.stream().filter(payment -> payment.getPaymentMethod() == method).count()
                 ))
                 .toList();
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AdminDashboardReceivablesResponse receivables(LocalDate startDate, LocalDate endDate) {
         Period period = resolvePeriod(startDate, endDate);
         List<PromissoryNote> openNotes = openNotes();
@@ -138,7 +147,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public byte[] report(LocalDate startDate, LocalDate endDate) {
         AdminDashboardSummaryResponse summary = summary(startDate, endDate);
         List<AdminDashboardPaymentMethodResponse> payments = paymentMethods(startDate, endDate);
@@ -224,11 +233,10 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 .toList();
     }
 
-    private List<PromissoryNote> paidNotes(Period period) {
-        return promissoryNoteRepository.findAll()
+    private List<PromissoryNotePayment> notePayments(Period period) {
+        return promissoryNotePaymentRepository.findAll()
                 .stream()
-                .filter(note -> note.getStatus() == PromissoryNoteStatus.PAID && note.getPaidAt() != null)
-                .filter(note -> !note.getPaidAt().isBefore(period.start()) && !note.getPaidAt().isAfter(period.end()))
+                .filter(payment -> !payment.getPaidAt().isBefore(period.start()) && !payment.getPaidAt().isAfter(period.end()))
                 .toList();
     }
 
@@ -246,7 +254,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         for (PromissoryNote note : notes) {
             Long customerId = note.getCustomer().getId();
             totals.computeIfAbsent(customerId, ignored -> new CustomerOpenAmount(customerId, note.getCustomer().getName()))
-                    .add(note.getAmount());
+                    .add(remainingAmount(note));
         }
 
         return totals.values()
@@ -264,7 +272,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 note.getCustomer().getName(),
                 note.getInstallmentNumber(),
                 note.getTotalInstallments(),
-                note.getAmount(),
+                remainingAmount(note),
                 note.getDueDate(),
                 note.getStatus(),
                 note.getPaymentMethod(),
@@ -291,33 +299,42 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private BigDecimal sumReceivedByMethod(List<Sale> sales, List<PromissoryNote> notes, PaymentMethod method) {
+    private BigDecimal sumReceivedByMethod(List<Sale> sales, List<PromissoryNotePayment> notePayments, PaymentMethod method) {
         BigDecimal saleReceipts = method == PaymentMethod.PROMISSORY_NOTE
                 ? BigDecimal.ZERO
                 : sumSalesByMethod(sales, method);
-        BigDecimal noteReceipts = notes.stream()
-                .filter(note -> note.getPaymentMethod() == method)
-                .map(PromissoryNote::getAmount)
+        BigDecimal noteReceipts = notePayments.stream()
+                .filter(payment -> payment.getPaymentMethod() == method)
+                .map(PromissoryNotePayment::getTotalReceived)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return saleReceipts.add(noteReceipts);
     }
 
+    private BigDecimal sumNotePayments(List<PromissoryNotePayment> notePayments) {
+        return notePayments.stream().map(PromissoryNotePayment::getTotalReceived).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     private BigDecimal sumNotes(List<PromissoryNote> notes) {
-        return notes.stream().map(PromissoryNote::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return notes.stream().map(this::remainingAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private BigDecimal sumOpenDueUntil(List<PromissoryNote> notes, LocalDate end) {
         return notes.stream()
                 .filter(note -> !note.getDueDate().isAfter(end))
-                .map(PromissoryNote::getAmount)
+                .map(this::remainingAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private BigDecimal sumOpenDueBetween(List<PromissoryNote> notes, LocalDate start, LocalDate end) {
         return notes.stream()
                 .filter(note -> !note.getDueDate().isBefore(start) && !note.getDueDate().isAfter(end))
-                .map(PromissoryNote::getAmount)
+                .map(this::remainingAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal remainingAmount(PromissoryNote note) {
+        BigDecimal paidAmount = note.getPaidAmount() == null ? BigDecimal.ZERO : note.getPaidAmount();
+        return note.getAmount().subtract(paidAmount).max(BigDecimal.ZERO);
     }
 
     private Period resolvePeriod(LocalDate startDate, LocalDate endDate) {

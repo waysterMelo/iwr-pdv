@@ -194,6 +194,26 @@ class CashRegisterControllerIntegrationTest {
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk());
 
+        String operatorAuthHeader = createOperatorAuthHeader("operador_caixa_" + cashRegisterId);
+
+        mockMvc.perform(get("/api/cash-register")
+                        .header("Authorization", operatorAuthHeader))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/cash-register/{cashRegisterId}", cashRegisterId)
+                        .header("Authorization", operatorAuthHeader))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/cash-register/{cashRegisterId}/report", cashRegisterId)
+                        .header("Authorization", operatorAuthHeader))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/cash-register/{cashRegisterId}/reopen", cashRegisterId)
+                        .header("Authorization", operatorAuthHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Tentativa sem permissao\"}"))
+                .andExpect(status().isForbidden());
+
         mockMvc.perform(post("/api/cash-register/{cashRegisterId}/reopen", cashRegisterId)
                         .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -208,6 +228,24 @@ class CashRegisterControllerIntegrationTest {
         mockMvc.perform(get("/api/cash-register/current")
                         .header("Authorization", authHeader))
                 .andExpect(status().isNoContent());
+    }
+
+    private String createOperatorAuthHeader(String username) throws Exception {
+        mockMvc.perform(post("/api/users")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "%s",
+                                  "displayName": "Operador Caixa",
+                                  "password": "senha123",
+                                  "role": "OPERATOR",
+                                  "active": true
+                                }
+                                """.formatted(username)))
+                .andExpect(status().isCreated());
+
+        return "Bearer " + authService.login(new LoginRequest(username, "senha123")).token();
     }
 
     private Product buildProduct(

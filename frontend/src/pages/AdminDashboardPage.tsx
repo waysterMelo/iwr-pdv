@@ -29,9 +29,11 @@ const paymentLabels: Record<PaymentMethod, string> = {
 
 const statusLabels = {
   PENDING: 'Pendente',
+  PARTIALLY_PAID: 'Parcial',
   PAID: 'Pago',
   OVERDUE: 'Vencido',
   CANCELLED: 'Cancelado',
+  RENEGOTIATED: 'Renegociado',
 }
 
 function toIsoDate(date: Date) {

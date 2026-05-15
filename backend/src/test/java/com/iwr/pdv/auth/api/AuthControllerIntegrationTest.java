@@ -7,11 +7,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iwr.pdv.auth.api.dto.LoginRequest;
 import com.iwr.pdv.auth.application.AuthService;
+import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.auth.domain.AppUserRepository;
+import com.iwr.pdv.auth.domain.UserRole;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -26,6 +31,12 @@ class AuthControllerIntegrationTest {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private AppUserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private MockMvc mockMvc;
 
@@ -66,6 +77,35 @@ class AuthControllerIntegrationTest {
                         .content(payload))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid username or password."));
+    }
+
+    @Test
+    void shouldTemporarilyLockUserAfterRepeatedInvalidPasswordAttempts() throws Exception {
+        String username = "lock_test_" + System.nanoTime();
+        createUser(username, "senha123");
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "username": "%s",
+                                      "password": "wrong"
+                                    }
+                                    """.formatted(username)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "%s",
+                                  "password": "senha123"
+                                }
+                                """.formatted(username)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("User is temporarily locked. Try again later."));
     }
 
     @Test
@@ -116,5 +156,20 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.content[0].action").value("LOGIN_FAILED"))
                 .andExpect(jsonPath("$.content[0].username").value("admin"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    private void createUser(String username, String password) {
+        OffsetDateTime now = OffsetDateTime.now();
+        AppUser user = new AppUser();
+        user.setUsername(username);
+        user.setDisplayName("Lock Test");
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setRole(UserRole.OPERATOR);
+        user.setActive(true);
+        user.setInvalidLoginAttempts(0);
+        user.setPasswordChangeRequired(false);
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+        userRepository.save(user);
     }
 }

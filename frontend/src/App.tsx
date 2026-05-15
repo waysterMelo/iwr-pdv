@@ -57,7 +57,7 @@ function App() {
   const allMenuItems: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
     { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
-    { id: 'cash-history', label: 'Hist. Caixa', eyebrow: 'Operacao' },
+    { id: 'cash-history', label: 'Hist. Caixa', eyebrow: 'Operacao', adminOnly: true },
     { id: 'admin-dashboard', label: 'Painel Admin', eyebrow: 'Admin', adminOnly: true },
     { id: 'promissory-notes', label: 'Notas', eyebrow: 'Promissorias' },
     { id: 'loyalty', label: 'Fidelidade', eyebrow: 'Clientes' },

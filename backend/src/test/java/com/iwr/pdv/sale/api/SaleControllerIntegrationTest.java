@@ -16,6 +16,8 @@ import com.iwr.pdv.product.domain.ProductCategory;
 import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
+import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEventRepository;
+import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteStatus;
 import com.iwr.pdv.sale.domain.SaleRepository;
@@ -59,6 +61,12 @@ class SaleControllerIntegrationTest {
     private PromissoryNoteRepository promissoryNoteRepository;
 
     @Autowired
+    private PromissoryNotePaymentRepository promissoryNotePaymentRepository;
+
+    @Autowired
+    private PromissoryNoteCollectionEventRepository promissoryNoteCollectionEventRepository;
+
+    @Autowired
     private CashMovementRepository cashMovementRepository;
 
     @Autowired
@@ -74,6 +82,8 @@ class SaleControllerIntegrationTest {
     void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
+        promissoryNoteCollectionEventRepository.deleteAll();
+        promissoryNotePaymentRepository.deleteAll();
         stockMovementRepository.deleteAll();
         promissoryNoteRepository.deleteAll();
         saleRepository.deleteAll();

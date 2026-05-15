@@ -49,6 +49,9 @@ public class PromissoryNote {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Column(name = "paid_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
     @Column(name = "due_date", nullable = false)
     private LocalDate dueDate;
 
@@ -76,6 +79,16 @@ public class PromissoryNote {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    @Column(name = "renegotiated_at")
+    private OffsetDateTime renegotiatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "renegotiated_by_user_id")
+    private AppUser renegotiatedBy;
+
+    @Column(name = "renegotiation_reason", length = 240)
+    private String renegotiationReason;
 
     public Long getId() {
         return id;
@@ -123,6 +136,14 @@ public class PromissoryNote {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public BigDecimal getPaidAmount() {
+        return paidAmount;
+    }
+
+    public void setPaidAmount(BigDecimal paidAmount) {
+        this.paidAmount = paidAmount;
     }
 
     public LocalDate getDueDate() {
@@ -187,5 +208,29 @@ public class PromissoryNote {
 
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public OffsetDateTime getRenegotiatedAt() {
+        return renegotiatedAt;
+    }
+
+    public void setRenegotiatedAt(OffsetDateTime renegotiatedAt) {
+        this.renegotiatedAt = renegotiatedAt;
+    }
+
+    public AppUser getRenegotiatedBy() {
+        return renegotiatedBy;
+    }
+
+    public void setRenegotiatedBy(AppUser renegotiatedBy) {
+        this.renegotiatedBy = renegotiatedBy;
+    }
+
+    public String getRenegotiationReason() {
+        return renegotiationReason;
+    }
+
+    public void setRenegotiationReason(String renegotiationReason) {
+        this.renegotiationReason = renegotiationReason;
     }
 }

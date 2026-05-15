@@ -237,20 +237,17 @@ class UserManagementControllerIntegrationTest {
         mockMvc.perform(get("/api/cash-register")
                         .header("Authorization", sellerHeader)
                         .param("status", "CLOSED"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/api/cash-register/{cashRegisterId}/report", cashRegisterId)
                         .header("Authorization", sellerHeader))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(post("/api/cash-register/{cashRegisterId}/reopen", cashRegisterId)
                         .header("Authorization", sellerHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"reason\":\"Gerente ausente, ajuste operacional\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("OPEN"))
-                .andExpect(jsonPath("$.reopenedBy.displayName").value("Joao Vendedor"));
+                .andExpect(status().isForbidden());
     }
 
     @Test

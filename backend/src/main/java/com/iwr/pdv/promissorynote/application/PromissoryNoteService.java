@@ -1,7 +1,12 @@
 package com.iwr.pdv.promissorynote.application;
 
 import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventRequest;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteDelinquencyRangeResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentRequest;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteRenegotiationRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteResponse;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteStatus;
 import java.time.LocalDate;
@@ -16,6 +21,20 @@ public interface PromissoryNoteService {
     PromissoryNoteResponse findById(Long noteId);
 
     PromissoryNoteResponse pay(Long noteId, PromissoryNotePaymentRequest request, AppUser operator);
+
+    List<PromissoryNotePaymentResponse> payments(Long noteId);
+
+    String generatePaymentReceipt(Long paymentId);
+
+    PromissoryNoteCollectionEventResponse addCollectionEvent(Long noteId, PromissoryNoteCollectionEventRequest request, AppUser operator);
+
+    List<PromissoryNoteCollectionEventResponse> collectionEvents(Long noteId);
+
+    String whatsappMessage(Long noteId, String pixKey);
+
+    List<PromissoryNoteDelinquencyRangeResponse> delinquencyReport();
+
+    List<PromissoryNoteResponse> renegotiate(PromissoryNoteRenegotiationRequest request, AppUser operator);
 
     String exportCsv(PromissoryNoteStatus status, Long customerId, LocalDate startDate, LocalDate endDate, boolean dueToday);
 

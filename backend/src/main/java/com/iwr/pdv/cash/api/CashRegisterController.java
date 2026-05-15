@@ -1,6 +1,7 @@
 package com.iwr.pdv.cash.api;
 
 import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.auth.infrastructure.AuthorizationService;
 import com.iwr.pdv.cash.api.dto.CashMovementRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterCloseRequest;
 import com.iwr.pdv.cash.api.dto.CashRegisterOpenRequest;
@@ -36,13 +37,16 @@ public class CashRegisterController {
 
     private final CashRegisterService cashRegisterService;
     private final CashRegisterReportService reportService;
+    private final AuthorizationService authorizationService;
 
     public CashRegisterController(
             CashRegisterService cashRegisterService,
-            CashRegisterReportService reportService
+            CashRegisterReportService reportService,
+            AuthorizationService authorizationService
     ) {
         this.cashRegisterService = cashRegisterService;
         this.reportService = reportService;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping
@@ -67,6 +71,7 @@ public class CashRegisterController {
             @RequestParam(defaultValue = "8") int size,
             HttpServletRequest servletRequest
     ) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return cashRegisterService.list(
                 openedStartDate,
                 openedEndDate,
@@ -109,7 +114,8 @@ public class CashRegisterController {
 
     @GetMapping("/{cashRegisterId}")
     @Operation(summary = "Find a cash register by id")
-    public CashRegisterResponse findById(@PathVariable Long cashRegisterId) {
+    public CashRegisterResponse findById(@PathVariable Long cashRegisterId, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         return cashRegisterService.findById(cashRegisterId);
     }
 
@@ -131,6 +137,7 @@ public class CashRegisterController {
             HttpServletRequest servletRequest
     ) {
         AppUser operator = currentUser(servletRequest);
+        authorizationService.requireAdmin(operator);
         return cashRegisterService.reopen(cashRegisterId, request, operator);
     }
 
@@ -150,7 +157,8 @@ public class CashRegisterController {
 
     @GetMapping("/{cashRegisterId}/report")
     @Operation(summary = "Download a cash register report as PDF")
-    public ResponseEntity<byte[]> downloadReportById(@PathVariable Long cashRegisterId) {
+    public ResponseEntity<byte[]> downloadReportById(@PathVariable Long cashRegisterId, HttpServletRequest servletRequest) {
+        authorizationService.requireAdmin(currentUser(servletRequest));
         CashRegisterResponse cashRegister = cashRegisterService.findById(cashRegisterId);
         byte[] pdfBytes = reportService.generateReport(cashRegister);
         HttpHeaders headers = new HttpHeaders();

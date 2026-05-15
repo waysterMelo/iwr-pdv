@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public LoginResponse login(LoginRequest request) {
         String username = request.username().trim();
         AppUser user = userRepository.findByUsernameIgnoreCase(username)
