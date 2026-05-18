@@ -13,6 +13,14 @@ function buildQuery(filters: AdminDashboardFilters) {
   return params.toString()
 }
 
+function getMonthRange(monthValue: string) {
+  const [year, month] = monthValue.split('-').map(Number)
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+  const end = new Date(year, month, 0)
+  const endDate = `${year}-${String(month).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`
+  return { startDate, endDate }
+}
+
 export function getAdminDashboardSummary(filters: AdminDashboardFilters) {
   return get<AdminDashboardSummary>(`/api/admin/dashboard/summary?${buildQuery(filters)}`)
 }
@@ -21,8 +29,15 @@ export function getAdminDashboardPaymentMethods(filters: AdminDashboardFilters) 
   return get<AdminDashboardPaymentMethod[]>(`/api/admin/dashboard/payment-methods?${buildQuery(filters)}`)
 }
 
-export function getAdminDashboardReceivables(filters: AdminDashboardFilters) {
-  return get<AdminDashboardReceivables>(`/api/admin/dashboard/receivables?${buildQuery(filters)}`)
+export function getAdminDashboardReceivables(filters: AdminDashboardFilters, calendarMonth?: string) {
+  const params = new URLSearchParams(buildQuery(filters))
+  if (calendarMonth) {
+    const range = getMonthRange(calendarMonth)
+    params.set('calendarStartDate', range.startDate)
+    params.set('calendarEndDate', range.endDate)
+  }
+
+  return get<AdminDashboardReceivables>(`/api/admin/dashboard/receivables?${params.toString()}`)
 }
 
 export async function downloadAdminDashboardReport(filters: AdminDashboardFilters) {

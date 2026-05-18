@@ -122,7 +122,7 @@ export function SalesHistoryPage() {
           status={`${sales.length} venda(s)`}
         />
 
-        <section className="scanner-panel">
+        <section className="scanner-panel sales-history-filter-panel">
           <form className="history-filter-form" onSubmit={handleFilterSubmit}>
             <div className="field-group">
               <label htmlFor="startDate">Inicio</label>

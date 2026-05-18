@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Activity, Ban, Clock3, KeyRound } from 'lucide-react'
 import { PageHeader } from '../components/PageHeader'
 import { Metric } from '../components/Metric'
@@ -16,19 +16,19 @@ const auditActions: AuditAction[] = [
   'USER_CREATED',
   'USER_UPDATED',
   'USER_PASSWORD_CHANGED',
-  'CASH_REGISTER_OPENED',
-  'CASH_REGISTER_CLOSED',
-  'CASH_MOVEMENT_CREATED',
   'PRODUCT_CREATED',
   'PRODUCT_UPDATED',
   'PRODUCT_PRICE_CHANGED',
   'PRODUCT_STOCK_CHANGED',
   'SALE_CANCELLED',
+  'PROMISSORY_NOTE_CREATED',
   'PROMISSORY_NOTE_PAID',
+  'PROMISSORY_NOTE_COLLECTION_REGISTERED',
+  'PROMISSORY_NOTE_RENEGOTIATED',
 ]
 
 function actionLabel(action: AuditAction) {
-  const labels: Record<AuditAction, string> = {
+  const labels: Partial<Record<AuditAction, string>> = {
     LOGIN_SUCCESS: 'Login realizado',
     LOGIN_FAILED: 'Login invalido',
     LOGOUT: 'Logout realizado',
@@ -36,15 +36,15 @@ function actionLabel(action: AuditAction) {
     USER_CREATED: 'Usuario criado',
     USER_UPDATED: 'Usuario alterado',
     USER_PASSWORD_CHANGED: 'Senha alterada',
-    CASH_REGISTER_OPENED: 'Caixa aberto',
-    CASH_REGISTER_CLOSED: 'Caixa fechado',
-    CASH_MOVEMENT_CREATED: 'Movimento de caixa',
     PRODUCT_CREATED: 'Produto criado',
     PRODUCT_UPDATED: 'Produto alterado',
     PRODUCT_PRICE_CHANGED: 'Preco alterado',
     PRODUCT_STOCK_CHANGED: 'Estoque alterado',
     SALE_CANCELLED: 'Venda cancelada',
+    PROMISSORY_NOTE_CREATED: 'Promissoria criada',
     PROMISSORY_NOTE_PAID: 'Promissoria baixada',
+    PROMISSORY_NOTE_COLLECTION_REGISTERED: 'Cobranca registrada',
+    PROMISSORY_NOTE_RENEGOTIATED: 'Promissoria renegociada',
   }
 
   return labels[action] ?? action
@@ -59,7 +59,7 @@ function actionTone(action: AuditAction) {
     return 'success'
   }
 
-  if (action.includes('CHANGED') || action.includes('UPDATED') || action.includes('CASH')) {
+  if (action.includes('CHANGED') || action.includes('UPDATED')) {
     return 'warning'
   }
 
@@ -69,8 +69,6 @@ function actionTone(action: AuditAction) {
 function entityLabel(entityType?: string | null) {
   const labels: Record<string, string> = {
     AUTH: 'Acesso',
-    CASH_MOVEMENT: 'Movimento',
-    CASH_REGISTER: 'Caixa',
     PRODUCT: 'Produto',
     PROMISSORY_NOTE: 'Promissoria',
     SALE: 'Venda',
@@ -109,12 +107,11 @@ export function AuditLogPage() {
     last: true,
   })
   const [filters, setFilters] = useState<AuditFilters>({})
-  const [page, setPage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const logs = Array.isArray(auditPage.content) ? auditPage.content : []
 
-  async function loadLogs(nextFilters = filters, nextPage = page) {
+  const loadLogs = useCallback(async (nextFilters: AuditFilters, nextPage: number) => {
     setIsLoading(true)
 
     try {
@@ -125,27 +122,28 @@ export function AuditLogPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    void loadLogs({}, 0)
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      void loadLogs({}, 0)
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadLogs])
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setPage(0)
     void loadLogs(filters, 0)
   }
 
   function clearFilters() {
     const nextFilters: AuditFilters = {}
     setFilters(nextFilters)
-    setPage(0)
     void loadLogs(nextFilters, 0)
   }
 
   function handlePageChange(nextPage: number) {
-    setPage(nextPage)
     void loadLogs(filters, nextPage)
   }
 
@@ -155,7 +153,7 @@ export function AuditLogPage() {
         <PageHeader
           eyebrow="Admin"
           title="Auditoria do sistema"
-          subtitle="Consulte acessos, operacoes de caixa, alteracoes de produtos, usuarios e eventos bloqueados."
+          subtitle="Consulte acessos, vendas, alteracoes de produtos, usuarios e eventos bloqueados."
           metricLabel="Eventos"
           metricValue={String(auditPage.totalElements)}
           status="Somente ADMIN"

@@ -32,8 +32,8 @@ public class PromissoryNote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "sale_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sale_id")
     private Sale sale;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

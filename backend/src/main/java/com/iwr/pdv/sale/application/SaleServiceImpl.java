@@ -3,8 +3,6 @@ package com.iwr.pdv.sale.application;
 import com.iwr.pdv.audit.application.AuditLogService;
 import com.iwr.pdv.audit.domain.AuditAction;
 import com.iwr.pdv.auth.domain.AppUser;
-import com.iwr.pdv.cash.application.CashRegisterService;
-import com.iwr.pdv.cash.domain.CashRegister;
 import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import com.iwr.pdv.customer.domain.Customer;
@@ -52,7 +50,6 @@ public class SaleServiceImpl implements SaleService {
     private final CustomerRepository customerRepository;
     private final PromissoryNoteRepository promissoryNoteRepository;
     private final SaleMapper saleMapper;
-    private final CashRegisterService cashRegisterService;
     private final AuditLogService auditLogService;
     private final Clock clock;
 
@@ -63,7 +60,6 @@ public class SaleServiceImpl implements SaleService {
             CustomerRepository customerRepository,
             PromissoryNoteRepository promissoryNoteRepository,
             SaleMapper saleMapper,
-            CashRegisterService cashRegisterService,
             AuditLogService auditLogService,
             Clock clock
     ) {
@@ -73,7 +69,6 @@ public class SaleServiceImpl implements SaleService {
         this.customerRepository = customerRepository;
         this.promissoryNoteRepository = promissoryNoteRepository;
         this.saleMapper = saleMapper;
-        this.cashRegisterService = cashRegisterService;
         this.auditLogService = auditLogService;
         this.clock = clock;
     }
@@ -83,7 +78,6 @@ public class SaleServiceImpl implements SaleService {
     public SaleResponse closeSale(SaleRequest request, AppUser operator) {
         Map<Long, Integer> quantitiesByProductId = consolidateQuantities(request.items());
         OffsetDateTime now = OffsetDateTime.now(clock);
-        CashRegister cashRegister = cashRegisterService.requireOpenRegister();
         Customer customer = resolveCustomer(request);
 
         Sale sale = new Sale();
@@ -91,7 +85,6 @@ public class SaleServiceImpl implements SaleService {
         sale.setCreatedAt(now);
         sale.setStatus(SaleStatus.COMPLETED);
         sale.setOperator(operator);
-        sale.setCashRegister(cashRegister);
         sale.setCustomer(customer);
         sale.setPaymentMethod(request.paymentMethod());
         sale.setSubtotalAmount(BigDecimal.ZERO);
@@ -143,18 +136,6 @@ public class SaleServiceImpl implements SaleService {
 
         OffsetDateTime now = OffsetDateTime.now(clock);
         List<PromissoryNote> promissoryNotes = promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(saleId);
-        for (PromissoryNote note : promissoryNotes) {
-            if (note.getStatus() == PromissoryNoteStatus.PAID) {
-                cashRegisterService.registerReceivableReversal(
-                        note.getAmount(),
-                        note.getPaymentMethod(),
-                        "Estorno de promissoria #" + note.getId() + " - cancelamento de venda",
-                        operator,
-                        "PROMISSORY_NOTE",
-                        note.getId()
-                );
-            }
-        }
 
         sale.setStatus(SaleStatus.CANCELLED);
         sale.setCancelledBy(operator);
@@ -162,7 +143,7 @@ public class SaleServiceImpl implements SaleService {
         sale.setCancelledAt(now);
 
         for (SaleItem item : sale.getItems()) {
-            Product product = item.getProduct();
+            Product product = findProduct(item.getProduct().getId());
             product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
             product.setUpdatedAt(now);
         }
@@ -458,7 +439,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     private Product findProduct(Long productId) {
-        return productRepository.findById(productId)
+        return productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found for id " + productId + "."));
     }
 

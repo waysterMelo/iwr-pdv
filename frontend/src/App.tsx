@@ -1,49 +1,44 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import { BarChart3, ClipboardList, Gift, History, Package, ReceiptText, ShieldCheck, Users } from 'lucide-react'
 import './App.css'
-import navCashRegister from './assets/generated/nav-cash-register.png'
 
-import navHistory from './assets/generated/nav-history.png'
-import navProducts from './assets/generated/nav-products.png'
-import navSales from './assets/generated/nav-sales.png'
-import navUsers from './assets/generated/nav-users.png'
-import { AuditLogPage } from './pages/AuditLogPage'
-import { AdminDashboardPage } from './pages/AdminDashboardPage'
-import { CashRegisterHistoryPage } from './pages/CashRegisterHistoryPage'
-import { CashRegisterPage } from './pages/CashRegisterPage'
-
-import { CustomerManagementPage } from './pages/CustomerManagementPage'
 import { LoginPage } from './pages/LoginPage'
-import { LoyaltyPage } from './pages/LoyaltyPage'
-import { MobileSalesPage } from './pages/MobileSalesPage'
-import { MobileCashRegisterPage } from './pages/MobileCashRegisterPage'
-import { ProductEditPage } from './pages/ProductEditPage'
-import { ProductManagementPage } from './pages/ProductManagementPage'
-import { PromissoryNotesPage } from './pages/PromissoryNotesPage'
-import { SalesCheckoutPage } from './pages/SalesCheckoutPage'
-import { SalesHistoryPage } from './pages/SalesHistoryPage'
-import { UserManagementPage } from './pages/UserManagementPage'
 import { getCurrentUser, logout } from './services/authService'
 import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'cash-register' | 'cash-history' | 'admin-dashboard' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'audit' | 'users'
-type MobileView = 'home' | 'sale' | 'cash-register'
+type AppView = 'checkout' | 'admin-dashboard' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'audit' | 'users'
+type MobileView = 'home' | 'sale'
 
-const menuImages: Record<AppView, string> = {
-  checkout: navSales,
-  'cash-register': navCashRegister,
-  'cash-history': navCashRegister,
-  'admin-dashboard': navHistory,
-  'promissory-notes': navHistory,
-  loyalty: navUsers,
-  customers: navUsers,
-  history: navHistory,
-  audit: navHistory,
-  products: navProducts,
-  'product-edit': navProducts,
+const AuditLogPage = lazy(() => import('./pages/AuditLogPage').then((module) => ({ default: module.AuditLogPage })))
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })))
+const CustomerManagementPage = lazy(() => import('./pages/CustomerManagementPage').then((module) => ({ default: module.CustomerManagementPage })))
+const LoyaltyPage = lazy(() => import('./pages/LoyaltyPage').then((module) => ({ default: module.LoyaltyPage })))
+const MobileSalesPage = lazy(() => import('./pages/MobileSalesPage').then((module) => ({ default: module.MobileSalesPage })))
+const ProductEditPage = lazy(() => import('./pages/ProductEditPage').then((module) => ({ default: module.ProductEditPage })))
+const ProductManagementPage = lazy(() => import('./pages/ProductManagementPage').then((module) => ({ default: module.ProductManagementPage })))
+const PromissoryNotesPage = lazy(() => import('./pages/PromissoryNotesPage').then((module) => ({ default: module.PromissoryNotesPage })))
+const SalesCheckoutPage = lazy(() => import('./pages/SalesCheckoutPage').then((module) => ({ default: module.SalesCheckoutPage })))
+const SalesHistoryPage = lazy(() => import('./pages/SalesHistoryPage').then((module) => ({ default: module.SalesHistoryPage })))
+const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then((module) => ({ default: module.UserManagementPage })))
 
-  users: navUsers,
+const menuIcons: Record<AppView, LucideIcon> = {
+  checkout: ReceiptText,
+  'admin-dashboard': BarChart3,
+  'promissory-notes': ClipboardList,
+  loyalty: Gift,
+  customers: Users,
+  history: History,
+  audit: ShieldCheck,
+  products: Package,
+  'product-edit': Package,
+  users: Users,
+}
+
+function LoadingView() {
+  return <div className="product-empty">Carregando tela...</div>
 }
 
 function App() {
@@ -56,20 +51,18 @@ function App() {
   const isMobileLayout = useMediaQuery('(max-width: 900px), (pointer: coarse) and (max-width: 1100px)')
   const allMenuItems: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }> = [
     { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
-    { id: 'cash-register', label: 'Caixa', eyebrow: 'Operacao' },
-    { id: 'cash-history', label: 'Hist. Caixa', eyebrow: 'Operacao', adminOnly: true },
     { id: 'admin-dashboard', label: 'Painel Admin', eyebrow: 'Admin', adminOnly: true },
     { id: 'promissory-notes', label: 'Notas', eyebrow: 'Promissorias' },
     { id: 'loyalty', label: 'Fidelidade', eyebrow: 'Clientes' },
     { id: 'customers', label: 'Clientes', eyebrow: 'Cadastro' },
     { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
     { id: 'audit', label: 'Auditoria', eyebrow: 'Admin', adminOnly: true },
-    { id: 'products', label: 'Produtos', eyebrow: 'Estoque', adminOnly: true },
+    { id: 'products', label: 'Produtos', eyebrow: 'Estoque' },
 
     { id: 'users', label: 'Usuarios', eyebrow: 'Acessos', adminOnly: true },
   ]
   const menuItems = allMenuItems.filter((item) => currentUser?.role === 'ADMIN' || !item.adminOnly)
-  const canEditProduct = currentUser?.role === 'ADMIN' && currentView === 'product-edit' && editingProductId !== null
+  const canEditProduct = currentView === 'product-edit' && editingProductId !== null
   const visibleView = menuItems.some((item) => item.id === currentView) || canEditProduct ? currentView : 'checkout'
 
   const currentItem =
@@ -154,23 +147,20 @@ function App() {
             <section className="mobile-home-hero">
               <span className="eyebrow">Vendedor</span>
               <h1>{currentUser.displayName}</h1>
-              <p>Venda por camera com carrinho simplificado e fechamento direto no caixa aberto.</p>
+              <p>Venda por camera com carrinho simplificado e fechamento direto.</p>
             </section>
 
             <div className="mobile-home-actions">
-              <button className="mobile-sell-button mobile-sell-button--secondary" type="button" onClick={() => setMobileView('cash-register')}>
-                Meu Caixa
-              </button>
               <button className="mobile-sell-button" type="button" onClick={() => setMobileView('sale')}>
                 Vender
               </button>
             </div>
           </main>
         ) : mobileView === 'sale' ? (
-          <MobileSalesPage onBack={() => setMobileView('home')} />
-        ) : (
-          <MobileCashRegisterPage onBack={() => setMobileView('home')} />
-        )}
+          <Suspense fallback={<LoadingView />}>
+            <MobileSalesPage onBack={() => setMobileView('home')} />
+          </Suspense>
+        ) : null}
       </div>
     )
   }
@@ -191,7 +181,7 @@ function App() {
             <div className="premium-status-card__icon" aria-hidden="true" />
             <div>
               <strong>Operacao premium</strong>
-              <span>Caixa aberto - Loja online</span>
+              <span>Vendas e promissorias</span>
             </div>
           </div>
         ) : null}
@@ -199,7 +189,7 @@ function App() {
         <nav className="side-navigation" aria-label="Navegacao principal">
           {menuItems.map((item) => (
             (() => {
-              const menuImage = menuImages[item.id]
+              const MenuIcon = menuIcons[item.id]
 
               return (
             <button
@@ -209,7 +199,7 @@ function App() {
               onClick={() => setCurrentView(item.id)}
             >
               <span className="side-nav-icon">
-                <img src={menuImage} alt="" aria-hidden="true" />
+                <MenuIcon size={21} strokeWidth={2.25} aria-hidden="true" />
               </span>
               <span className="side-nav-copy">
                 <span>{item.eyebrow}</span>
@@ -266,38 +256,38 @@ function App() {
           </div>
         ) : null}
 
-        {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
-        {visibleView === 'cash-register' ? <CashRegisterPage /> : null}
-        {visibleView === 'cash-history' ? <CashRegisterHistoryPage /> : null}
-        {visibleView === 'admin-dashboard' ? <AdminDashboardPage /> : null}
-        {visibleView === 'promissory-notes' ? <PromissoryNotesPage /> : null}
-        {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
-        {visibleView === 'customers' ? <CustomerManagementPage /> : null}
-        {visibleView === 'history' ? <SalesHistoryPage /> : null}
-        {visibleView === 'audit' ? <AuditLogPage /> : null}
-        {visibleView === 'products' ? (
-          <ProductManagementPage
-            onEditProduct={(productId) => {
-              setEditingProductId(productId)
-              setCurrentView('product-edit')
-            }}
-          />
-        ) : null}
-        {visibleView === 'product-edit' && editingProductId !== null ? (
-          <ProductEditPage
-            productId={editingProductId}
-            onBack={() => {
-              setEditingProductId(null)
-              setCurrentView('products')
-            }}
-            onSaved={() => {
-              setEditingProductId(null)
-              setCurrentView('products')
-            }}
-          />
-        ) : null}
+        <Suspense fallback={<LoadingView />}>
+          {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
+          {visibleView === 'admin-dashboard' ? <AdminDashboardPage /> : null}
+          {visibleView === 'promissory-notes' ? <PromissoryNotesPage /> : null}
+          {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
+          {visibleView === 'customers' ? <CustomerManagementPage /> : null}
+          {visibleView === 'history' ? <SalesHistoryPage /> : null}
+          {visibleView === 'audit' ? <AuditLogPage /> : null}
+          {visibleView === 'products' ? (
+            <ProductManagementPage
+              onEditProduct={(productId) => {
+                setEditingProductId(productId)
+                setCurrentView('product-edit')
+              }}
+            />
+          ) : null}
+          {visibleView === 'product-edit' && editingProductId !== null ? (
+            <ProductEditPage
+              productId={editingProductId}
+              onBack={() => {
+                setEditingProductId(null)
+                setCurrentView('products')
+              }}
+              onSaved={() => {
+                setEditingProductId(null)
+                setCurrentView('products')
+              }}
+            />
+          ) : null}
 
-        {visibleView === 'users' ? <UserManagementPage /> : null}
+          {visibleView === 'users' ? <UserManagementPage /> : null}
+        </Suspense>
       </section>
     </div>
   )

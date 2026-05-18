@@ -15,6 +15,11 @@ import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductCodeControl;
 import com.iwr.pdv.product.domain.ProductCodeControlRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
+import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEventRepository;
+import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
+import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
+import com.iwr.pdv.sale.domain.SaleRepository;
+import com.iwr.pdv.sale.domain.StockMovementRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +49,21 @@ class ProductControllerIntegrationTest {
     private ProductCodeControlRepository productCodeControlRepository;
 
     @Autowired
+    private SaleRepository saleRepository;
+
+    @Autowired
+    private StockMovementRepository stockMovementRepository;
+
+    @Autowired
+    private PromissoryNoteRepository promissoryNoteRepository;
+
+    @Autowired
+    private PromissoryNotePaymentRepository promissoryNotePaymentRepository;
+
+    @Autowired
+    private PromissoryNoteCollectionEventRepository promissoryNoteCollectionEventRepository;
+
+    @Autowired
     private AuthService authService;
 
     private MockMvc mockMvc;
@@ -53,6 +73,11 @@ class ProductControllerIntegrationTest {
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
+        promissoryNoteCollectionEventRepository.deleteAll();
+        promissoryNotePaymentRepository.deleteAll();
+        stockMovementRepository.deleteAll();
+        promissoryNoteRepository.deleteAll();
+        saleRepository.deleteAll();
         productRepository.deleteAll();
         resetProductCodeSequence();
     }

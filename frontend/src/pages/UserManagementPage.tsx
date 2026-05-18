@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import {
   createUser,
   getUsersPage,
@@ -89,11 +89,7 @@ export function UserManagementPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const users = userPage.content
 
-  useEffect(() => {
-    void loadUsers(0)
-  }, [])
-
-  async function loadUsers(nextPage = page) {
+  const loadUsers = useCallback(async (nextPage: number) => {
     setIsLoading(true)
 
     try {
@@ -106,7 +102,15 @@ export function UserManagementPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadUsers(0)
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadUsers])
 
   function resetForm(clearMessages = true) {
     setForm(initialFormState)
@@ -297,7 +301,7 @@ export function UserManagementPage() {
             <header className="section-header">
               <div>
                 <h2>Usuarios cadastrados</h2>
-                <p>Vendedores acessam Vendas e Caixa. Admins acessam todos os menus.</p>
+                <p>Vendedores acessam Vendas, clientes e promissorias. Admins acessam todos os menus.</p>
               </div>
             </header>
 

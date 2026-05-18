@@ -2,12 +2,10 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { UserRound, UsersRound } from 'lucide-react'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
-import { createCustomer, getCustomers, updateCustomer } from '../services/customerService'
+import { createCustomer, getCustomerPage, updateCustomer } from '../services/customerService'
 import type { Customer, CustomerPayload } from '../types/customer'
 import { getErrorMessage } from '../utils/errors'
-import { formatDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
-import { usePagination } from '../hooks/usePagination'
 import { PaginationControls } from '../components/PaginationControls'
 import { maskCpf, maskPhone } from '../utils/masks'
 
@@ -39,32 +37,40 @@ export function CustomerManagementPage() {
   const [form, setForm] = useState<CustomerPayload>(initialForm)
   const [editingCustomerId, setEditingCustomerId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
+  const [appliedSearch, setAppliedSearch] = useState('')
+  const [customerPage, setCustomerPage] = useState(0)
+  const [customerTotal, setCustomerTotal] = useState(0)
+  const [customerTotalPages, setCustomerTotalPages] = useState(1)
+  const customerPageSize = 6
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const activeCustomers = useMemo(() => customers.filter((customer) => customer.active).length, [customers])
-  const customerPagination = usePagination(customers, 6)
 
-  const loadCustomers = useCallback(async (nextSearch = '') => {
+  const loadCustomers = useCallback(async (nextSearch = appliedSearch, nextPage = customerPage) => {
     setIsLoading(true)
     try {
-      setCustomers(await getCustomers(nextSearch))
+      const response = await getCustomerPage(nextSearch, nextPage, customerPageSize)
+      setCustomers(response.content)
+      setCustomerPage(response.page)
+      setCustomerTotal(response.totalElements)
+      setCustomerTotalPages(Math.max(response.totalPages, 1))
       setErrorMessage(null)
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Nao foi possivel carregar clientes.'))
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [appliedSearch, customerPage])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      void loadCustomers()
+      void loadCustomers(appliedSearch, customerPage)
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [loadCustomers])
+  }, [appliedSearch, customerPage, loadCustomers])
 
   function resetForm() {
     setEditingCustomerId(null)
@@ -113,7 +119,7 @@ export function CustomerManagementPage() {
         message: 'Cadastro salvo com sucesso.',
       })
       resetForm()
-      await loadCustomers()
+      await loadCustomers(appliedSearch, customerPage)
     } catch (error) {
       const message = getErrorMessage(error, 'Nao foi possivel salvar cliente.')
       setErrorMessage(message)
@@ -125,7 +131,8 @@ export function CustomerManagementPage() {
 
   function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    void loadCustomers(search)
+    setAppliedSearch(search)
+    setCustomerPage(0)
   }
 
   return (
@@ -137,7 +144,7 @@ export function CustomerManagementPage() {
           subtitle="Mantenha os dados usados nas vendas a prazo e na impressao das notas promissorias."
           metricLabel="Ativos"
           metricValue={String(activeCustomers)}
-          status={`${customers.length} cliente(s) listados`}
+          status={`${customerTotal} cliente(s) encontrados`}
         />
 
         <div className="metric-grid metric-grid--3">
@@ -147,7 +154,7 @@ export function CustomerManagementPage() {
         </div>
 
         <div className="content-grid">
-          <section className="product-form-panel">
+          <section className="product-form-panel customer-form-panel">
             <header className="section-header">
               <div>
                 <h2>{editingCustomerId === null ? 'Novo cliente' : 'Editar cliente'}</h2>
@@ -239,7 +246,7 @@ export function CustomerManagementPage() {
             </form>
           </section>
 
-          <section className="product-list-panel">
+          <section className="product-list-panel customer-list-panel">
             <header className="section-header">
               <div>
                 <h2>Clientes</h2>
@@ -265,9 +272,9 @@ export function CustomerManagementPage() {
             ) : customers.length === 0 ? (
               <div className="product-empty">Nenhum cliente encontrado.</div>
             ) : (
-              <div className="product-list">
-                {customerPagination.pageItems.map((customer) => (
-                  <article className="product-card" key={customer.id}>
+              <div className="product-list customer-card-list">
+                {customers.map((customer) => (
+                  <article className="product-card customer-card" key={customer.id}>
                     <div className="product-card-header">
                       <div>
                         <h3>{customer.name}</h3>
@@ -277,23 +284,9 @@ export function CustomerManagementPage() {
                         {customer.active ? 'Ativo' : 'Inativo'}
                       </span>
                     </div>
-                    <div className="product-card-grid">
-                      <div>
-                        <span>Telefone</span>
-                        <strong>{customer.phone ? maskPhone(customer.phone) : '-'}</strong>
-                      </div>
-                      <div>
-                        <span>Email</span>
-                        <strong>{customer.email || '-'}</strong>
-                      </div>
-                      <div>
-                        <span>Aniversario</span>
-                        <strong>{customer.birthDate ? customer.birthDate.split('-').reverse().join('/') : '-'}</strong>
-                      </div>
-                      <div>
-                        <span>Atualizado</span>
-                        <strong>{formatDateTime(customer.updatedAt)}</strong>
-                      </div>
+                    <div className="customer-card-contact">
+                      <span>Telefone</span>
+                      <strong>{customer.phone ? maskPhone(customer.phone) : 'Nao informado'}</strong>
                     </div>
                     <div className="product-card-actions">
                       <button className="secondary-button" type="button" onClick={() => handleEdit(customer)}>
@@ -304,11 +297,11 @@ export function CustomerManagementPage() {
                 ))}
                 <PaginationControls
                   itemLabel="clientes"
-                  page={customerPagination.page}
-                  pageSize={customerPagination.pageSize}
-                  totalItems={customerPagination.totalItems}
-                  totalPages={customerPagination.totalPages}
-                  onPageChange={customerPagination.setPage}
+                  page={customerPage}
+                  pageSize={customerPageSize}
+                  totalItems={customerTotal}
+                  totalPages={customerTotalPages}
+                  onPageChange={setCustomerPage}
                 />
               </div>
             )}

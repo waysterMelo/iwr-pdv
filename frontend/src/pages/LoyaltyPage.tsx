@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Cake, CalendarDays, Gift, Phone } from 'lucide-react'
+import { Cake, CalendarDays, Gift, HeartHandshake, MessageCircle, Phone, Sparkles } from 'lucide-react'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationControls } from '../components/PaginationControls'
@@ -71,7 +71,11 @@ export function LoyaltyPage() {
   }, [])
 
   useEffect(() => {
-    void loadCustomers()
+    const timeoutId = window.setTimeout(() => {
+      void loadCustomers()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [loadCustomers])
 
   const birthdayCustomers = useMemo<BirthdayCustomer[]>(() => {
@@ -109,11 +113,26 @@ export function LoyaltyPage() {
 
         {errorMessage ? <div className="feedback-message feedback-message--error">{errorMessage}</div> : null}
 
-        <section className="product-list-panel">
-          <header className="section-header">
-            <div>
-              <h2>Calendario de relacionamento</h2>
-              <p>Clientes ordenados pelo proximo aniversario.</p>
+        <section className="product-list-panel relationship-client-panel">
+          <header className="section-header relationship-client-header">
+            <div className="relationship-client-title">
+              <span className="relationship-client-icon" aria-hidden="true">
+                <HeartHandshake size={22} strokeWidth={2.4} />
+              </span>
+              <div>
+                <h2>Calendario de relacionamento</h2>
+                <p>Clientes ordenados pelo proximo aniversario.</p>
+              </div>
+            </div>
+            <div className="relationship-client-actions" aria-label="Resumo do relacionamento">
+              <span>
+                <Sparkles size={14} strokeWidth={2.4} aria-hidden="true" />
+                {todayCount} hoje
+              </span>
+              <span>
+                <Gift size={14} strokeWidth={2.4} aria-hidden="true" />
+                {nextSevenDaysCount} proximos
+              </span>
             </div>
           </header>
 
@@ -124,7 +143,14 @@ export function LoyaltyPage() {
           ) : (
             <div className="product-list">
               {birthdayPagination.pageItems.map((customer) => (
-                <article className="product-card" key={customer.id}>
+                <article
+                  className={
+                    customer.daysUntilBirthday <= 7
+                      ? 'product-card relationship-customer-card relationship-customer-card--hot'
+                      : 'product-card relationship-customer-card'
+                  }
+                  key={customer.id}
+                >
                   <div className="product-card-header">
                     <div>
                       <h3>{customer.name}</h3>
@@ -137,7 +163,16 @@ export function LoyaltyPage() {
                   <div className="product-card-grid">
                     <div>
                       <span>Telefone</span>
-                      <strong>{customer.phone ? maskPhone(customer.phone) : '-'}</strong>
+                      <strong>
+                        {customer.phone ? (
+                          <>
+                            <Phone size={14} strokeWidth={2.3} aria-hidden="true" />
+                            {maskPhone(customer.phone)}
+                          </>
+                        ) : (
+                          '-'
+                        )}
+                      </strong>
                     </div>
                     <div>
                       <span>Email</span>
@@ -145,7 +180,16 @@ export function LoyaltyPage() {
                     </div>
                     <div>
                       <span>Contato</span>
-                      <strong>{customer.phone ? <Phone size={14} strokeWidth={2.3} aria-hidden="true" /> : '-'}</strong>
+                      <strong>
+                        {customer.phone ? (
+                          <>
+                            <MessageCircle size={14} strokeWidth={2.3} aria-hidden="true" />
+                            WhatsApp
+                          </>
+                        ) : (
+                          '-'
+                        )}
+                      </strong>
                     </div>
                   </div>
                 </article>

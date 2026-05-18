@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import {
   AlertCircle,
+  ArrowLeft,
+  CalendarDays,
   CalendarClock,
   CheckCircle2,
   FileDown,
   MessageCircle,
+  PlusCircle,
   Printer,
   ReceiptText,
   Search,
@@ -14,12 +17,14 @@ import { PageHeader } from '../components/PageHeader'
 import { PaginationControls } from '../components/PaginationControls'
 import { getCustomers } from '../services/customerService'
 import {
+  createManualPromissoryNotes,
+  downloadPromissoryNotesCsv,
   getPromissoryNotePrintUrl,
+  getPromissoryNoteCalendarDays,
   getPromissoryNoteCollectionEvents,
   getPromissoryNotePayments,
   getPromissoryNotes,
   getPromissoryNotesDueToday,
-  getPromissoryNotesExportUrl,
   getPromissoryPaymentReceiptUrl,
   getPromissoryDelinquencyReport,
   getPromissoryWhatsappMessage,
@@ -30,6 +35,7 @@ import {
 import type { Customer } from '../types/customer'
 import type {
   PromissoryNote,
+  PromissoryNoteCalendarDay,
   PromissoryNoteCollectionAction,
   PromissoryNoteCollectionEvent,
   PromissoryNoteDelinquencyRange,
@@ -80,6 +86,42 @@ function getLocalToday() {
   return localDate.toISOString().slice(0, 10)
 }
 
+function shiftMonth(value: string, offset: number) {
+  const [year, month] = value.split('-').map(Number)
+  const date = new Date(year, month - 1 + offset, 1)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function buildCalendarDays(monthValue: string) {
+  const [year, month] = monthValue.split('-').map(Number)
+  const firstDate = new Date(year, month - 1, 1)
+  const lastDate = new Date(year, month, 0)
+  const days: Array<{ date: string; day: number; muted: boolean }> = []
+
+  for (let index = 0; index < firstDate.getDay(); index += 1) {
+    days.push({ date: '', day: 0, muted: true })
+  }
+
+  for (let day = 1; day <= lastDate.getDate(); day += 1) {
+    days.push({
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      day,
+      muted: false,
+    })
+  }
+
+  return days
+}
+
+function monthRange(monthValue: string) {
+  const [year, month] = monthValue.split('-').map(Number)
+  const endDay = new Date(year, month, 0).getDate()
+  return {
+    startDate: `${year}-${String(month).padStart(2, '0')}-01`,
+    endDate: `${year}-${String(month).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`,
+  }
+}
+
 export function PromissoryNotesPage() {
   const { confirm, notify } = useAppMessage()
   const [notes, setNotes] = useState<PromissoryNote[]>([])
@@ -87,7 +129,16 @@ export function PromissoryNotesPage() {
   const [selectedNote, setSelectedNote] = useState<PromissoryNote | null>(null)
   const [filters, setFilters] = useState<PromissoryNoteFilters>({})
   const [draftFilters, setDraftFilters] = useState({ status: '', customerId: '', startDate: '', endDate: '' })
+  const [pageMode, setPageMode] = useState<'wallet' | 'manual-create'>('wallet')
+  const [manualNoteForm, setManualNoteForm] = useState({
+    customerId: '',
+    totalAmount: '',
+    installments: '1',
+    firstDueDate: getLocalToday(),
+  })
   const [listMode, setListMode] = useState<'due-today' | 'custom'>('due-today')
+  const [calendarMonth, setCalendarMonth] = useState(() => getLocalToday().slice(0, 7))
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => getLocalToday())
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>>('CASH')
   const [paymentAmount, setPaymentAmount] = useState('')
@@ -95,6 +146,7 @@ export function PromissoryNotesPage() {
   const [payments, setPayments] = useState<PromissoryNotePayment[]>([])
   const [collectionEvents, setCollectionEvents] = useState<PromissoryNoteCollectionEvent[]>([])
   const [delinquencyReport, setDelinquencyReport] = useState<PromissoryNoteDelinquencyRange[]>([])
+  const [calendarReceivableDays, setCalendarReceivableDays] = useState<PromissoryNoteCalendarDay[]>([])
   const [collectionAction, setCollectionAction] = useState<PromissoryNoteCollectionAction>('MESSAGE_SENT')
   const [collectionComment, setCollectionComment] = useState('')
   const [promisedPaymentDate, setPromisedPaymentDate] = useState('')
@@ -105,6 +157,8 @@ export function PromissoryNotesPage() {
   const [renegotiationSecondDueDate, setRenegotiationSecondDueDate] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isPaying, setIsPaying] = useState(false)
+  const [isExportingCsv, setIsExportingCsv] = useState(false)
+  const [isCreatingManualNote, setIsCreatingManualNote] = useState(false)
   const [isRegisteringCollection, setIsRegisteringCollection] = useState(false)
   const [isRenegotiating, setIsRenegotiating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -116,22 +170,34 @@ export function PromissoryNotesPage() {
       if (!normalizedSearch) return true
       return (
         note.customer.name.toLowerCase().includes(normalizedSearch) ||
-        String(note.saleId).includes(normalizedSearch) ||
+        (note.saleId ? String(note.saleId).includes(normalizedSearch) : 'nota avulsa'.includes(normalizedSearch)) ||
         (note.customer.cpf ?? '').includes(normalizedSearch)
       )
     })
   }, [notes, searchTerm])
   const notePagination = usePagination(filteredNotes, 8)
+  const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth])
+  const calendarTotals = useMemo(() => {
+    const totals = new Map<string, { count: number; amount: number }>()
+    calendarReceivableDays.forEach((day) => {
+      totals.set(day.date, { count: day.count, amount: day.amount })
+    })
+    return totals
+  }, [calendarReceivableDays])
 
   useEffect(() => {
-    if (filteredNotes.length === 0) {
-      setSelectedNote(null)
-      return
-    }
+    const timeoutId = window.setTimeout(() => {
+      if (filteredNotes.length === 0) {
+        setSelectedNote(null)
+        return
+      }
 
-    if (!selectedNote || !filteredNotes.some((note) => note.id === selectedNote.id)) {
-      setSelectedNote(filteredNotes[0])
-    }
+      if (!selectedNote || !filteredNotes.some((note) => note.id === selectedNote.id)) {
+        setSelectedNote(filteredNotes[0])
+      }
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [filteredNotes, selectedNote])
 
   const metrics = useMemo(() => {
@@ -185,6 +251,15 @@ export function PromissoryNotesPage() {
     }
   }, [])
 
+  const loadCalendarDays = useCallback(async (nextCalendarMonth: string) => {
+    try {
+      const range = monthRange(nextCalendarMonth)
+      setCalendarReceivableDays(await getPromissoryNoteCalendarDays(range.startDate, range.endDate))
+    } catch {
+      setCalendarReceivableDays([])
+    }
+  }, [])
+
   const refreshCurrentList = useCallback(async () => {
     if (listMode === 'due-today') {
       await loadDueToday()
@@ -192,7 +267,8 @@ export function PromissoryNotesPage() {
       await loadNotes(filters)
     }
     await loadDelinquencyReport()
-  }, [filters, listMode, loadDelinquencyReport, loadDueToday, loadNotes])
+    await loadCalendarDays(calendarMonth)
+  }, [calendarMonth, filters, listMode, loadCalendarDays, loadDelinquencyReport, loadDueToday, loadNotes])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -205,34 +281,45 @@ export function PromissoryNotesPage() {
   }, [loadDelinquencyReport, loadDueToday])
 
   useEffect(() => {
-    if (!selectedNote) {
-      setPayments([])
-      setCollectionEvents([])
-      return
-    }
+    const timeoutId = window.setTimeout(() => {
+      void loadCalendarDays(calendarMonth)
+    }, 0)
 
-    setPaymentAmount(selectedNote.remainingAmount > 0 ? String(selectedNote.remainingAmount) : '')
-    setRenegotiationFirstAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
-    setRenegotiationSecondAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
+    return () => window.clearTimeout(timeoutId)
+  }, [calendarMonth, loadCalendarDays])
 
+  useEffect(() => {
     let isCurrent = true
-    Promise.all([
-      getPromissoryNotePayments(selectedNote.id),
-      getPromissoryNoteCollectionEvents(selectedNote.id),
-    ])
-      .then(([nextPayments, nextEvents]) => {
-        if (!isCurrent) return
-        setPayments(nextPayments)
-        setCollectionEvents(nextEvents)
-      })
-      .catch(() => {
-        if (!isCurrent) return
+    const timeoutId = window.setTimeout(() => {
+      if (!selectedNote) {
         setPayments([])
         setCollectionEvents([])
-      })
+        return
+      }
+
+      setPaymentAmount(selectedNote.remainingAmount > 0 ? String(selectedNote.remainingAmount) : '')
+      setRenegotiationFirstAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
+      setRenegotiationSecondAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
+
+      Promise.all([
+        getPromissoryNotePayments(selectedNote.id),
+        getPromissoryNoteCollectionEvents(selectedNote.id),
+      ])
+        .then(([nextPayments, nextEvents]) => {
+          if (!isCurrent) return
+          setPayments(nextPayments)
+          setCollectionEvents(nextEvents)
+        })
+        .catch(() => {
+          if (!isCurrent) return
+          setPayments([])
+          setCollectionEvents([])
+        })
+    }, 0)
 
     return () => {
       isCurrent = false
+      window.clearTimeout(timeoutId)
     }
   }, [selectedNote])
 
@@ -244,10 +331,11 @@ export function PromissoryNotesPage() {
         void loadNotes(filters)
       }
       void loadDelinquencyReport()
+      void loadCalendarDays(calendarMonth)
     }, 60_000)
 
     return () => window.clearInterval(intervalId)
-  }, [listMode, loadDelinquencyReport, loadDueToday, loadNotes, filters])
+  }, [calendarMonth, listMode, loadCalendarDays, loadDelinquencyReport, loadDueToday, loadNotes, filters])
 
   function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -272,12 +360,111 @@ export function PromissoryNotesPage() {
     void loadDelinquencyReport()
   }
 
+  function handleCalendarDateClick(date: string) {
+    if (!date) return
+    const nextDraftFilters = { ...draftFilters, startDate: date, endDate: date }
+    const nextFilters: PromissoryNoteFilters = {
+      status: nextDraftFilters.status ? nextDraftFilters.status as PromissoryNoteStatus : undefined,
+      customerId: nextDraftFilters.customerId ? Number(nextDraftFilters.customerId) : undefined,
+      startDate: date,
+      endDate: date,
+    }
+    setSelectedCalendarDate(date)
+    setDraftFilters(nextDraftFilters)
+    setFilters(nextFilters)
+    setListMode('custom')
+    void loadNotes(nextFilters)
+    void loadDelinquencyReport()
+  }
+
   function showDueToday() {
     setDraftFilters({ status: '', customerId: '', startDate: '', endDate: '' })
     setFilters({})
     setListMode('due-today')
     void loadDueToday()
     void loadDelinquencyReport()
+  }
+
+  function buildManualInstallments(totalAmount: number, installmentsCount: number, firstDueDate: string) {
+    const [year, month, day] = firstDueDate.split('-').map(Number)
+    const totalInCents = Math.round(totalAmount * 100)
+    const baseAmount = Math.floor(totalInCents / installmentsCount)
+    const remainder = totalInCents % installmentsCount
+
+    return Array.from({ length: installmentsCount }, (_, index) => {
+      const dueDate = new Date(year, month - 1 + index, day)
+      const amountInCents = baseAmount + (index < remainder ? 1 : 0)
+      return {
+        dueDate: `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}`,
+        amount: amountInCents / 100,
+      }
+    })
+  }
+
+  async function handleManualNoteSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const customerId = Number(manualNoteForm.customerId)
+    const totalAmount = Number(manualNoteForm.totalAmount)
+    const installmentsCount = Number(manualNoteForm.installments)
+
+    if (!customerId || !Number.isFinite(totalAmount) || totalAmount <= 0 || !Number.isInteger(installmentsCount) || installmentsCount < 1) {
+      notify({
+        type: 'error',
+        title: 'Nota incompleta',
+        message: 'Informe cliente, valor total e quantidade de parcelas.',
+      })
+      return
+    }
+
+    setIsCreatingManualNote(true)
+    try {
+      const newNotes = await createManualPromissoryNotes({
+        customerId,
+        installments: buildManualInstallments(totalAmount, installmentsCount, manualNoteForm.firstDueDate),
+      })
+      setManualNoteForm({ customerId: '', totalAmount: '', installments: '1', firstDueDate: getLocalToday() })
+      setPageMode('wallet')
+      setListMode('custom')
+      setFilters({})
+      setDraftFilters({ status: '', customerId: '', startDate: '', endDate: '' })
+      await loadNotes({})
+      await loadDelinquencyReport()
+      await loadCalendarDays(calendarMonth)
+      setSelectedNote(newNotes[0] ?? null)
+      notify({
+        type: 'success',
+        title: 'Nota avulsa cadastrada',
+        message: `${newNotes.length} parcela(s) adicionada(s) a carteira.`,
+      })
+    } catch (error) {
+      notify({
+        type: 'error',
+        title: 'Nao foi possivel cadastrar',
+        message: getErrorMessage(error, 'Revise os dados da nota promissoria.'),
+      })
+    } finally {
+      setIsCreatingManualNote(false)
+    }
+  }
+
+  async function handleExportCsv() {
+    setIsExportingCsv(true)
+    try {
+      await downloadPromissoryNotesCsv(filters)
+      notify({
+        type: 'success',
+        title: 'CSV gerado',
+        message: 'A carteira de notas promissorias foi exportada.',
+      })
+    } catch (error) {
+      notify({
+        type: 'error',
+        title: 'CSV indisponivel',
+        message: getErrorMessage(error, 'Nao foi possivel exportar as notas promissorias.'),
+      })
+    } finally {
+      setIsExportingCsv(false)
+    }
   }
 
   async function handlePay() {
@@ -296,7 +483,7 @@ export function PromissoryNotesPage() {
     const confirmed = await confirm({
       type: 'warning',
       title: 'Baixar nota?',
-      message: `Registrar recebimento de ${formatCurrency(amount ?? selectedNote.remainingAmount)} no caixa aberto?`,
+      message: `Registrar recebimento de ${formatCurrency(amount ?? selectedNote.remainingAmount)}?`,
       confirmLabel: 'Baixar',
       cancelLabel: 'Voltar',
     })
@@ -311,13 +498,13 @@ export function PromissoryNotesPage() {
       notify({
         type: 'success',
         title: paidNote.status === 'PAID' ? 'Nota baixada' : 'Pagamento parcial',
-        message: `Parcela #${paidNote.id} registrada no caixa.`,
+        message: `Parcela #${paidNote.id} registrada como recebida.`,
       })
     } catch (error) {
       notify({
         type: 'error',
         title: 'Nao foi possivel baixar',
-        message: getErrorMessage(error, 'Verifique se existe caixa aberto.'),
+        message: getErrorMessage(error, 'Nao foi possivel registrar o recebimento.'),
       })
     } finally {
       setIsPaying(false)
@@ -433,13 +620,106 @@ export function PromissoryNotesPage() {
     }
   }
 
+  if (pageMode === 'manual-create') {
+    return (
+      <main className="app-shell">
+        <div className="app-container history-container">
+          <PageHeader
+            eyebrow="Recebiveis"
+            title="Nova nota avulsa"
+            subtitle="Cadastre promissorias antigas sem depender de uma venda no PDV."
+            metricLabel="Cadastro"
+            metricValue="Manual"
+            status="Nota sem venda"
+          />
+
+          <section className="product-form-panel product-form-panel--new-product promissory-manual-panel promissory-manual-panel--page">
+            <header className="section-header product-form-header">
+              <div>
+                <h2>Dados da nota</h2>
+                <p>Selecione o cliente e informe como o valor sera dividido.</p>
+              </div>
+              <button className="secondary-button" type="button" onClick={() => setPageMode('wallet')} disabled={isCreatingManualNote}>
+                <ArrowLeft size={14} strokeWidth={2.3} aria-hidden="true" />
+                Voltar para carteira
+              </button>
+            </header>
+
+            <form className="product-form" onSubmit={handleManualNoteSubmit}>
+              <div className="form-grid">
+                <div className="field-group field-group--full">
+                  <label htmlFor="manualNoteCustomer">Cliente</label>
+                  <select
+                    id="manualNoteCustomer"
+                    value={manualNoteForm.customerId}
+                    onChange={(event) => setManualNoteForm((current) => ({ ...current, customerId: event.target.value }))}
+                    required
+                  >
+                    <option value="">Selecione o cliente</option>
+                    {customers.map((customer) => (
+                      <option value={customer.id} key={customer.id}>{customer.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field-group">
+                  <label htmlFor="manualNoteAmount">Valor total</label>
+                  <input
+                    id="manualNoteAmount"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={manualNoteForm.totalAmount}
+                    onChange={(event) => setManualNoteForm((current) => ({ ...current, totalAmount: event.target.value }))}
+                    placeholder="Ex.: 300.00"
+                    required
+                  />
+                </div>
+                <div className="field-group">
+                  <label htmlFor="manualNoteInstallments">Parcelas</label>
+                  <input
+                    id="manualNoteInstallments"
+                    type="number"
+                    min="1"
+                    max="36"
+                    step="1"
+                    value={manualNoteForm.installments}
+                    onChange={(event) => setManualNoteForm((current) => ({ ...current, installments: event.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="field-group field-group--full">
+                  <label htmlFor="manualNoteDueDate">Primeiro vencimento</label>
+                  <input
+                    id="manualNoteDueDate"
+                    type="date"
+                    value={manualNoteForm.firstDueDate}
+                    onChange={(event) => setManualNoteForm((current) => ({ ...current, firstDueDate: event.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="form-actions">
+                <button className="action-button" type="submit" disabled={isCreatingManualNote}>
+                  {isCreatingManualNote ? 'Cadastrando...' : 'Cadastrar nota avulsa'}
+                </button>
+                <button className="secondary-button" type="button" onClick={() => setPageMode('wallet')} disabled={isCreatingManualNote}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="app-shell">
       <div className="app-container history-container">
         <PageHeader
           eyebrow="Recebiveis"
           title="Carteira de notas promissorias"
-          subtitle="Acompanhe vencimentos, imprima parcelas e registre baixas diretamente no caixa aberto."
+          subtitle="Acompanhe vencimentos, imprima parcelas e registre baixas de promissorias."
           metricLabel="Aberto"
           metricValue={formatCurrency(metrics.openAmount)}
           status={listMode === 'due-today' ? 'Cobranca do dia' : `${metrics.openCount} parcela(s) em aberto`}
@@ -472,7 +752,60 @@ export function PromissoryNotesPage() {
           </section>
         ) : null}
 
-        <section className="scanner-panel">
+        <button className="promissory-create-card" type="button" onClick={() => setPageMode('manual-create')}>
+          <span className="promissory-create-card__icon" aria-hidden="true">
+            <PlusCircle size={22} strokeWidth={2.4} />
+          </span>
+          <span>
+            <strong>Nova nota</strong>
+            <small>Cadastrar promissoria avulsa sem venda</small>
+          </span>
+        </button>
+
+        <section className="relationship-calendar-panel">
+          <header className="section-header">
+            <div>
+              <h2><CalendarDays size={18} strokeWidth={2.3} aria-hidden="true" /> Calendario de cobrancas</h2>
+              <p>Clique em um dia para ver as promissorias com vencimento na data.</p>
+            </div>
+            <div className="calendar-nav">
+              <button className="secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))}>
+                Anterior
+              </button>
+              <strong>{new Date(`${calendarMonth}-01T00:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</strong>
+              <button className="secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))}>
+                Proximo
+              </button>
+            </div>
+          </header>
+          <div className="calendar-weekdays" aria-hidden="true">
+            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day) => <span key={day}>{day}</span>)}
+          </div>
+          <div className="collection-calendar-grid">
+            {calendarDays.map((day, index) => {
+              const total = day.date ? calendarTotals.get(day.date) : undefined
+              const buttonClassName = [
+                'collection-calendar-day',
+                day.date === selectedCalendarDate ? 'collection-calendar-day--selected' : '',
+                total ? 'collection-calendar-day--has-receivables' : '',
+              ].filter(Boolean).join(' ')
+              return (
+                <button
+                  className={buttonClassName}
+                  type="button"
+                  key={day.date || `empty-${index}`}
+                  disabled={day.muted}
+                  onClick={() => handleCalendarDateClick(day.date)}
+                >
+                  <span>{day.day || ''}</span>
+                  {total ? <small>{total.count} cobr. {formatCurrency(total.amount)}</small> : null}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="scanner-panel promissory-filter-panel">
           <div className="qr-modal-actions">
             <button className="action-button" type="button" onClick={showDueToday} disabled={isLoading}>
               Cobranca de hoje
@@ -532,9 +865,10 @@ export function PromissoryNotesPage() {
             </div>
             <button className="action-button" type="submit" disabled={isLoading}>Filtrar</button>
             <button className="secondary-button" type="button" onClick={clearFilters} disabled={isLoading}>Limpar</button>
-            <a className="icon-link" href={getPromissoryNotesExportUrl(filters, listMode === 'due-today')} target="_blank" rel="noreferrer">
-              <FileDown size={14} strokeWidth={2.3} aria-hidden="true" />CSV
-            </a>
+            <button className="icon-link" type="button" onClick={handleExportCsv} disabled={isExportingCsv}>
+              <FileDown size={14} strokeWidth={2.3} aria-hidden="true" />
+              {isExportingCsv ? 'Gerando...' : 'CSV'}
+            </button>
           </form>
 
           <div className="field-group notes-search">
@@ -577,7 +911,7 @@ export function PromissoryNotesPage() {
                     <span><CalendarClock size={14} strokeWidth={2.3} aria-hidden="true" />Vence {formatDate(note.dueDate)}</span>
                     <strong>{formatCurrency(note.remainingAmount)}</strong>
                     <small>
-                      {note.customer.name} - {statusLabels[note.status]} - Parcela {note.installmentNumber}/{note.totalInstallments}
+                      {note.customer.name} - {statusLabels[note.status]} - {note.saleId ? `Venda #${note.saleId}` : 'Nota avulsa'} - Parcela {note.installmentNumber}/{note.totalInstallments}
                     </small>
                   </button>
                 ))}
@@ -597,7 +931,7 @@ export function PromissoryNotesPage() {
             <header className="section-header">
               <div>
                 <h2>Detalhe da nota</h2>
-                <p>{selectedNote ? `Nota #${selectedNote.id} - venda #${selectedNote.saleId}` : 'Selecione uma parcela.'}</p>
+                <p>{selectedNote ? `Nota #${selectedNote.id} - ${selectedNote.saleId ? `venda #${selectedNote.saleId}` : 'avulsa'}` : 'Selecione uma parcela.'}</p>
               </div>
             </header>
 
@@ -651,7 +985,7 @@ export function PromissoryNotesPage() {
                   </div>
                 ) : selectedNote.status === 'CANCELLED' ? (
                   <div className="feedback-message feedback-message--warning">
-                    Nota cancelada junto com a venda #{selectedNote.saleId}.
+                    Nota cancelada{selectedNote.saleId ? ` junto com a venda #${selectedNote.saleId}` : ''}.
                   </div>
                 ) : selectedNote.status === 'RENEGOTIATED' ? (
                   <div className="feedback-message feedback-message--warning">

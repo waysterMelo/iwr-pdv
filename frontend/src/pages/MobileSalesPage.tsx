@@ -1,5 +1,4 @@
-import { useState, type FormEvent } from 'react'
-import { MobileQrScanner } from '../components/MobileQrScanner'
+import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import type { PaymentMethod } from '../types/sale'
@@ -11,6 +10,8 @@ import { usePagination } from '../hooks/usePagination'
 type MobileSalesPageProps = {
   onBack: () => void
 }
+
+const MobileQrScanner = lazy(() => import('../components/MobileQrScanner').then((module) => ({ default: module.MobileQrScanner })))
 
 export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
   const { confirm } = useAppMessage()
@@ -65,23 +66,11 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
         </div>
       </header>
 
-      {(!checkout.cashRegister || checkout.cashRegister.status !== 'OPEN') ? (
-        <section className="mobile-action-panel mobile-action-panel--empty">
-          <h2>Nenhum caixa aberto</h2>
-          <p>Voce precisa abrir o caixa para realizar vendas.</p>
-          <button className="mobile-primary-button" type="button" onClick={onBack}>
-            Ir para Meu Caixa
-          </button>
-        </section>
-      ) : (
-        <>
+      <>
           <section className="mobile-total-panel">
             <span>Total</span>
             <strong>{formatCurrency(checkout.totalAmount)}</strong>
-            <small>
-              {checkout.cashRegister ? `Caixa #${checkout.cashRegister.id} aberto` : 'Abra o caixa no desktop'} -{' '}
-              {checkout.totalItems} item(ns)
-            </small>
+            <small>{checkout.totalItems} item(ns)</small>
           </section>
 
           <section className="mobile-action-panel">
@@ -222,7 +211,7 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
             <button
               className="mobile-primary-button"
               type="button"
-              disabled={checkout.cartItems.length === 0 || checkout.isClosingSale || !checkout.cashRegister}
+              disabled={checkout.cartItems.length === 0 || checkout.isClosingSale}
               onClick={() => void handleFinalizeSale()}
             >
               {checkout.isClosingSale ? 'Finalizando...' : 'Finalizar'}
@@ -230,14 +219,15 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
           </footer>
 
           {scannerOpen ? (
-            <MobileQrScanner
-              active={scannerOpen}
-              onClose={() => setScannerOpen(false)}
-              onRead={handleScannedCode}
-            />
+            <Suspense fallback={<div className="mobile-empty-state">Abrindo camera...</div>}>
+              <MobileQrScanner
+                active={scannerOpen}
+                onClose={() => setScannerOpen(false)}
+                onRead={handleScannedCode}
+              />
+            </Suspense>
           ) : null}
         </>
-      )}
     </main>
   )
 }

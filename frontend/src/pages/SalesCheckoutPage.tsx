@@ -201,11 +201,10 @@ export function SalesCheckoutPage() {
       <div className="app-container checkout-container">
         <PageHeader
           eyebrow="PDV"
-          title="Caixa com leitura por codigo"
+          title="Venda com leitura por codigo"
           subtitle="Leia o QR Code ou digite o codigo do produto para montar a venda, finalizar no backend e baixar estoque automaticamente."
           metricLabel="Total da venda"
           metricValue={formatCurrency(checkout.totalAmount)}
-          status={checkout.cashRegister ? `Caixa #${checkout.cashRegister.id} aberto` : undefined}
         />
 
         <div className="quick-actions">
@@ -602,7 +601,7 @@ export function SalesCheckoutPage() {
           <button
             className="action-button"
             type="button"
-            disabled={checkout.cartItems.length === 0 || checkout.isClosingSale || !checkout.cashRegister}
+            disabled={checkout.cartItems.length === 0 || checkout.isClosingSale}
             onClick={() => void handleCloseSale()}
           >
             {checkout.isClosingSale ? 'Finalizando...' : 'Finalizar venda'}

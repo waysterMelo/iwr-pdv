@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Banknote, CalendarDays, FileDown, ReceiptText, TrendingUp, WalletCards } from 'lucide-react'
+import { Banknote, BarChart3, CalendarDays, FileDown, ReceiptText, TrendingUp, WalletCards } from 'lucide-react'
 import { Metric } from '../components/Metric'
 import { PageHeader } from '../components/PageHeader'
 import {
@@ -46,6 +46,33 @@ function toIsoDate(date: Date) {
 function todayFilters(): AdminDashboardFilters {
   const today = toIsoDate(new Date())
   return { startDate: today, endDate: today }
+}
+
+function shiftMonth(value: string, offset: number) {
+  const [year, month] = value.split('-').map(Number)
+  const date = new Date(year, month - 1 + offset, 1)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function buildCalendarDays(monthValue: string) {
+  const [year, month] = monthValue.split('-').map(Number)
+  const firstDate = new Date(year, month - 1, 1)
+  const lastDate = new Date(year, month, 0)
+  const days: Array<{ date: string; day: number; muted: boolean }> = []
+
+  for (let index = 0; index < firstDate.getDay(); index += 1) {
+    days.push({ date: '', day: 0, muted: true })
+  }
+
+  for (let day = 1; day <= lastDate.getDate(); day += 1) {
+    days.push({
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      day,
+      muted: false,
+    })
+  }
+
+  return days
 }
 
 function presetFilters(preset: 'today' | 'yesterday' | 'week' | 'month'): AdminDashboardFilters {
@@ -100,6 +127,7 @@ const emptyReceivables: AdminDashboardReceivables = {
   dueNext7DaysAmount: 0,
   dueNext30DaysAmount: 0,
   topCustomers: [],
+  calendarDays: [],
   items: [],
 }
 
@@ -110,16 +138,18 @@ export function AdminDashboardPage() {
   const [summary, setSummary] = useState<AdminDashboardSummary>(() => emptySummary(todayFilters()))
   const [paymentMethods, setPaymentMethods] = useState<AdminDashboardPaymentMethod[]>([])
   const [receivables, setReceivables] = useState<AdminDashboardReceivables>(emptyReceivables)
+  const [calendarMonth, setCalendarMonth] = useState(() => todayFilters().startDate.slice(0, 7))
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => todayFilters().startDate)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const loadDashboard = useCallback(async (nextFilters: AdminDashboardFilters) => {
+  const loadDashboard = useCallback(async (nextFilters: AdminDashboardFilters, nextCalendarMonth: string) => {
     setIsLoading(true)
     try {
       const [nextSummary, nextPaymentMethods, nextReceivables] = await Promise.all([
         getAdminDashboardSummary(nextFilters),
         getAdminDashboardPaymentMethods(nextFilters),
-        getAdminDashboardReceivables(nextFilters),
+        getAdminDashboardReceivables(nextFilters, nextCalendarMonth),
       ])
       setSummary(nextSummary)
       setPaymentMethods(nextPaymentMethods)
@@ -133,16 +163,42 @@ export function AdminDashboardPage() {
   }, [])
 
   useEffect(() => {
-    void loadDashboard(filters)
-  }, [filters, loadDashboard])
+    const timeoutId = window.setTimeout(() => {
+      void loadDashboard(filters, calendarMonth)
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [calendarMonth, filters, loadDashboard])
 
   const receivedRatio = useMemo(() => {
     if (summary.totalSold <= 0) return '0%'
     return `${Math.min(100, Math.round((summary.totalReceived / summary.totalSold) * 100))}%`
   }, [summary.totalReceived, summary.totalSold])
+  const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth])
+  const receivableDayTotals = useMemo(() => {
+    const totals = new Map<string, { count: number; amount: number }>()
+    receivables.calendarDays.forEach((day) => {
+      totals.set(day.date, { count: day.count, amount: day.amount })
+    })
+    return totals
+  }, [receivables.calendarDays])
+  const maxPaymentAmount = useMemo(
+    () => Math.max(...paymentMethods.map((payment) => payment.receivedAmount), 1),
+    [paymentMethods],
+  )
 
   function applyPreset(preset: 'today' | 'yesterday' | 'week' | 'month') {
     const nextFilters = presetFilters(preset)
+    setDraftFilters(nextFilters)
+    setFilters(nextFilters)
+    setSelectedCalendarDate(nextFilters.startDate)
+    setCalendarMonth(nextFilters.startDate.slice(0, 7))
+  }
+
+  function selectCalendarDate(date: string) {
+    if (!date) return
+    const nextFilters = { startDate: date, endDate: date }
+    setSelectedCalendarDate(date)
     setDraftFilters(nextFilters)
     setFilters(nextFilters)
   }
@@ -150,6 +206,8 @@ export function AdminDashboardPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setFilters(draftFilters)
+    setSelectedCalendarDate(draftFilters.startDate)
+    setCalendarMonth(draftFilters.startDate.slice(0, 7))
   }
 
   async function handleReport() {
@@ -224,12 +282,102 @@ export function AdminDashboardPage() {
           <Metric label="Vence hoje" value={formatCurrency(summary.dueTodayReceivables)} tone="warning" />
         </div>
 
+        <section className="cart-panel admin-bi-panel">
+          <header className="section-header">
+            <div>
+              <h2><BarChart3 size={18} strokeWidth={2.3} aria-hidden="true" /> Visao BI</h2>
+              <p>Indicadores rapidos para leitura do periodo selecionado.</p>
+            </div>
+          </header>
+          <div className="admin-bi-grid">
+            <div className="admin-mini-chart">
+              <span>Recebido por forma</span>
+              {paymentMethods.map((payment) => (
+                <div className="admin-chart-row" key={payment.paymentMethod}>
+                  <small>{paymentLabels[payment.paymentMethod]}</small>
+                  <div><i style={{ width: `${Math.max(8, (payment.receivedAmount / maxPaymentAmount) * 100)}%` }} /></div>
+                  <strong>{formatCurrency(payment.receivedAmount)}</strong>
+                </div>
+              ))}
+            </div>
+            <div className="admin-mini-chart admin-mini-chart--split">
+              <span>Recebiveis</span>
+              <div>
+                <strong>{formatCurrency(receivables.openAmount)}</strong>
+                <small>Aberto</small>
+              </div>
+              <div>
+                <strong>{formatCurrency(receivables.overdueAmount)}</strong>
+                <small>Vencido</small>
+              </div>
+              <div>
+                <strong>{formatCurrency(receivables.dueNext7DaysAmount)}</strong>
+                <small>7 dias</small>
+              </div>
+            </div>
+            <div className="admin-mini-chart admin-mini-chart--split">
+              <span>Vendas</span>
+              <div>
+                <strong>{summary.saleCount}</strong>
+                <small>Qtd.</small>
+              </div>
+              <div>
+                <strong>{formatCurrency(summary.averageTicket)}</strong>
+                <small>Ticket</small>
+              </div>
+              <div>
+                <strong>{formatCurrency(summary.totalDiscounts)}</strong>
+                <small>Desconto</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="cart-panel admin-calendar-panel">
+          <header className="section-header">
+            <div>
+              <h2><CalendarDays size={18} strokeWidth={2.3} aria-hidden="true" /> Calendario de recebimentos</h2>
+              <p>Clique em uma data para pesquisar os recebiveis daquele dia.</p>
+            </div>
+            <div className="calendar-nav">
+              <button className="secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))}>Anterior</button>
+              <strong>{new Date(`${calendarMonth}-01T00:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</strong>
+              <button className="secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))}>Proximo</button>
+            </div>
+          </header>
+          <div className="calendar-weekdays" aria-hidden="true">
+            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day) => <span key={day}>{day}</span>)}
+          </div>
+          <div className="collection-calendar-grid collection-calendar-grid--compact">
+            {calendarDays.map((day, index) => {
+              const total = day.date ? receivableDayTotals.get(day.date) : undefined
+              const dayClassName = [
+                'collection-calendar-day',
+                total ? 'collection-calendar-day--has-receivables' : '',
+                day.date === selectedCalendarDate ? 'collection-calendar-day--selected' : '',
+              ].filter(Boolean).join(' ')
+              return (
+                <button
+                  className={dayClassName}
+                  type="button"
+                  key={day.date || `admin-empty-${index}`}
+                  disabled={day.muted}
+                  onClick={() => selectCalendarDate(day.date)}
+                >
+                  <span>{day.day || ''}</span>
+                  {total ? <small>{total.count} rec. {formatCurrency(total.amount)}</small> : null}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
         <div className="admin-dashboard-grid">
           <section className="cart-panel admin-dashboard-panel">
             <header className="section-header">
               <div>
                 <h2>Resumo por pagamento</h2>
-                <p>Vendido no periodo e recebido no caixa.</p>
+                <p>Vendido no periodo e recebido por forma de pagamento.</p>
               </div>
             </header>
             <div className="admin-payment-list">
@@ -255,7 +403,7 @@ export function AdminDashboardPage() {
                 <p>Promissorias abertas e vencimentos proximos.</p>
               </div>
             </header>
-            <div className="cash-history-kpi-grid">
+            <div className="admin-receivables-kpi-grid">
               <div><span>Aberto</span><strong>{formatCurrency(receivables.openAmount)}</strong></div>
               <div><span>Vencido</span><strong>{formatCurrency(receivables.overdueAmount)}</strong></div>
               <div><span>7 dias</span><strong>{formatCurrency(receivables.dueNext7DaysAmount)}</strong></div>

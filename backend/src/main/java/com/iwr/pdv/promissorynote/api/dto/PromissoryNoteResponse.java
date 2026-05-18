@@ -26,7 +26,6 @@ public record PromissoryNoteResponse(
         OffsetDateTime paidAt,
         UserResponse paidBy,
         PaymentMethod paymentMethod,
-        Long cashRegisterId,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         List<SaleItemResponse> saleItems

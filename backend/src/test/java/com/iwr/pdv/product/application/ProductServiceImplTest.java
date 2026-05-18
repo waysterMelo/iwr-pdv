@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceConflictException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import com.iwr.pdv.product.api.dto.ProductActivationRequest;
@@ -266,6 +268,32 @@ class ProductServiceImplTest {
         assertEquals("<html>label</html>", label);
     }
 
+    @Test
+    void shouldGenerateBulkLabelsOnlyForProductsWithStock() {
+        Product inStockProduct = product("Vestido Midi", "IWR-000010", 2);
+        Product outOfStockProduct = product("Blusa Linho", "IWR-000011", 0);
+
+        when(productRepository.findById(10L)).thenReturn(Optional.of(inStockProduct));
+        when(productRepository.findById(11L)).thenReturn(Optional.of(outOfStockProduct));
+        when(productLabelService.generateLabel(inStockProduct)).thenReturn("<section>label</section>");
+
+        String html = productService.generateLabels(List.of(10L, 11L));
+
+        assertEquals(2, html.split("<section>label</section>", -1).length - 1);
+        verify(productLabelService, times(2)).generateLabel(inStockProduct);
+        verify(productLabelService, never()).generateLabel(outOfStockProduct);
+    }
+
+    @Test
+    void shouldRejectBulkLabelsWhenSelectedProductsHaveNoStock() {
+        Product outOfStockProduct = product("Blusa Linho", "IWR-000011", 0);
+
+        when(productRepository.findById(11L)).thenReturn(Optional.of(outOfStockProduct));
+
+        assertThrows(BusinessRuleException.class, () -> productService.generateLabels(List.of(11L)));
+        verify(productLabelService, never()).generateLabel(any(Product.class));
+    }
+
     private ProductCategory category() {
         ProductCategory category = new ProductCategory();
         category.setId(1L);
@@ -273,5 +301,17 @@ class ProductServiceImplTest {
         category.setIcon("dress");
         category.setActive(true);
         return category;
+    }
+
+    private Product product(String name, String code, int stockQuantity) {
+        Product product = new Product();
+        product.setId(Long.valueOf(code.substring(code.length() - 2)));
+        product.setName(name);
+        product.setCode(code);
+        product.setCategory(category());
+        product.setPrice(new BigDecimal("149.90"));
+        product.setStockQuantity(stockQuantity);
+        product.setActive(true);
+        return product;
     }
 }

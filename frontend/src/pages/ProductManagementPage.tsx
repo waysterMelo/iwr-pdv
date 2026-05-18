@@ -103,6 +103,10 @@ function getLabelUrl(productId: number) {
   return `/api/products/${productId}/label`
 }
 
+function getStockLabelsUrl(productId: number) {
+  return getBulkLabelsUrl([productId])
+}
+
 function getCategoryIcon(icon: string): LucideIcon {
   const icons: Record<string, LucideIcon> = {
     dress: Sparkles,
@@ -158,12 +162,13 @@ type ProductManagementPageProps = {
 }
 
 export function ProductManagementPage({ onEditProduct }: ProductManagementPageProps) {
-  const { notify } = useAppMessage()
+  const { confirm, notify } = useAppMessage()
   const [productPage, setProductPage] = useState<ProductPage>(() => buildEmptyProductPage(initialFilters.size))
   const [filters, setFilters] = useState<ProductPageFilters>(initialFilters)
   const deferredFilters = useDeferredValue(filters)
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [page, setPage] = useState(0)
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
   const [form, setForm] = useState<ProductFormState>(initialFormState)
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null)
   const [formSuccessMessage, setFormSuccessMessage] = useState<string | null>(null)
@@ -189,14 +194,6 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
   const selectedCategory = categories.find((category) => String(category.id) === filters.categoryId) ?? null
 
   async function loadProducts(nextFilters: ProductPageFilters, nextPage: number, signal?: AbortSignal) {
-    if (!nextFilters.categoryId) {
-      setProductPage(buildEmptyProductPage(nextFilters.size))
-      setSelectedProductIds(new Set())
-      setIsProductsLoading(false)
-      setListErrorMessage(null)
-      return
-    }
-
     setIsProductsLoading(true)
 
     try {
@@ -295,17 +292,30 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
     try {
       const payload = toPayload(form)
 
-      await createProduct(payload)
+      const createdProduct = await createProduct(payload)
       resetForm(false)
       setFormSuccessMessage('Produto cadastrado com sucesso.')
-      notify({
-        type: 'success',
-        title: 'Produto cadastrado',
-        message: 'Produto cadastrado com sucesso.',
-      })
-
       setFormErrorMessage(null)
       await loadProducts(filters, page)
+      if (createdProduct.stockQuantity > 0) {
+        const shouldPrintLabels = await confirm({
+          type: 'success',
+          title: 'Produto cadastrado',
+          message: `Produto ${createdProduct.code} cadastrado com estoque ${createdProduct.stockQuantity}. Deseja imprimir as etiquetas agora?`,
+          confirmLabel: `Imprimir ${createdProduct.stockQuantity}`,
+          cancelLabel: 'Depois',
+        })
+
+        if (shouldPrintLabels) {
+          handlePrintStockLabels(createdProduct)
+        }
+      } else {
+        notify({
+          type: 'success',
+          title: 'Produto cadastrado',
+          message: 'Produto cadastrado sem estoque para impressao.',
+        })
+      }
     } catch (error) {
       const message = getErrorMessage(error)
       setFormErrorMessage(message)
@@ -365,6 +375,13 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
     })
   }
 
+  function handlePrintStockLabels(product: Product) {
+    const printWindow = window.open(getStockLabelsUrl(product.id), '_blank')
+    printWindow?.addEventListener('load', () => {
+      printWindow.print()
+    })
+  }
+
   return (
     <main className="app-shell">
       <div className="app-container">
@@ -383,42 +400,6 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
           <Metric label="Estoque baixo" value={String(lowStockProducts)} tone={lowStockProducts > 0 ? 'warning' : 'default'} icon={AlertTriangle} />
           <Metric label="Sem estoque" value={String(outOfStockProducts)} tone={outOfStockProducts > 0 ? 'danger' : 'default'} icon={CircleSlash} />
         </div>
-
-        <section className="category-panel" aria-label="Categorias de produtos">
-          <header className="section-header">
-            <div>
-              <h2>Categorias</h2>
-              <p>Escolha uma categoria para carregar apenas os produtos daquele grupo.</p>
-            </div>
-          </header>
-
-          <div className="category-card-grid">
-            {categories.map((category) => (
-              (() => {
-                const CategoryIcon = getCategoryIcon(category.icon)
-
-                return (
-              <button
-                className={
-                  filters.categoryId === String(category.id)
-                    ? 'category-card category-card--active'
-                    : 'category-card'
-                }
-                type="button"
-                key={category.id}
-                onClick={() => updateFilter('categoryId', String(category.id))}
-              >
-                <span className="category-icon">
-                  <CategoryIcon size={20} strokeWidth={2.2} aria-hidden="true" />
-                </span>
-                <strong>{category.name}</strong>
-                <small>{filters.categoryId === String(category.id) ? 'Filtro ativo' : 'Ver produtos'}</small>
-              </button>
-                )
-              })()
-            ))}
-          </div>
-        </section>
 
         <div className="content-grid">
           <section className="product-form-panel product-form-panel--new-product product-form-panel--offwhite">
@@ -539,7 +520,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
             <header className="section-header">
               <div>
                 <h2>Produtos cadastrados</h2>
-                <p>Selecione uma categoria para carregar produtos e aplicar os demais filtros.</p>
+                <p>Busca global com paginacao. Use filtros avancados apenas quando precisar refinar a lista.</p>
               </div>
             </header>
 
@@ -562,25 +543,12 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   value={filters.categoryId}
                   onChange={(event) => updateFilter('categoryId', event.target.value)}
                 >
-                  <option value="">Escolha uma categoria</option>
+                  <option value="">Todas</option>
                   {categories.map((category) => (
                     <option value={category.id} key={category.id}>
                       {category.name}
                     </option>
                   ))}
-                </select>
-              </div>
-
-              <div className="field-group">
-                <label htmlFor="activeFilter">Status</label>
-                <select
-                  id="activeFilter"
-                  value={filters.active}
-                  onChange={(event) => updateFilter('active', event.target.value as ProductPageFilters['active'])}
-                >
-                  <option value="ALL">Todos</option>
-                  <option value="ACTIVE">Ativos</option>
-                  <option value="INACTIVE">Inativos</option>
                 </select>
               </div>
 
@@ -597,6 +565,30 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   <option value="IN_STOCK">Em estoque</option>
                   <option value="LOW_STOCK">Estoque baixo</option>
                   <option value="OUT_OF_STOCK">Sem estoque</option>
+                </select>
+              </div>
+
+              <button className="secondary-button" type="button" onClick={() => setIsAdvancedFiltersOpen((current) => !current)}>
+                {isAdvancedFiltersOpen ? 'Ocultar avancados' : 'Filtros avancados'}
+              </button>
+
+              <button className="secondary-button" type="button" onClick={clearFilters}>
+                Limpar filtros
+              </button>
+            </section>
+
+            {isAdvancedFiltersOpen ? (
+            <section className="inventory-toolbar inventory-toolbar--advanced" aria-label="Filtros avancados de estoque">
+              <div className="field-group">
+                <label htmlFor="activeFilter">Status</label>
+                <select
+                  id="activeFilter"
+                  value={filters.active}
+                  onChange={(event) => updateFilter('active', event.target.value as ProductPageFilters['active'])}
+                >
+                  <option value="ALL">Todos</option>
+                  <option value="ACTIVE">Ativos</option>
+                  <option value="INACTIVE">Inativos</option>
                 </select>
               </div>
 
@@ -673,17 +665,12 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   <option value={48}>48</option>
                 </select>
               </div>
-
-              <button className="secondary-button" type="button" onClick={clearFilters}>
-                Limpar filtros
-              </button>
             </section>
+            ) : null}
 
             <div className="inventory-result-bar">
               <span>
-                {!filters.categoryId
-                  ? 'Selecione uma categoria para carregar os produtos.'
-                  : isProductsLoading
+                {isProductsLoading
                   ? 'Atualizando listagem...'
                   : `${productPage.totalElements} produto(s) encontrados${
                       selectedCategory ? ` em ${selectedCategory.name}` : ''
@@ -725,9 +712,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
             ) : null}
 
             <div className="product-list">
-              {!filters.categoryId ? (
-                <div className="product-empty">Selecione uma categoria para visualizar os produtos.</div>
-              ) : isProductsLoading ? (
+              {isProductsLoading ? (
                 <div className="product-empty">Carregando produtos...</div>
               ) : products.length === 0 ? (
                 <div className="product-empty">Nenhum produto encontrado para os filtros atuais.</div>
@@ -858,6 +843,14 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                         onClick={() => setSelectedLabelProduct(product)}
                       >
                         Etiqueta
+                      </button>
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        disabled={product.stockQuantity <= 0}
+                        onClick={() => handlePrintStockLabels(product)}
+                      >
+                        Imprimir estoque
                       </button>
                       <button
                         className="action-button"
@@ -1002,7 +995,15 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                 type="button"
                 onClick={() => handlePrintLabel(selectedLabelProduct)}
               >
-                Imprimir etiqueta
+                Imprimir 1 etiqueta
+              </button>
+              <button
+                className="action-button"
+                type="button"
+                disabled={selectedLabelProduct.stockQuantity <= 0}
+                onClick={() => handlePrintStockLabels(selectedLabelProduct)}
+              >
+                Imprimir estoque ({selectedLabelProduct.stockQuantity})
               </button>
             </div>
           </section>

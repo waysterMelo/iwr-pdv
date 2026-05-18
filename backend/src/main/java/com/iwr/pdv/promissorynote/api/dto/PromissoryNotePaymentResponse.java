@@ -13,7 +13,6 @@ public record PromissoryNotePaymentResponse(
         BigDecimal totalReceived,
         PaymentMethod paymentMethod,
         UserResponse paidBy,
-        Long cashRegisterId,
         OffsetDateTime paidAt
 ) {
 }

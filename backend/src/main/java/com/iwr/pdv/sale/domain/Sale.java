@@ -57,8 +57,8 @@ public class Sale {
     @JoinColumn(name = "operator_user_id", nullable = false)
     private AppUser operator;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cash_register_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cash_register_id")
     private CashRegister cashRegister;
 
     @ManyToOne(fetch = FetchType.LAZY)

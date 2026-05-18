@@ -1,5 +1,6 @@
 package com.iwr.pdv.product.application;
 
+import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceConflictException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import com.iwr.pdv.product.api.dto.ProductActivationRequest;
@@ -194,7 +195,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public String generateLabels(List<Long> productIds) {
         if (productIds == null || productIds.isEmpty()) {
-            throw new com.iwr.pdv.common.exception.BusinessRuleException("Select at least one product to print labels.");
+            throw new BusinessRuleException("Select at least one product to print labels.");
         }
 
         List<Product> products = productIds.stream()
@@ -203,10 +204,14 @@ public class ProductServiceImpl implements ProductService {
 
         StringBuilder labelsHtml = new StringBuilder();
         for (Product product : products) {
-            int quantity = Math.max(product.getStockQuantity(), 1);
+            int quantity = Math.max(product.getStockQuantity(), 0);
             for (int i = 0; i < quantity; i++) {
                 labelsHtml.append(productLabelService.generateLabel(product));
             }
+        }
+
+        if (labelsHtml.length() == 0) {
+            throw new BusinessRuleException("Selected products have no stock to print labels.");
         }
 
         return """

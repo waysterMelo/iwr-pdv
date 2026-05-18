@@ -16,7 +16,6 @@ public record AdminDashboardReceivableResponse(
         LocalDate dueDate,
         PromissoryNoteStatus status,
         PaymentMethod paymentMethod,
-        OffsetDateTime paidAt,
-        Long cashRegisterId
+        OffsetDateTime paidAt
 ) {
 }

@@ -1,6 +1,7 @@
 package com.iwr.pdv.promissorynote.api;
 
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -89,12 +90,6 @@ class PromissoryNoteControllerIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
         cleanDatabase();
-
-        mockMvc.perform(post("/api/cash-register/open")
-                        .header("Authorization", authHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"openingAmount\":100.00}"))
-                .andExpect(status().isCreated());
     }
 
     @AfterEach
@@ -151,8 +146,7 @@ class PromissoryNoteControllerIntegrationTest {
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].amount").value(20.00))
-                .andExpect(jsonPath("$[0].totalReceived").value(22.00))
-                .andExpect(jsonPath("$[0].cashRegisterId").isNumber());
+                .andExpect(jsonPath("$[0].totalReceived").value(22.00));
 
         mockMvc.perform(post("/api/promissory-notes/{noteId}/collection-events", overdueNote.getId())
                         .header("Authorization", authHeader)
@@ -197,6 +191,120 @@ class PromissoryNoteControllerIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].status").value("PENDING"))
                 .andExpect(jsonPath("$[0].amount").value(20.00));
+    }
+
+    @Test
+    void shouldNeutralizeSpreadsheetFormulasWhenExportingCsv() throws Exception {
+        Product product = productRepository.save(buildProduct("Conjunto Fiado", "PROM-CSV-001", new BigDecimal("80.00"), 5));
+        Customer customer = customerRepository.save(buildCustomer("=HYPERLINK(\"http://evil.test\")"));
+        LocalDate today = LocalDate.now(clock);
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "items": [{"productId": %d, "quantity": 1}],
+                                  "paymentMethod": "PROMISSORY_NOTE",
+                                  "discountAmount": 0,
+                                  "customerId": %d,
+                                  "promissoryInstallments": [
+                                    {"dueDate": "%s", "amount": 80.00}
+                                  ]
+                                }
+                                """.formatted(product.getId(), customer.getId(), today)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/promissory-notes/export.csv")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String csv = result.getResponse().getContentAsString();
+                    if (!csv.contains("\"'=HYPERLINK(\"\"http://evil.test\"\")\"")) {
+                        throw new AssertionError("Expected CSV formula to be neutralized.");
+                    }
+                    if (csv.contains("\"=HYPERLINK(")) {
+                        throw new AssertionError("CSV must not expose executable spreadsheet formulas.");
+                    }
+                });
+    }
+
+    @Test
+    void shouldCreateManualPromissoryNotesWithoutSaleAndExportThem() throws Exception {
+        Customer customer = customerRepository.save(buildCustomer("Cliente Legado"));
+        LocalDate today = LocalDate.now(clock);
+
+        mockMvc.perform(post("/api/promissory-notes/manual")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "customerId": %d,
+                                  "installments": [
+                                    {"dueDate": "%s", "amount": 75.00},
+                                    {"dueDate": "%s", "amount": 75.00}
+                                  ]
+                                }
+                                """.formatted(customer.getId(), today.plusDays(5), today.plusDays(35))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].saleId").value(nullValue()))
+                .andExpect(jsonPath("$[0].customer.name").value("Cliente Legado"))
+                .andExpect(jsonPath("$[0].amount").value(75.00));
+
+        mockMvc.perform(get("/api/promissory-notes")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].saleId").value(nullValue()));
+
+        mockMvc.perform(get("/api/promissory-notes/export.csv")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String csv = result.getResponse().getContentAsString();
+                    if (!csv.contains("Avulsa")) {
+                        throw new AssertionError("Expected manual promissory notes to be exported as Avulsa.");
+                    }
+                    if (!csv.contains("\"Cliente Legado\"")) {
+                        throw new AssertionError("Expected manual promissory note customer in CSV.");
+                    }
+                });
+    }
+
+    @Test
+    void shouldReturnOpenNotesGroupedByDueDateForCalendar() throws Exception {
+        Product product = productRepository.save(buildProduct("Conjunto Calendario", "PROM-CAL-001", new BigDecimal("120.00"), 5));
+        Customer customer = customerRepository.save(buildCustomer("Cliente Calendario"));
+        LocalDate today = LocalDate.now(clock);
+        LocalDate dueDate = today.plusDays(4);
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "items": [{"productId": %d, "quantity": 1}],
+                                  "paymentMethod": "PROMISSORY_NOTE",
+                                  "discountAmount": 0,
+                                  "customerId": %d,
+                                  "promissoryInstallments": [
+                                    {"dueDate": "%s", "amount": 50.00},
+                                    {"dueDate": "%s", "amount": 70.00}
+                                  ]
+                                }
+                                """.formatted(product.getId(), customer.getId(), dueDate, dueDate)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/promissory-notes/calendar-days")
+                        .header("Authorization", authHeader)
+                        .param("startDate", today.withDayOfMonth(1).toString())
+                        .param("endDate", today.withDayOfMonth(today.lengthOfMonth()).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].date").value(dueDate.toString()))
+                .andExpect(jsonPath("$[0].amount").value(120.00))
+                .andExpect(jsonPath("$[0].count").value(2));
     }
 
     private Product buildProduct(String name, String code, BigDecimal price, int stockQuantity) {

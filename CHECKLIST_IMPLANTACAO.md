@@ -40,7 +40,7 @@ Use este roteiro para preparar uma maquina local para operar o IWR PDV.
 - [ ] Confirmar codigo automatico no padrao `IWR-000001`.
 - [ ] Abrir QR Code do produto.
 - [ ] Abrir preview da etiqueta.
-- [ ] Adicionar produto no caixa pelo codigo.
+- [ ] Adicionar produto na venda pelo codigo.
 - [ ] Finalizar venda.
 - [ ] Confirmar baixa de estoque no cadastro de produtos.
 - [ ] Confirmar venda no historico.

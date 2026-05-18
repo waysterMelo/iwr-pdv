@@ -10,6 +10,7 @@ public record AdminDashboardReceivablesResponse(
         BigDecimal dueNext7DaysAmount,
         BigDecimal dueNext30DaysAmount,
         List<AdminDashboardTopCustomerResponse> topCustomers,
+        List<AdminDashboardReceivableDayResponse> calendarDays,
         List<AdminDashboardReceivableResponse> items
 ) {
 }

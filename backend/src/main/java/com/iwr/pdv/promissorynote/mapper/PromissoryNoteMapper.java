@@ -15,6 +15,7 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -33,7 +34,7 @@ public class PromissoryNoteMapper {
     public PromissoryNoteResponse toResponse(PromissoryNote note) {
         return new PromissoryNoteResponse(
                 note.getId(),
-                note.getSale().getId(),
+                note.getSale() == null ? null : note.getSale().getId(),
                 customerMapper.toResponse(note.getCustomer()),
                 note.getInstallmentNumber(),
                 note.getTotalInstallments(),
@@ -47,10 +48,9 @@ public class PromissoryNoteMapper {
                 note.getPaidAt(),
                 note.getPaidBy() == null ? null : authMapper.toResponse(note.getPaidBy()),
                 note.getPaymentMethod(),
-                note.getCashRegister() == null ? null : note.getCashRegister().getId(),
                 note.getCreatedAt(),
                 note.getUpdatedAt(),
-                note.getSale().getItems().stream().map(this::toSaleItemResponse).toList()
+                note.getSale() == null ? List.of() : note.getSale().getItems().stream().map(this::toSaleItemResponse).toList()
         );
     }
 
@@ -63,7 +63,6 @@ public class PromissoryNoteMapper {
                 payment.getTotalReceived(),
                 payment.getPaymentMethod(),
                 authMapper.toResponse(payment.getPaidBy()),
-                payment.getCashRegister().getId(),
                 payment.getPaidAt()
         );
     }

@@ -76,10 +76,16 @@ public class AdminDashboardController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate endDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate calendarStartDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate calendarEndDate,
             HttpServletRequest servletRequest
     ) {
         requireAdmin(servletRequest);
-        return adminDashboardService.receivables(startDate, endDate);
+        return adminDashboardService.receivables(startDate, endDate, calendarStartDate, calendarEndDate);
     }
 
     @GetMapping("/report")

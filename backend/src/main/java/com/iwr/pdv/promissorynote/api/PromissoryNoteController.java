@@ -1,9 +1,11 @@
 package com.iwr.pdv.promissorynote.api;
 
 import com.iwr.pdv.auth.domain.AppUser;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCalendarDayResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteDelinquencyRangeResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteManualRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteRenegotiationRequest;
@@ -56,6 +58,24 @@ public class PromissoryNoteController {
         return promissoryNoteService.listDueToday();
     }
 
+    @GetMapping("/calendar-days")
+    @Operation(summary = "Return open promissory notes grouped by due date")
+    public List<PromissoryNoteCalendarDayResponse> calendarDays(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return promissoryNoteService.calendarDays(startDate, endDate);
+    }
+
+    @PostMapping("/manual")
+    @Operation(summary = "Create promissory notes without a sale")
+    public List<PromissoryNoteResponse> createManual(
+            @Valid @RequestBody PromissoryNoteManualRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return promissoryNoteService.createManual(request, currentUser(servletRequest));
+    }
+
     @GetMapping("/{noteId}")
     @Operation(summary = "Find promissory note by id")
     public PromissoryNoteResponse findById(@PathVariable Long noteId) {
@@ -63,7 +83,7 @@ public class PromissoryNoteController {
     }
 
     @PostMapping("/{noteId}/payments")
-    @Operation(summary = "Settle a promissory note and register the receivable in the open cash register")
+    @Operation(summary = "Settle a promissory note payment")
     public PromissoryNoteResponse pay(
             @PathVariable Long noteId,
             @Valid @RequestBody PromissoryNotePaymentRequest request,

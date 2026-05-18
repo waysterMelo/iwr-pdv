@@ -40,7 +40,6 @@ export type AdminDashboardReceivable = {
   status: PromissoryNoteStatus
   paymentMethod: PaymentMethod | null
   paidAt: string | null
-  cashRegisterId: number | null
 }
 
 export type AdminDashboardTopCustomer = {
@@ -50,6 +49,12 @@ export type AdminDashboardTopCustomer = {
   openInstallments: number
 }
 
+export type AdminDashboardReceivableDay = {
+  date: string
+  amount: number
+  count: number
+}
+
 export type AdminDashboardReceivables = {
   openAmount: number
   overdueAmount: number
@@ -57,6 +62,7 @@ export type AdminDashboardReceivables = {
   dueNext7DaysAmount: number
   dueNext30DaysAmount: number
   topCustomers: AdminDashboardTopCustomer[]
+  calendarDays: AdminDashboardReceivableDay[]
   items: AdminDashboardReceivable[]
 }
 

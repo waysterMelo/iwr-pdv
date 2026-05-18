@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAppMessage } from '../hooks/useAppMessage'
-import { getCurrentCashRegister } from '../services/cashRegisterService'
 import { findProductByCode } from '../services/productService'
 import { closeSale } from '../services/saleService'
-import type { CashRegister } from '../types/cashRegister'
 import type { Product } from '../types/product'
 import type { PaymentMethod, Sale } from '../types/sale'
 import type { PromissoryInstallmentPayload } from '../types/promissoryNote'
@@ -31,7 +29,6 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
   const [messageType, setMessageType] = useState<FeedbackType>('success')
   const [isSearching, setIsSearching] = useState(false)
   const [isClosingSale, setIsClosingSale] = useState(false)
-  const [cashRegister, setCashRegister] = useState<CashRegister | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(options.initialPaymentMethod ?? 'CASH')
   const [discountAmount, setDiscountAmount] = useState('0.00')
   const [amountReceived, setAmountReceived] = useState('')
@@ -46,18 +43,6 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
   const totalAmount = Math.max(subtotalAmount - parsedDiscountAmount, 0)
   const parsedAmountReceived = Number(amountReceived) || 0
   const changeAmount = paymentMethod === 'CASH' ? Math.max(parsedAmountReceived - totalAmount, 0) : 0
-
-  useEffect(() => {
-    void refreshCashRegister()
-  }, [])
-
-  async function refreshCashRegister() {
-    try {
-      setCashRegister(await getCurrentCashRegister())
-    } catch {
-      setCashRegister(null)
-    }
-  }
 
   function showMessage(nextMessage: string, nextType: FeedbackType) {
     setMessage(nextMessage)
@@ -150,11 +135,6 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
       return null
     }
 
-    if (!cashRegister) {
-      showMessage('Abra o caixa antes de finalizar vendas.', 'error')
-      return null
-    }
-
     if (parsedDiscountAmount > subtotalAmount) {
       showMessage('O desconto nao pode ser maior que o subtotal.', 'error')
       return null
@@ -202,7 +182,6 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
       setDiscountAmount('0.00')
       setAmountReceived('')
       setLastSale(sale)
-      await refreshCashRegister()
       showMessage(`Venda #${sale.id} finalizada com sucesso.`, 'success')
       return sale
     } catch (error) {
@@ -216,7 +195,6 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
   return {
     amountReceived,
     cartItems,
-    cashRegister,
     changeAmount,
     discountAmount,
     isClosingSale,
@@ -236,7 +214,6 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
     addProductToCart,
     clearCart,
     finalizeSale,
-    refreshCashRegister,
     showMessage,
     updateQuantity,
   }

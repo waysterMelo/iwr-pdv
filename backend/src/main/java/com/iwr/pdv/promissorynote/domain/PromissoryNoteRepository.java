@@ -41,6 +41,12 @@ public interface PromissoryNoteRepository extends JpaRepository<PromissoryNote, 
     @EntityGraph(attributePaths = {"customer", "sale", "sale.items"})
     List<PromissoryNote> findByStatusInAndDueDateLessThanEqualOrderByDueDateAsc(List<PromissoryNoteStatus> statuses, LocalDate dueDate);
 
+    List<PromissoryNote> findByStatusInAndDueDateBetweenOrderByDueDateAsc(
+            List<PromissoryNoteStatus> statuses,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
     @EntityGraph(attributePaths = {"customer", "sale", "sale.items"})
     List<PromissoryNote> findBySaleIdOrderByInstallmentNumberAsc(Long saleId);
 

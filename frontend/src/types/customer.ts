@@ -20,3 +20,13 @@ export type CustomerPayload = {
   birthDate?: string
   active?: boolean
 }
+
+export type CustomerPage = {
+  content: Customer[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
+}

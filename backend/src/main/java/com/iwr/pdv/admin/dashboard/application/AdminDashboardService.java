@@ -12,7 +12,12 @@ public interface AdminDashboardService {
 
     List<AdminDashboardPaymentMethodResponse> paymentMethods(LocalDate startDate, LocalDate endDate);
 
-    AdminDashboardReceivablesResponse receivables(LocalDate startDate, LocalDate endDate);
+    AdminDashboardReceivablesResponse receivables(
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalDate calendarStartDate,
+            LocalDate calendarEndDate
+    );
 
     byte[] report(LocalDate startDate, LocalDate endDate);
 }

@@ -61,12 +61,14 @@ Os endpoints de produto e venda exigem sessao autenticada.
 - `POST /api/sales/{saleId}/cancel`
 - `GET /api/sales/{saleId}/receipt`
 
-## Endpoints de caixa
+## Endpoints de promissorias
 
-- `POST /api/cash-register/open`
-- `POST /api/cash-register/movements`
-- `GET /api/cash-register/current`
-- `POST /api/cash-register/{cashRegisterId}/close`
+- `GET /api/promissory-notes`
+- `GET /api/promissory-notes/due-today`
+- `POST /api/promissory-notes/{noteId}/payments`
+- `GET /api/promissory-notes/{noteId}/payments`
+- `GET /api/promissory-notes/{noteId}/whatsapp-message`
+- `POST /api/promissory-notes/renegotiations`
 
 ## Swagger
 

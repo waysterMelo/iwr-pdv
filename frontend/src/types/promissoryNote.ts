@@ -20,7 +20,7 @@ export type PromissoryNoteSummary = {
 }
 
 export type PromissoryNote = PromissoryNoteSummary & {
-  saleId: number
+  saleId: number | null
   customer: Customer
   paidAmount: number
   remainingAmount: number
@@ -29,7 +29,6 @@ export type PromissoryNote = PromissoryNoteSummary & {
   paidAt: string | null
   paidBy: AuthUser | null
   paymentMethod: PaymentMethod | null
-  cashRegisterId: number | null
   createdAt: string
   updatedAt: string
   saleItems: SaleItem[]
@@ -43,7 +42,6 @@ export type PromissoryNotePayment = {
   totalReceived: number
   paymentMethod: Exclude<PaymentMethod, 'PROMISSORY_NOTE'>
   paidBy: AuthUser
-  cashRegisterId: number
   paidAt: string
 }
 
@@ -62,9 +60,20 @@ export type PromissoryNoteDelinquencyRange = {
   count: number
 }
 
+export type PromissoryNoteCalendarDay = {
+  date: string
+  amount: number
+  count: number
+}
+
 export type PromissoryRenegotiationPayload = {
   noteIds: number[]
   reason: string
+  installments: PromissoryInstallmentPayload[]
+}
+
+export type PromissoryManualPayload = {
+  customerId: number
   installments: PromissoryInstallmentPayload[]
 }
 

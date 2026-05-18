@@ -7,7 +7,7 @@ Manual curto para a operacao basica da loja.
 1. Abra `http://127.0.0.1:5173/`.
 2. Entre com o usuario e senha fornecidos para a loja.
 3. No ambiente local inicial, o padrao e `admin` / `admin123`.
-4. Use a navegacao para alternar entre `Caixa`, `Historico` e `Produtos`.
+4. Use a navegacao para alternar entre `Vendas`, `Promissorias`, `Clientes`, `Historico` e `Produtos`.
 
 ## Cadastrar produto
 
@@ -26,23 +26,22 @@ Manual curto para a operacao basica da loja.
 
 ## Realizar venda
 
-1. Abra `Caixa` e confirme que existe um caixa aberto.
-2. Abra `Vendas`.
-3. Leia o QR Code ou digite o codigo do produto.
-4. Pressione `Enter` ou clique em `Adicionar`.
-5. Ajuste a quantidade se necessario.
-6. Informe forma de pagamento, desconto quando houver e valor recebido para dinheiro.
-7. Clique em `Finalizar venda`.
+1. Abra `Vendas`.
+2. Leia o QR Code ou digite o codigo do produto.
+3. Pressione `Enter` ou clique em `Adicionar`.
+4. Ajuste a quantidade se necessario.
+5. Informe forma de pagamento, desconto quando houver e valor recebido para dinheiro.
+6. Clique em `Finalizar venda`.
 
 O sistema valida produto ativo e estoque disponivel antes de finalizar. Ao finalizar, a venda e salva e o estoque e reduzido automaticamente.
 
-## Operar caixa diario
+## Controlar promissorias
 
-1. Abra `Caixa`.
-2. Informe o saldo inicial e clique em `Abrir caixa`.
-3. Registre `Suprimento` para entrada manual de dinheiro.
-4. Registre `Sangria` para retirada manual de dinheiro.
-5. No fim do periodo, informe o dinheiro contado e clique em `Fechar caixa`.
+1. Abra `Promissorias`.
+2. Acompanhe parcelas pendentes, vencidas e pagas.
+3. Registre recebimentos quando o cliente pagar.
+4. Use a mensagem de WhatsApp para lembrar clientes em atraso.
+5. Renegocie parcelas quando for necessario combinar novo prazo.
 
 ## Consultar historico
 
@@ -56,7 +55,6 @@ O sistema valida produto ativo e estoque disponivel antes de finalizar. Ao final
 
 - Produto inativo nao entra no carrinho.
 - Produto sem estoque nao pode ser vendido.
-- Venda so pode ser finalizada com caixa aberto.
 - A baixa de estoque acontece apenas quando a venda e finalizada.
 - Cancelamento devolve o estoque dos itens vendidos.
 - Impressao e leitura fisica dependem da homologacao dos equipamentos.

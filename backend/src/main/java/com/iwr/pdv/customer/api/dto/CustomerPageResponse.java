@@ -1,0 +1,14 @@
+package com.iwr.pdv.customer.api.dto;
+
+import java.util.List;
+
+public record CustomerPageResponse(
+        List<CustomerResponse> content,
+        int page,
+        int size,
+        long totalElements,
+        int totalPages,
+        boolean first,
+        boolean last
+) {
+}

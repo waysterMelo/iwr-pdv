@@ -1,14 +1,16 @@
 import type { PaymentMethod } from '../types/sale'
 import type {
   PromissoryNote,
+  PromissoryNoteCalendarDay,
   PromissoryNoteCollectionAction,
   PromissoryNoteCollectionEvent,
   PromissoryNoteDelinquencyRange,
   PromissoryNoteFilters,
   PromissoryNotePayment,
+  PromissoryManualPayload,
   PromissoryRenegotiationPayload,
 } from '../types/promissoryNote'
-import { get, post } from './httpClient'
+import { apiBaseUrl, get, getAuthToken, HttpRequestError, post } from './httpClient'
 
 function toQuery(filters: PromissoryNoteFilters = {}) {
   const params = new URLSearchParams()
@@ -27,6 +29,15 @@ export async function getPromissoryNotes(filters: PromissoryNoteFilters = {}) {
 
 export async function getPromissoryNotesDueToday() {
   return get<PromissoryNote[]>('/api/promissory-notes/due-today')
+}
+
+export async function getPromissoryNoteCalendarDays(startDate: string, endDate: string) {
+  const params = new URLSearchParams({ startDate, endDate })
+  return get<PromissoryNoteCalendarDay[]>(`/api/promissory-notes/calendar-days?${params.toString()}`)
+}
+
+export async function createManualPromissoryNotes(payload: PromissoryManualPayload) {
+  return post<PromissoryNote[]>('/api/promissory-notes/manual', payload)
 }
 
 export async function payPromissoryNote(
@@ -93,4 +104,29 @@ export function getPromissoryNotesExportUrl(filters: PromissoryNoteFilters = {},
   const query = toQuery(filters)
   const separator = query ? '&' : '?'
   return `/api/promissory-notes/export.csv${query}${dueToday ? `${separator}dueToday=true` : ''}`
+}
+
+export async function downloadPromissoryNotesCsv(filters: PromissoryNoteFilters = {}) {
+  const path = getPromissoryNotesExportUrl(filters, false)
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    headers: {
+      Accept: 'text/csv',
+      ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+    },
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new HttpRequestError(`Failed to download CSV (Status: ${response.status})`, response.status)
+  }
+
+  const blob = await response.blob()
+  const url = window.URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = 'notas-promissorias.csv'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.URL.revokeObjectURL(url)
 }

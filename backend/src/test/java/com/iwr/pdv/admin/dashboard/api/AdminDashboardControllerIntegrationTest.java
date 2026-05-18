@@ -87,12 +87,6 @@ class AdminDashboardControllerIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
         cleanDatabase();
-
-        mockMvc.perform(post("/api/cash-register/open")
-                        .header("Authorization", authHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"openingAmount\":100.00}"))
-                .andExpect(status().isCreated());
     }
 
     @AfterEach
@@ -190,9 +184,15 @@ class AdminDashboardControllerIntegrationTest {
         mockMvc.perform(get("/api/admin/dashboard/receivables")
                         .header("Authorization", authHeader)
                         .param("startDate", today.toString())
-                        .param("endDate", today.plusDays(30).toString()))
+                        .param("endDate", today.plusDays(30).toString())
+                        .param("calendarStartDate", today.toString())
+                        .param("calendarEndDate", today.plusDays(30).toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.openAmount").value(40.00))
+                .andExpect(jsonPath("$.calendarDays.length()").value(1))
+                .andExpect(jsonPath("$.calendarDays[0].date").value(today.plusDays(10).toString()))
+                .andExpect(jsonPath("$.calendarDays[0].amount").value(40.00))
+                .andExpect(jsonPath("$.calendarDays[0].count").value(1))
                 .andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(jsonPath("$.items[0].customerName").value("Cliente Painel"))
                 .andExpect(jsonPath("$.topCustomers[0].openAmount").value(40.00));

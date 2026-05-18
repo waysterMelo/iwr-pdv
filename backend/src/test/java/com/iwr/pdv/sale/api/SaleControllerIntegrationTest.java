@@ -91,7 +91,6 @@ class SaleControllerIntegrationTest {
         cashRegisterRepository.deleteAll();
         customerRepository.deleteAll();
         productRepository.deleteAll();
-        openCashRegister();
     }
 
     @Test
@@ -307,7 +306,7 @@ class SaleControllerIntegrationTest {
     }
 
     @Test
-    void shouldRejectSaleWithoutOpenCashRegister() throws Exception {
+    void shouldCloseSaleWithoutCashRegister() throws Exception {
         cashMovementRepository.deleteAll();
         saleRepository.deleteAll();
         cashRegisterRepository.deleteAll();
@@ -330,8 +329,9 @@ class SaleControllerIntegrationTest {
                         .header("Authorization", authHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.message").value("Open the cash register before closing sales."));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.paymentMethod").value("PIX"))
+                .andExpect(jsonPath("$.totalAmount").value(49.90));
     }
 
     @Test
@@ -361,7 +361,7 @@ class SaleControllerIntegrationTest {
     }
 
     @Test
-    void shouldClosePromissoryNoteSaleAndSettleInstallmentIntoCashRegister() throws Exception {
+    void shouldClosePromissoryNoteSaleAndSettleInstallmentWithoutCashRegister() throws Exception {
         Customer customer = customerRepository.save(buildCustomer("Cliente Promissoria"));
         Product product = productRepository.save(buildProduct("Conjunto Linho", "IWR-NP-001", new BigDecimal("100.00"), 3, true));
 
@@ -420,13 +420,7 @@ class SaleControllerIntegrationTest {
                 .andExpect(jsonPath("$.status").value("PAID"))
                 .andExpect(jsonPath("$.paymentMethod").value("CASH"));
 
-        org.junit.jupiter.api.Assertions.assertEquals(1, cashMovementRepository.count());
-
-        mockMvc.perform(get("/api/cash-register/current")
-                        .header("Authorization", authHeader))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.expectedCashAmount").value(150.00))
-                .andExpect(jsonPath("$.totalsByPaymentMethod.PROMISSORY_NOTE").value(100.00));
+        org.junit.jupiter.api.Assertions.assertEquals(0, cashMovementRepository.count());
     }
 
     @Test
@@ -609,10 +603,7 @@ class SaleControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
-        mockMvc.perform(get("/api/cash-register/current")
-                        .header("Authorization", authHeader))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.cashOutAmount").value(90.00));
+        org.junit.jupiter.api.Assertions.assertEquals(0, cashMovementRepository.count());
     }
 
     @Test
@@ -729,13 +720,6 @@ class SaleControllerIntegrationTest {
                 });
     }
 
-    private void openCashRegister() throws Exception {
-        mockMvc.perform(post("/api/cash-register/open")
-                        .header("Authorization", authHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"openingAmount\":100.00}"))
-                .andExpect(status().isCreated());
-    }
 
     private Product buildProduct(
             String name,

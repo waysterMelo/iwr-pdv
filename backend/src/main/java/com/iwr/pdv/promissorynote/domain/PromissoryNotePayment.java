@@ -49,8 +49,8 @@ public class PromissoryNotePayment {
     @JoinColumn(name = "paid_by_user_id", nullable = false)
     private AppUser paidBy;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cash_register_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cash_register_id")
     private CashRegister cashRegister;
 
     @Column(name = "paid_at", nullable = false)

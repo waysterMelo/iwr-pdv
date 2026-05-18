@@ -3,13 +3,15 @@ package com.iwr.pdv.promissorynote.application;
 import com.iwr.pdv.audit.application.AuditLogService;
 import com.iwr.pdv.audit.domain.AuditAction;
 import com.iwr.pdv.auth.domain.AppUser;
-import com.iwr.pdv.cash.application.CashRegisterService;
-import com.iwr.pdv.cash.domain.CashRegister;
 import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
+import com.iwr.pdv.customer.domain.Customer;
+import com.iwr.pdv.customer.domain.CustomerRepository;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCalendarDayResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteDelinquencyRangeResponse;
+import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteManualRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteRenegotiationRequest;
@@ -34,39 +36,44 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PromissoryNoteServiceImpl implements PromissoryNoteService {
 
-    private static final String PROMISSORY_REFERENCE_TYPE = "PROMISSORY_NOTE";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final BigDecimal PENALTY_RATE = new BigDecimal("0.02");
     private static final BigDecimal DAILY_INTEREST_RATE = new BigDecimal("0.003");
+    private static final Set<PromissoryNoteStatus> OPEN_STATUSES = Set.of(
+            PromissoryNoteStatus.PENDING,
+            PromissoryNoteStatus.PARTIALLY_PAID,
+            PromissoryNoteStatus.OVERDUE
+    );
 
     private final PromissoryNoteRepository promissoryNoteRepository;
+    private final CustomerRepository customerRepository;
     private final PromissoryNotePaymentRepository paymentRepository;
     private final PromissoryNoteCollectionEventRepository collectionEventRepository;
     private final PromissoryNoteMapper promissoryNoteMapper;
-    private final CashRegisterService cashRegisterService;
     private final AuditLogService auditLogService;
     private final Clock clock;
 
     public PromissoryNoteServiceImpl(
             PromissoryNoteRepository promissoryNoteRepository,
+            CustomerRepository customerRepository,
             PromissoryNotePaymentRepository paymentRepository,
             PromissoryNoteCollectionEventRepository collectionEventRepository,
             PromissoryNoteMapper promissoryNoteMapper,
-            CashRegisterService cashRegisterService,
             AuditLogService auditLogService,
             Clock clock
     ) {
         this.promissoryNoteRepository = promissoryNoteRepository;
+        this.customerRepository = customerRepository;
         this.paymentRepository = paymentRepository;
         this.collectionEventRepository = collectionEventRepository;
         this.promissoryNoteMapper = promissoryNoteMapper;
-        this.cashRegisterService = cashRegisterService;
         this.auditLogService = auditLogService;
         this.clock = clock;
     }
@@ -113,6 +120,70 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
 
     @Override
     @Transactional
+    public List<PromissoryNoteCalendarDayResponse> calendarDays(LocalDate startDate, LocalDate endDate) {
+        refreshOverdueStatuses();
+        LocalDate start = startDate == null ? LocalDate.now(clock).withDayOfMonth(1) : startDate;
+        LocalDate end = endDate == null ? start.withDayOfMonth(start.lengthOfMonth()) : endDate;
+        Map<LocalDate, ReceivableDayTotal> totals = new LinkedHashMap<>();
+
+        promissoryNoteRepository.findByStatusInAndDueDateBetweenOrderByDueDateAsc(
+                        List.copyOf(OPEN_STATUSES),
+                        start,
+                        end
+                )
+                .forEach(note -> totals.computeIfAbsent(note.getDueDate(), ReceivableDayTotal::new)
+                        .add(remainingAmount(note)));
+
+        return totals.values()
+                .stream()
+                .sorted(Comparator.comparing(ReceivableDayTotal::date))
+                .map(total -> new PromissoryNoteCalendarDayResponse(total.date(), total.amount(), total.count()))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<PromissoryNoteResponse> createManual(PromissoryNoteManualRequest request, AppUser operator) {
+        Customer customer = customerRepository.findById(request.customerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found for id " + request.customerId() + "."));
+        if (!Boolean.TRUE.equals(customer.getActive())) {
+            throw new BusinessRuleException("Customer is inactive.");
+        }
+
+        OffsetDateTime now = OffsetDateTime.now(clock);
+        int totalInstallments = request.installments().size();
+        List<PromissoryNote> notes = new java.util.ArrayList<>();
+        for (int index = 0; index < request.installments().size(); index++) {
+            PromissoryNoteManualRequest.Installment installment = request.installments().get(index);
+            PromissoryNote note = new PromissoryNote();
+            note.setSale(null);
+            note.setCustomer(customer);
+            note.setInstallmentNumber(index + 1);
+            note.setTotalInstallments(totalInstallments);
+            note.setAmount(money(installment.amount()));
+            note.setPaidAmount(BigDecimal.ZERO);
+            note.setDueDate(installment.dueDate());
+            note.setStatus(installment.dueDate().isBefore(LocalDate.now(clock)) ? PromissoryNoteStatus.OVERDUE : PromissoryNoteStatus.PENDING);
+            note.setCreatedAt(now);
+            note.setUpdatedAt(now);
+            notes.add(promissoryNoteRepository.save(note));
+        }
+
+        BigDecimal totalAmount = notes.stream().map(PromissoryNote::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        auditLogService.log(
+                AuditAction.PROMISSORY_NOTE_CREATED,
+                operator,
+                "PROMISSORY_NOTE",
+                notes.get(0).getId(),
+                "Manual promissory notes created. Customer: " + customer.getId()
+                        + ". Installments: " + totalInstallments + ". Amount: " + totalAmount + "."
+        );
+
+        return notes.stream().map(promissoryNoteMapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional
     public PromissoryNoteResponse findById(Long noteId) {
         refreshOverdueStatuses();
         PromissoryNote note = findNote(noteId);
@@ -152,14 +223,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                 ? calculateCharges(remainingAmount, note.getDueDate())
                 : new Charges(BigDecimal.ZERO, BigDecimal.ZERO);
         BigDecimal totalReceived = paymentAmount.add(charges.penaltyAmount()).add(charges.interestAmount());
-        CashRegister cashRegister = cashRegisterService.registerReceivablePayment(
-                totalReceived,
-                request.paymentMethod(),
-                "Baixa de nota promissoria #" + note.getId(),
-                operator,
-                PROMISSORY_REFERENCE_TYPE,
-                note.getId()
-        );
 
         PromissoryNotePayment payment = new PromissoryNotePayment();
         payment.setNote(note);
@@ -169,7 +232,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
         payment.setTotalReceived(totalReceived);
         payment.setPaymentMethod(request.paymentMethod());
         payment.setPaidBy(operator);
-        payment.setCashRegister(cashRegister);
         payment.setPaidAt(now);
         paymentRepository.save(payment);
 
@@ -183,7 +245,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             note.setStatus(PromissoryNoteStatus.PARTIALLY_PAID);
         }
         note.setPaymentMethod(request.paymentMethod());
-        note.setCashRegister(cashRegister);
         note.setUpdatedAt(now);
 
         auditLogService.log(
@@ -367,11 +428,13 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
         });
 
         PromissoryNote baseNote = notes.get(0);
-        int nextInstallmentNumber = promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(baseNote.getSale().getId())
-                .stream()
-                .map(PromissoryNote::getInstallmentNumber)
-                .max(Integer::compareTo)
-                .orElse(0) + 1;
+        int nextInstallmentNumber = baseNote.getSale() == null
+                ? 1
+                : promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(baseNote.getSale().getId())
+                        .stream()
+                        .map(PromissoryNote::getInstallmentNumber)
+                        .max(Integer::compareTo)
+                        .orElse(0) + 1;
 
         List<PromissoryNote> newNotes = new java.util.ArrayList<>();
         for (int index = 0; index < request.installments().size(); index++) {
@@ -409,7 +472,7 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
         for (PromissoryNoteResponse note : notes) {
             csv.append(csvCell(note.customer().name())).append(';')
                     .append(csvCell(note.customer().cpf())).append(';')
-                    .append(note.saleId()).append(';')
+                    .append(note.saleId() == null ? "Avulsa" : note.saleId()).append(';')
                     .append(note.installmentNumber()).append('/').append(note.totalInstallments()).append(';')
                     .append(formatMoney(note.amount())).append(';')
                     .append(DATE_FORMATTER.format(note.dueDate())).append(';')
@@ -453,10 +516,12 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
 
     private String generateNoteSection(PromissoryNote note) {
         StringBuilder rows = new StringBuilder();
-        List<SaleItem> items = note.getSale().getItems()
-                .stream()
-                .sorted(Comparator.comparing(SaleItem::getId))
-                .toList();
+        List<SaleItem> items = note.getSale() == null
+                ? List.of()
+                : note.getSale().getItems()
+                        .stream()
+                        .sorted(Comparator.comparing(SaleItem::getId))
+                        .toList();
         for (SaleItem item : items) {
             rows.append("""
                     <tr>
@@ -505,7 +570,7 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                         <div class="field"><span>Emitente</span><strong>%s</strong></div>
                         <div class="field"><span>Documento</span><strong>%s</strong></div>
                         <div class="field"><span>Telefone</span><strong>%s</strong></div>
-                        <div class="field"><span>Venda / Emissao</span><strong>#%d - %s</strong></div>
+                        <div class="field"><span>Origem / Emissao</span><strong>%s - %s</strong></div>
                       </div>
                       <table>
                         <thead><tr><th>Produto</th><th>Qtd</th><th>Unitario</th><th>Total</th></tr></thead>
@@ -534,7 +599,7 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                 escape(note.getCustomer().getName()),
                 note.getCustomer().getCpf() == null ? "Sem CPF" : escape(note.getCustomer().getCpf()),
                 note.getCustomer().getPhone() == null ? "Sem telefone" : escape(note.getCustomer().getPhone()),
-                note.getSale().getId(),
+                note.getSale() == null ? "Nota avulsa" : "#" + note.getSale().getId(),
                 DATE_FORMATTER.format(note.getCreatedAt()),
                 rows,
                 statusLabel(note.getStatus()),
@@ -670,7 +735,22 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             return "";
         }
 
-        return "\"" + value.replace("\"", "\"\"") + "\"";
+        String safeValue = neutralizeCsvFormula(value);
+        return "\"" + safeValue.replace("\"", "\"\"") + "\"";
+    }
+
+    private String neutralizeCsvFormula(String value) {
+        String trimmed = value.stripLeading();
+        if (trimmed.isEmpty()) {
+            return value;
+        }
+
+        char firstCharacter = trimmed.charAt(0);
+        if (firstCharacter == '=' || firstCharacter == '+' || firstCharacter == '-' || firstCharacter == '@') {
+            return "'" + value;
+        }
+
+        return value;
     }
 
     private String escape(String value) {
@@ -695,6 +775,33 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
         void add(BigDecimal value) {
             amount = amount.add(value);
             count++;
+        }
+
+        BigDecimal amount() {
+            return amount;
+        }
+
+        long count() {
+            return count;
+        }
+    }
+
+    private static class ReceivableDayTotal {
+        private final LocalDate date;
+        private BigDecimal amount = BigDecimal.ZERO;
+        private long count;
+
+        ReceivableDayTotal(LocalDate date) {
+            this.date = date;
+        }
+
+        void add(BigDecimal value) {
+            amount = amount.add(value);
+            count++;
+        }
+
+        LocalDate date() {
+            return date;
         }
 
         BigDecimal amount() {

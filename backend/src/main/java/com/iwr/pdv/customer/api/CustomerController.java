@@ -1,6 +1,7 @@
 package com.iwr.pdv.customer.api;
 
 import com.iwr.pdv.customer.api.dto.CustomerRequest;
+import com.iwr.pdv.customer.api.dto.CustomerPageResponse;
 import com.iwr.pdv.customer.api.dto.CustomerResponse;
 import com.iwr.pdv.customer.application.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,16 @@ public class CustomerController {
     @Operation(summary = "List active customers")
     public List<CustomerResponse> list(@RequestParam(required = false) String search) {
         return customerService.list(search);
+    }
+
+    @GetMapping("/page")
+    @Operation(summary = "List active customers with pagination")
+    public CustomerPageResponse listPage(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
+        return customerService.listPage(search, page, size);
     }
 
     @GetMapping("/birthdays")

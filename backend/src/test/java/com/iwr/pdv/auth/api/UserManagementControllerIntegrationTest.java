@@ -13,7 +13,6 @@ import com.iwr.pdv.auth.domain.AppUserRepository;
 import com.iwr.pdv.auth.domain.AuthSessionRepository;
 import com.iwr.pdv.cash.domain.CashMovementRepository;
 import com.iwr.pdv.cash.domain.CashRegisterRepository;
-import com.iwr.pdv.cash.domain.CashRegisterStatus;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductCategory;
 import com.iwr.pdv.product.domain.ProductCategoryRepository;
@@ -177,7 +176,7 @@ class UserManagementControllerIntegrationTest {
     }
 
     @Test
-    void shouldRestrictSellerToSalesAndCashRegister() throws Exception {
+    void shouldRestrictSellerToSalesOperation() throws Exception {
         String sellerHeader = "Bearer " + createSellerAndLogin("joao", "Joao Vendedor");
         Product product = productRepository.save(buildProduct("Blusa Barcode", "IWR-SELLER-001", new BigDecimal("30.00"), 3, true));
 
@@ -192,12 +191,6 @@ class UserManagementControllerIntegrationTest {
         mockMvc.perform(get("/api/sales")
                         .header("Authorization", sellerHeader))
                 .andExpect(status().isForbidden());
-
-        mockMvc.perform(post("/api/cash-register/open")
-                        .header("Authorization", sellerHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"openingAmount\":100.00}"))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(get("/api/sales/product-by-code")
                         .header("Authorization", sellerHeader)
@@ -222,32 +215,6 @@ class UserManagementControllerIntegrationTest {
                                 """.formatted(product.getId())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.operator.displayName").value("Joao Vendedor"));
-
-        Long cashRegisterId = cashRegisterRepository.findFirstByStatusOrderByOpenedAtDesc(CashRegisterStatus.OPEN)
-                .orElseThrow()
-                .getId();
-
-        mockMvc.perform(post("/api/cash-register/{cashRegisterId}/close", cashRegisterId)
-                        .header("Authorization", sellerHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"declaredCashAmount\":100.00}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CLOSED"));
-
-        mockMvc.perform(get("/api/cash-register")
-                        .header("Authorization", sellerHeader)
-                        .param("status", "CLOSED"))
-                .andExpect(status().isForbidden());
-
-        mockMvc.perform(get("/api/cash-register/{cashRegisterId}/report", cashRegisterId)
-                        .header("Authorization", sellerHeader))
-                .andExpect(status().isForbidden());
-
-        mockMvc.perform(post("/api/cash-register/{cashRegisterId}/reopen", cashRegisterId)
-                        .header("Authorization", sellerHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"reason\":\"Gerente ausente, ajuste operacional\"}"))
-                .andExpect(status().isForbidden());
     }
 
     @Test

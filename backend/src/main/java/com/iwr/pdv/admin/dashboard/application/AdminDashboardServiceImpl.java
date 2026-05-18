@@ -1,6 +1,7 @@
 package com.iwr.pdv.admin.dashboard.application;
 
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardPaymentMethodResponse;
+import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardReceivableDayResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardReceivableResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardReceivablesResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardSummaryResponse;
@@ -126,8 +127,14 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     @Override
     @Transactional
-    public AdminDashboardReceivablesResponse receivables(LocalDate startDate, LocalDate endDate) {
+    public AdminDashboardReceivablesResponse receivables(
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalDate calendarStartDate,
+            LocalDate calendarEndDate
+    ) {
         Period period = resolvePeriod(startDate, endDate);
+        Period calendarPeriod = resolvePeriod(calendarStartDate, calendarEndDate);
         List<PromissoryNote> openNotes = openNotes();
         LocalDate today = LocalDate.now(clock);
         List<PromissoryNote> periodNotes = openNotes.stream()
@@ -142,6 +149,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 sumOpenDueBetween(openNotes, today.plusDays(1), today.plusDays(7)),
                 sumOpenDueBetween(openNotes, today.plusDays(1), today.plusDays(30)),
                 topCustomers(openNotes),
+                calendarDays(openNotes, calendarPeriod),
                 periodNotes.stream().map(this::toReceivableResponse).toList()
         );
     }
@@ -151,7 +159,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     public byte[] report(LocalDate startDate, LocalDate endDate) {
         AdminDashboardSummaryResponse summary = summary(startDate, endDate);
         List<AdminDashboardPaymentMethodResponse> payments = paymentMethods(startDate, endDate);
-        AdminDashboardReceivablesResponse receivables = receivables(startDate, endDate);
+        AdminDashboardReceivablesResponse receivables = receivables(startDate, endDate, startDate, endDate);
         Document document = new Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -276,9 +284,25 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 note.getDueDate(),
                 note.getStatus(),
                 note.getPaymentMethod(),
-                note.getPaidAt(),
-                note.getCashRegister() == null ? null : note.getCashRegister().getId()
+                note.getPaidAt()
         );
+    }
+
+    private List<AdminDashboardReceivableDayResponse> calendarDays(List<PromissoryNote> notes, Period calendarPeriod) {
+        Map<LocalDate, ReceivableDayTotal> totals = new LinkedHashMap<>();
+        for (PromissoryNote note : notes) {
+            if (note.getDueDate().isBefore(calendarPeriod.startDate()) || note.getDueDate().isAfter(calendarPeriod.endDate())) {
+                continue;
+            }
+            totals.computeIfAbsent(note.getDueDate(), ReceivableDayTotal::new)
+                    .add(remainingAmount(note));
+        }
+
+        return totals.values()
+                .stream()
+                .sorted(Comparator.comparing(ReceivableDayTotal::date))
+                .map(total -> new AdminDashboardReceivableDayResponse(total.date(), total.amount(), total.count()))
+                .toList();
     }
 
     private BigDecimal sumSales(List<Sale> sales) {
@@ -413,6 +437,33 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
         String customerName() {
             return customerName;
+        }
+
+        BigDecimal amount() {
+            return amount;
+        }
+
+        long count() {
+            return count;
+        }
+    }
+
+    private static class ReceivableDayTotal {
+        private final LocalDate date;
+        private BigDecimal amount = BigDecimal.ZERO;
+        private long count;
+
+        ReceivableDayTotal(LocalDate date) {
+            this.date = date;
+        }
+
+        void add(BigDecimal value) {
+            amount = amount.add(value);
+            count++;
+        }
+
+        LocalDate date() {
+            return date;
         }
 
         BigDecimal amount() {

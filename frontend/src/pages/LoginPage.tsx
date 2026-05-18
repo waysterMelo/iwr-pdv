@@ -58,7 +58,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
         <div className="login-copy">
           <span className="eyebrow">Acesso restrito</span>
-          <h1 id="login-title">Entre para operar o caixa</h1>
+          <h1 id="login-title">Entre para operar o PDV</h1>
           <p>
             Produtos, vendas e historico ficam protegidos por sessao. Use o usuario
             inicial e altere a senha padrao antes da entrega final ao cliente.

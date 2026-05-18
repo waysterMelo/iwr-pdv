@@ -121,9 +121,9 @@ Para a camera funcionar em celular, o acesso precisa ocorrer em contexto seguro:
 - Sprint 8 concluida em software com modo smartphone, venda mobile, leitura por camera e fallback manual
 - login de acesso ao sistema com sessao protegida
 - pagamento por dinheiro, Pix, debito e credito
-- abertura, movimentacao e fechamento de caixa
+- venda direta sem abertura ou fechamento operacional
 - cancelamento de venda com estorno de estoque
 - recibo nao fiscal imprimivel
 - busca por nome ou codigo
 - ativacao e inativacao de produtos
-- frontend com tela de cadastro, listagem, edicao, caixa e historico
+- frontend com tela de cadastro, listagem, edicao, promissorias, clientes e historico
