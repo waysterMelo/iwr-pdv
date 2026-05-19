@@ -1,0 +1,89 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.iwr.pdv:backend >-------------------------
+[INFO] Building iwr-pdv-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:4.0.5:run (default-cli) > test-compile @ backend >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 15 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ backend ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:4.0.5:run (default-cli) < test-compile @ backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:4.0.5:run (default-cli) @ backend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.5)
+
+2026-05-17T13:25:32.067-03:00  INFO 688 --- [iwr-pdv-backend] [           main] com.iwr.pdv.BackendApplication           : Starting BackendApplication using Java 22.0.2 with PID 688 (C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\backend\target\classes started by wayst in C:\Users\wayst\OneDrive\Desktop\Projetos\iwr-pdv\backend)
+2026-05-17T13:25:32.077-03:00  INFO 688 --- [iwr-pdv-backend] [           main] com.iwr.pdv.BackendApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-05-17T13:25:34.838-03:00  INFO 688 --- [iwr-pdv-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-17T13:25:35.311-03:00  INFO 688 --- [iwr-pdv-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 458 ms. Found 14 JPA repository interfaces.
+2026-05-17T13:25:37.026-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-17T13:25:37.053-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-17T13:25:37.088-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.20]
+2026-05-17T13:25:37.249-03:00  INFO 688 --- [iwr-pdv-backend] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 5038 ms
+2026-05-17T13:25:38.106-03:00  INFO 688 --- [iwr-pdv-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-17T13:25:39.005-03:00  INFO 688 --- [iwr-pdv-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@d76099a
+2026-05-17T13:25:39.009-03:00  INFO 688 --- [iwr-pdv-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-17T13:25:39.376-03:00  INFO 688 --- [iwr-pdv-backend] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/iwr_pdv (PostgreSQL 16.13)
+2026-05-17T13:25:41.081-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 15 migrations (execution time 00:00.285s)
+2026-05-17T13:25:41.608-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 15
+2026-05-17T13:25:41.687-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-05-17T13:25:42.747-03:00  INFO 688 --- [iwr-pdv-backend] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-17T13:25:43.069-03:00  INFO 688 --- [iwr-pdv-backend] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.7.Final
+2026-05-17T13:25:44.466-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-17T13:25:45.169-03:00  INFO 688 --- [iwr-pdv-backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/iwr_pdv]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 16.13
+	Default catalog/schema: iwr_pdv/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-17T13:25:48.560-03:00  INFO 688 --- [iwr-pdv-backend] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-17T13:25:49.780-03:00  INFO 688 --- [iwr-pdv-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-17T13:25:49.978-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-17T13:25:57.631-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-05-17T13:25:57.822-03:00  INFO 688 --- [iwr-pdv-backend] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-17T13:25:57.837-03:00  INFO 688 --- [iwr-pdv-backend] [           main] com.iwr.pdv.BackendApplication           : Started BackendApplication in 26.988 seconds (process running for 28.399)
+2026-05-17T13:26:05.546-03:00  INFO 688 --- [iwr-pdv-backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-17T13:26:05.547-03:00  INFO 688 --- [iwr-pdv-backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-17T13:26:05.551-03:00  INFO 688 --- [iwr-pdv-backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  02:12 h
+[INFO] Finished at: 2026-05-17T15:38:06-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:4.0.5:run (default-cli) on project backend: Process terminated with exit code: -1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

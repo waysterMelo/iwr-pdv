@@ -6,13 +6,19 @@ import {
   Boxes,
   CircleSlash,
   Clock3,
+  Copy,
+  Download,
+  Edit3,
   Package,
   PackageCheck,
   Barcode,
+  Printer,
   Shirt,
   ShoppingBag,
   Sparkles,
   Tag,
+  Tags,
+  X,
 } from 'lucide-react'
 import {
   createProduct,
@@ -676,36 +682,38 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                       selectedCategory ? ` em ${selectedCategory.name}` : ''
                     }`}
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {selectedProductIds.size > 0 ? (
-                  <>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--color-gold)' }}>
-                      {selectedProductIds.size} selecionado(s)
-                    </span>
-                    <a
-                      className="action-button"
-                      href={getBulkLabelsUrl(Array.from(selectedProductIds))}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ textDecoration: 'none', fontSize: '0.85rem', padding: '6px 14px' }}
-                    >
-                      Imprimir etiquetas
-                    </a>
-                    <button
-                      className="secondary-button"
-                      type="button"
-                      onClick={() => setSelectedProductIds(new Set())}
-                      style={{ fontSize: '0.85rem', padding: '6px 14px' }}
-                    >
-                      Limpar selecao
-                    </button>
-                  </>
-                ) : null}
-                <strong>
-                  Pagina {productPage.totalPages === 0 ? 0 : productPage.page + 1} de {productPage.totalPages}
-                </strong>
-              </div>
+              <strong>
+                Pagina {productPage.totalPages === 0 ? 0 : productPage.page + 1} de {productPage.totalPages}
+              </strong>
             </div>
+
+            {selectedProductIds.size > 0 ? (
+              <div className="product-selection-bar" role="status">
+                <div>
+                  <span className="selection-count">{selectedProductIds.size} selecionado(s)</span>
+                  <strong>Uma etiqueta por unidade em estoque</strong>
+                </div>
+                <div className="product-selection-actions">
+                  <a
+                    className="action-button"
+                    href={getBulkLabelsUrl(Array.from(selectedProductIds))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Printer size={15} strokeWidth={2.4} aria-hidden="true" />
+                    Imprimir etiquetas
+                  </a>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => setSelectedProductIds(new Set())}
+                  >
+                    <X size={15} strokeWidth={2.4} aria-hidden="true" />
+                    Limpar selecao
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {listErrorMessage ? (
               <div className="feedback-message feedback-message--error">{listErrorMessage}</div>
@@ -722,9 +730,13 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                   const cardColor = themeColors[product.id % themeColors.length]
                   
                   return (
-                  <article className="product-card" style={{ borderLeft: `4px solid ${cardColor}` }} key={product.id}>
+                  <article
+                    className={`product-card ${selectedProductIds.has(product.id) ? 'product-card--selected' : ''}`}
+                    style={{ borderLeft: `4px solid ${cardColor}` }}
+                    key={product.id}
+                  >
                     <div className="product-card-header">
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <label className="product-select-control">
                         <input
                           type="checkbox"
                           checked={selectedProductIds.has(product.id)}
@@ -740,8 +752,8 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                             })
                           }}
                           aria-label={`Selecionar ${product.name}`}
-                          style={{ width: '16px', height: '16px', accentColor: 'var(--color-gold)' }}
                         />
+                        <Tags size={15} strokeWidth={2.4} aria-hidden="true" />
                       </label>
                       <div>
                         <h3>{product.name}</h3>
@@ -818,6 +830,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                             aria-label={`Copiar codigo ${product.code}`}
                             onClick={() => void handleCopyCode(product)}
                           >
+                            <Copy size={14} strokeWidth={2.4} aria-hidden="true" />
                             {copiedProductId === product.id ? 'OK' : 'Copiar'}
                           </button>
                           <a
@@ -827,6 +840,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                             title="Baixar codigo de barras"
                             aria-label={`Baixar codigo de barras do produto ${product.code}`}
                           >
+                            <Download size={14} strokeWidth={2.4} aria-hidden="true" />
                             Baixar
                           </a>
                         </div>
@@ -835,6 +849,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
 
                     <div className="product-card-actions">
                       <button className="secondary-button" type="button" onClick={() => onEditProduct(product.id)}>
+                        <Edit3 size={15} strokeWidth={2.4} aria-hidden="true" />
                         Editar
                       </button>
                       <button
@@ -842,6 +857,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                         type="button"
                         onClick={() => setSelectedLabelProduct(product)}
                       >
+                        <Tag size={15} strokeWidth={2.4} aria-hidden="true" />
                         Etiqueta
                       </button>
                       <button
@@ -850,6 +866,7 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                         disabled={product.stockQuantity <= 0}
                         onClick={() => handlePrintStockLabels(product)}
                       >
+                        <Printer size={15} strokeWidth={2.4} aria-hidden="true" />
                         Imprimir estoque
                       </button>
                       <button
@@ -858,6 +875,11 @@ export function ProductManagementPage({ onEditProduct }: ProductManagementPagePr
                         disabled={busyProductId === product.id}
                         onClick={() => void handleToggleActivation(product)}
                       >
+                        {product.active ? (
+                          <CircleSlash size={15} strokeWidth={2.4} aria-hidden="true" />
+                        ) : (
+                          <PackageCheck size={15} strokeWidth={2.4} aria-hidden="true" />
+                        )}
                         {busyProductId === product.id
                           ? 'Atualizando...'
                           : product.active

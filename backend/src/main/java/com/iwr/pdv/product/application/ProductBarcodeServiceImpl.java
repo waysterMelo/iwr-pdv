@@ -30,7 +30,7 @@ public class ProductBarcodeServiceImpl implements ProductBarcodeService {
 
     @Override
     public byte[] generateBarcode(String content) {
-        String numericContent = content.replaceAll("[^0-9]", "");
+        String barcodeContent = content.trim().toUpperCase();
 
         try {
             Map<EncodeHintType, Object> hints = new HashMap<>();
@@ -38,7 +38,7 @@ public class ProductBarcodeServiceImpl implements ProductBarcodeService {
 
             MultiFormatWriter writer = new MultiFormatWriter();
             BitMatrix bitMatrix = writer.encode(
-                    numericContent,
+                    barcodeContent,
                     BarcodeFormat.CODE_128,
                     BARCODE_WIDTH,
                     BARCODE_HEIGHT,
@@ -69,7 +69,7 @@ public class ProductBarcodeServiceImpl implements ProductBarcodeService {
             g.setFont(new Font("Monospaced", Font.PLAIN, 20));
             FontMetrics fm = g.getFontMetrics();
 
-            String displayText = formatDisplayCode(numericContent);
+            String displayText = formatDisplayCode(barcodeContent);
             int textX = (finalWidth - fm.stringWidth(displayText)) / 2;
             int textY = MARGIN + BARCODE_HEIGHT + fm.getAscent() + 4;
 
@@ -84,12 +84,12 @@ public class ProductBarcodeServiceImpl implements ProductBarcodeService {
         }
     }
 
-    private String formatDisplayCode(String numericCode) {
-        if (numericCode.length() <= 3) {
-            return numericCode;
+    private String formatDisplayCode(String code) {
+        if (code.length() <= 3) {
+            return code;
         }
 
-        int mid = numericCode.length() / 2;
-        return numericCode.substring(0, mid) + " " + numericCode.substring(mid);
+        int mid = code.length() / 2;
+        return code.substring(0, mid) + " " + code.substring(mid);
     }
 }

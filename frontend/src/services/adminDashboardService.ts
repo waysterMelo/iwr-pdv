@@ -37,7 +37,12 @@ export function getAdminDashboardReceivables(filters: AdminDashboardFilters, cal
     params.set('calendarEndDate', range.endDate)
   }
 
-  return get<AdminDashboardReceivables>(`/api/admin/dashboard/receivables?${params.toString()}`)
+  return get<AdminDashboardReceivables>(`/api/admin/dashboard/receivables?${params.toString()}`).then((receivables) => ({
+    ...receivables,
+    topCustomers: receivables.topCustomers ?? [],
+    calendarDays: receivables.calendarDays ?? [],
+    items: receivables.items ?? [],
+  }))
 }
 
 export async function downloadAdminDashboardReport(filters: AdminDashboardFilters) {

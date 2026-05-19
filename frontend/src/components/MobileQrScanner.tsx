@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
+import { BarcodeFormat, BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
+import { DecodeHintType } from '@zxing/library'
 
 type MobileQrScannerProps = {
   active: boolean
@@ -8,6 +9,10 @@ type MobileQrScannerProps = {
 }
 
 const duplicateReadWindowMs = 1800
+const barcodeHints = new Map<DecodeHintType, unknown>([
+  [DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.CODE_128]],
+  [DecodeHintType.TRY_HARDER, true],
+])
 
 export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -43,7 +48,7 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
       videoElement.srcObject = null
     }
 
-    BrowserQRCodeReader.releaseAllStreams()
+    BrowserMultiFormatReader.releaseAllStreams()
   }
 
   useEffect(() => {
@@ -53,7 +58,7 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
     }
 
     let isDisposed = false
-    const codeReader = new BrowserQRCodeReader()
+    const codeReader = new BrowserMultiFormatReader(barcodeHints)
 
     async function startScanner() {
       if (!videoRef.current) {
@@ -94,7 +99,7 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
 
             inFlightRef.current = true
             lastReadRef.current = { code, time: now }
-            setScannerStatus('QR Code lido. Atualizando carrinho...')
+            setScannerStatus('Codigo de barras lido. Atualizando carrinho...')
 
             try {
               const added = await onReadRef.current(code)
@@ -141,7 +146,7 @@ export function MobileQrScanner({ active, onClose, onRead }: MobileQrScannerProp
       </header>
 
       <div className={`mobile-camera-frame ${hasSuccessfulRead ? 'mobile-camera-frame--success' : ''}`}>
-        <video ref={videoRef} muted playsInline aria-label="Camera para leitura de QR Code" />
+        <video ref={videoRef} muted playsInline aria-label="Camera para leitura de codigo de barras" />
         <span className="mobile-scan-target" aria-hidden="true" />
         {hasSuccessfulRead ? <span className="mobile-scan-success" aria-hidden="true">OK</span> : null}
       </div>
