@@ -116,6 +116,12 @@ function emptySummary(filters: AdminDashboardFilters): AdminDashboardSummary {
     dueTodayReceivables: 0,
     dueNext7DaysReceivables: 0,
     dueNext30DaysReceivables: 0,
+    globalStockItems: 0,
+    globalCostValue: 0,
+    globalSaleValue: 0,
+    totalCMV: 0,
+    totalProfit: 0,
+    topProducts: [],
   }
 }
 
@@ -370,8 +376,8 @@ export function AdminDashboardPage() {
             </div>
           </header>
 
-          <div className="admin-bi-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '22px' }}>
-            {/* Gráficos de Barras com degradê Gold */}
+          <div className="admin-bi-grid">
+            {/* Linha 1: Gráficos de Faturamento por Forma */}
             <div className="admin-mini-chart" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Faturamento por Forma</span>
               {paymentMethods.length === 0 ? (
@@ -397,8 +403,95 @@ export function AdminDashboardPage() {
               )}
             </div>
 
-            {/* Divisão de Recebíveis */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContainer: 'space-between', justifyContent: 'space-between', gap: '14px' }}>
+            {/* Linha 1: Performance Financeira / CMV */}
+            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
+              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Performance do Período</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
+                  <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>Receita Bruta</small>
+                  <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{formatCurrency(summary.totalSold)}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
+                  <small style={{ color: '#fb7185', fontSize: '0.75rem' }}>Custo das Vendas (CMV)</small>
+                  <strong style={{ color: '#fb7185', fontSize: '0.85rem' }}>{formatCurrency(summary.totalCMV)}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
+                  <small style={{ color: '#2dd4bf', fontSize: '0.75rem' }}>Lucro Realizado</small>
+                  <strong style={{ color: '#2dd4bf', fontSize: '0.85rem' }}>{formatCurrency(summary.totalProfit)}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <small style={{ color: '#f6d78b', fontSize: '0.75rem' }}>Margem Bruta %</small>
+                  <strong style={{ color: '#f6d78b', fontSize: '0.85rem' }}>
+                    {summary.totalSold > 0 ? ((summary.totalProfit / summary.totalSold) * 100).toFixed(1) : '0.0'}%
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Linha 1: Estoque Global (Preço de Custo) */}
+            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
+              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estoque Global (Atelier)</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
+                  <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>Peças Cadastradas</small>
+                  <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{summary.globalStockItems} un.</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
+                  <small style={{ color: '#fb7185', fontSize: '0.75rem' }}>Custo Total (Investido)</small>
+                  <strong style={{ color: '#fb7185', fontSize: '0.85rem' }}>{formatCurrency(summary.globalCostValue)}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
+                  <small style={{ color: '#2dd4bf', fontSize: '0.75rem' }}>Valor Venda Potencial</small>
+                  <strong style={{ color: '#2dd4bf', fontSize: '0.85rem' }}>{formatCurrency(summary.globalSaleValue)}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <small style={{ color: '#f6d78b', fontSize: '0.75rem' }}>Margem Teórica %</small>
+                  <strong style={{ color: '#f6d78b', fontSize: '0.85rem' }}>
+                    {summary.globalSaleValue > 0 ? (((summary.globalSaleValue - summary.globalCostValue) / summary.globalSaleValue) * 100).toFixed(1) : '0.0'}%
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Linha 2: Curva ABC - Top 5 Mais Vendidos */}
+            <div className="admin-mini-chart" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Curva ABC - Top 5 Mais Vendidos</span>
+              {!summary.topProducts || summary.topProducts.length === 0 ? (
+                <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '20px 0' }}>Sem movimentações no período.</div>
+              ) : (
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {summary.topProducts.map((product) => {
+                    const maxQty = Math.max(...summary.topProducts.map((p) => p.quantity), 1)
+                    return (
+                      <div className="admin-chart-row" key={product.productCode} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', width: '120px' }}>
+                          <strong style={{ color: '#fff', fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {product.productName}
+                          </strong>
+                          <small style={{ color: '#7b8493', fontSize: '0.6rem' }}>{product.productCode}</small>
+                        </div>
+                        <div style={{ flex: 1, height: '8px', background: '#11141a', borderRadius: '4px', overflow: 'hidden' }}>
+                          <i style={{ 
+                            display: 'block', 
+                            height: '100%', 
+                            borderRadius: 'inherit',
+                            background: 'linear-gradient(90deg, #d7ad55, #f6d78b)', 
+                            width: `${Math.max(6, (product.quantity / maxQty) * 100)}%` 
+                          }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', width: '80px', textAlign: 'right' }}>
+                          <strong style={{ color: '#fff', fontSize: '0.75rem' }}>{product.quantity} un.</strong>
+                          <small style={{ color: '#2dd4bf', fontSize: '0.62rem' }}>{formatCurrency(product.totalRevenue)}</small>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Linha 2: Divisão de Recebíveis */}
+            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
               <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recebíveis da Carteira</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
@@ -416,8 +509,8 @@ export function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Métricas de BI Vendas */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContainer: 'space-between', justifyContent: 'space-between', gap: '14px' }}>
+            {/* Linha 2: Métricas de BI Vendas */}
+            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
               <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>BI de Operações</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>

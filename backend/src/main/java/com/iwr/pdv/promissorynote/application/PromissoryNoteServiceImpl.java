@@ -391,29 +391,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
     }
 
     private String generateNoteSection(PromissoryNote note) {
-        StringBuilder rows = new StringBuilder();
-        List<SaleItem> items = note.getSale() == null
-                ? List.of()
-                : note.getSale().getItems()
-                        .stream()
-                        .sorted(Comparator.comparing(SaleItem::getId))
-                        .toList();
-        for (SaleItem item : items) {
-            rows.append("""
-                    <tr>
-                      <td>%s</td>
-                      <td>%d</td>
-                      <td>%s</td>
-                      <td>%s</td>
-                    </tr>
-                    """.formatted(
-                    escape(item.getProductName()),
-                    item.getQuantity(),
-                    formatMoney(item.getUnitPrice()),
-                    formatMoney(item.getSubtotal())
-            ));
-        }
-
         return """
                     <section class="note">
                       <aside class="stub">
@@ -433,6 +410,7 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                         <header class="top">
                           <div>
                             <div class="brand">IWR MODAS</div>
+                            <div class="cnpj" style="font-size: 11px; color: var(--muted); font-weight: 800; margin-top: 2px;">CNPJ: 21.638.373/0001-62</div>
                             <div class="title">Nota Promissoria</div>
                             <div class="serial">Documento #%d - Parcela %d de %d</div>
                           </div>
@@ -441,17 +419,13 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                             <strong>%s</strong>
                           </div>
                         </header>
-                      <p class="legal">Ao dia <strong>%s</strong>, pagarei por esta unica via de <strong>NOTA PROMISSORIA</strong> a <strong>IWR MODAS</strong>, ou a sua ordem, a quantia de <strong>%s</strong> em moeda corrente deste pais.</p>
+                      <p class="legal">Ao dia <strong>%s</strong>, pagarei por esta unica via de <strong>NOTA PROMISSORIA</strong> a <strong>IWR MODAS (CNPJ: 21.638.373/0001-62)</strong>, ou a sua ordem, a quantia de <strong>%s (%s)</strong> em moeda corrente deste pais.</p>
                       <div class="field-grid">
                         <div class="field"><span>Emitente</span><strong>%s</strong></div>
                         <div class="field"><span>Documento</span><strong>%s</strong></div>
                         <div class="field"><span>Telefone</span><strong>%s</strong></div>
                         <div class="field"><span>Origem / Emissao</span><strong>%s - %s</strong></div>
                       </div>
-                      <table>
-                        <thead><tr><th>Produto</th><th>Qtd</th><th>Unitario</th><th>Total</th></tr></thead>
-                        <tbody>%s</tbody>
-                      </table>
                       <div class="field"><span>Status</span><strong>%s</strong></div>
                       <div class="signature">
                         <div class="place">Local e data: ________________________________</div>
@@ -472,12 +446,12 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                 formatMoney(note.getAmount()),
                 DATE_FORMATTER.format(note.getDueDate()),
                 formatMoney(note.getAmount()),
+                convertToWords(note.getAmount()),
                 escape(note.getCustomer().getName()),
                 note.getCustomer().getCpf() == null ? "Sem CPF" : escape(note.getCustomer().getCpf()),
                 note.getCustomer().getPhone() == null ? "Sem telefone" : escape(note.getCustomer().getPhone()),
                 note.getSale() == null ? "Nota avulsa" : "#" + note.getSale().getId(),
                 DATE_FORMATTER.format(note.getCreatedAt()),
-                rows,
                 statusLabel(note.getStatus()),
                 escape(note.getCustomer().getName())
         );
@@ -686,5 +660,92 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
         long count() {
             return count;
         }
+    }
+
+    private static final String[] UNITS = {
+        "", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"
+    };
+
+    private static final String[] TEENS = {
+        "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"
+    };
+
+    private static final String[] TENS = {
+        "", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"
+    };
+
+    private static final String[] HUNDREDS = {
+        "", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"
+    };
+
+    public static String convertToWords(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0) {
+            return "zero reais";
+        }
+
+        long totalCents = amount.multiply(new BigDecimal("100")).setScale(0, RoundingMode.HALF_UP).longValue();
+        long reais = totalCents / 100;
+        int cents = (int) (totalCents % 100);
+
+        StringBuilder words = new StringBuilder();
+
+        if (reais > 0) {
+            words.append(convertNumber(reais));
+            words.append(reais == 1 ? " real" : " reais");
+        }
+
+        if (cents > 0) {
+            if (reais > 0) {
+                words.append(" e ");
+            }
+            words.append(convertNumber(cents));
+            words.append(cents == 1 ? " centavo" : " centavos");
+        }
+
+        return words.toString();
+    }
+
+    private static String convertNumber(long number) {
+        if (number == 0) {
+            return "";
+        }
+        if (number < 10) {
+            return UNITS[(int) number];
+        }
+        if (number < 20) {
+            return TEENS[(int) (number - 10)];
+        }
+        if (number < 100) {
+            int tens = (int) (number / 10);
+            int unit = (int) (number % 10);
+            return TENS[tens] + (unit > 0 ? " e " + UNITS[unit] : "");
+        }
+        if (number == 100) {
+            return "cem";
+        }
+        if (number < 1000) {
+            int hundreds = (int) (number / 100);
+            int remainder = (int) (number % 100);
+            return HUNDREDS[hundreds] + (remainder > 0 ? " e " + convertNumber(remainder) : "");
+        }
+        if (number < 1000000) {
+            long thousands = number / 1000;
+            long remainder = number % 1000;
+            String thousandsStr = (thousands == 1) ? "mil" : convertNumber(thousands) + " mil";
+            if (remainder == 0) {
+                return thousandsStr;
+            }
+            String connector = (remainder < 100 || remainder % 100 == 0) ? " e " : " ";
+            return thousandsStr + connector + convertNumber(remainder);
+        }
+        
+        long millions = number / 1000000;
+        long remainder = number % 1000000;
+        String millionsStr = (millions == 1) ? "um milhão" : convertNumber(millions) + " milhões";
+        if (remainder == 0) {
+            return millionsStr;
+        }
+        String connector = (remainder < 100 || remainder % 100 == 0) ? " e " : " ";
+        return millionsStr + connector + convertNumber(remainder);
     }
 }

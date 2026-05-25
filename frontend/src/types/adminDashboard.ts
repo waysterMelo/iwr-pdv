@@ -1,6 +1,13 @@
 import type { PaymentMethod } from './sale'
 import type { PromissoryNoteStatus } from './promissoryNote'
 
+export type AdminDashboardTopProduct = {
+  productName: string
+  productCode: string
+  quantity: number
+  totalRevenue: number
+}
+
 export type AdminDashboardSummary = {
   startDate: string
   endDate: string
@@ -19,6 +26,12 @@ export type AdminDashboardSummary = {
   dueTodayReceivables: number
   dueNext7DaysReceivables: number
   dueNext30DaysReceivables: number
+  globalStockItems: number
+  globalCostValue: number
+  globalSaleValue: number
+  totalCMV: number
+  totalProfit: number
+  topProducts: AdminDashboardTopProduct[]
 }
 
 export type AdminDashboardPaymentMethod = {

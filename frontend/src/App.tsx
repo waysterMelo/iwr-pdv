@@ -325,7 +325,6 @@ function App() {
 
       <section className="workspace">
         <header className="workspace-header">
-          <div className="workspace-search">Buscar produto, venda ou usuario...</div>
           <div className="workspace-current">
             <span>{currentItem.eyebrow}</span>
             <strong>{currentItem.label}</strong>

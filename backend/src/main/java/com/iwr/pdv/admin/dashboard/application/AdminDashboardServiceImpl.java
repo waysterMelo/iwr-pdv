@@ -6,6 +6,8 @@ import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardReceivableResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardReceivablesResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardSummaryResponse;
 import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardTopCustomerResponse;
+import com.iwr.pdv.admin.dashboard.api.dto.AdminDashboardTopProductResponse;
+import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePayment;
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
@@ -40,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,17 +58,20 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     );
 
     private final SaleRepository saleRepository;
+    private final ProductRepository productRepository;
     private final PromissoryNoteRepository promissoryNoteRepository;
     private final PromissoryNotePaymentRepository promissoryNotePaymentRepository;
     private final Clock clock;
 
     public AdminDashboardServiceImpl(
             SaleRepository saleRepository,
+            ProductRepository productRepository,
             PromissoryNoteRepository promissoryNoteRepository,
             PromissoryNotePaymentRepository promissoryNotePaymentRepository,
             Clock clock
     ) {
         this.saleRepository = saleRepository;
+        this.productRepository = productRepository;
         this.promissoryNoteRepository = promissoryNoteRepository;
         this.promissoryNotePaymentRepository = promissoryNotePaymentRepository;
         this.clock = clock;
@@ -84,6 +90,19 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         BigDecimal totalReceived = sumReceivedSales(completedSales).add(sumNotePayments(notePayments));
         long saleCount = completedSales.size();
 
+        long globalStockItems = productRepository.sumTotalStockQuantity();
+        BigDecimal globalCostValue = productRepository.sumTotalCostValue();
+        BigDecimal globalSaleValue = productRepository.sumTotalSaleValue();
+
+        BigDecimal totalCMV = saleRepository.sumCMVForPeriod(period.start(), period.end());
+        BigDecimal totalProfit = totalSold.subtract(totalCMV);
+
+        List<AdminDashboardTopProductResponse> topProducts = saleRepository.findTopProductsForPeriod(
+                period.start(),
+                period.end(),
+                PageRequest.of(0, 5)
+        );
+
         return new AdminDashboardSummaryResponse(
                 period.startDate(),
                 period.endDate(),
@@ -101,7 +120,13 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 sumOpenDueUntil(openNotes, today.minusDays(1)),
                 sumOpenDueBetween(openNotes, today, today),
                 sumOpenDueBetween(openNotes, today.plusDays(1), today.plusDays(7)),
-                sumOpenDueBetween(openNotes, today.plusDays(1), today.plusDays(30))
+                sumOpenDueBetween(openNotes, today.plusDays(1), today.plusDays(30)),
+                globalStockItems,
+                globalCostValue,
+                globalSaleValue,
+                totalCMV,
+                totalProfit,
+                topProducts
         );
     }
 

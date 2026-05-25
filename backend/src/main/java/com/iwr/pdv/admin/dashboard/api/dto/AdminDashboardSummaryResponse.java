@@ -2,6 +2,7 @@ package com.iwr.pdv.admin.dashboard.api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public record AdminDashboardSummaryResponse(
         LocalDate startDate,
@@ -20,6 +21,12 @@ public record AdminDashboardSummaryResponse(
         BigDecimal overdueReceivables,
         BigDecimal dueTodayReceivables,
         BigDecimal dueNext7DaysReceivables,
-        BigDecimal dueNext30DaysReceivables
+        BigDecimal dueNext30DaysReceivables,
+        long globalStockItems,
+        BigDecimal globalCostValue,
+        BigDecimal globalSaleValue,
+        BigDecimal totalCMV,
+        BigDecimal totalProfit,
+        List<AdminDashboardTopProductResponse> topProducts
 ) {
 }
