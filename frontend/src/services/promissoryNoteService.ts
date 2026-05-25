@@ -2,13 +2,10 @@ import type { PaymentMethod } from '../types/sale'
 import type {
   PromissoryNote,
   PromissoryNoteCalendarDay,
-  PromissoryNoteCollectionAction,
-  PromissoryNoteCollectionEvent,
   PromissoryNoteDelinquencyRange,
   PromissoryNoteFilters,
   PromissoryNotePayment,
   PromissoryManualPayload,
-  PromissoryRenegotiationPayload,
 } from '../types/promissoryNote'
 import { apiBaseUrl, get, getAuthToken, HttpRequestError, post } from './httpClient'
 
@@ -44,12 +41,13 @@ export async function payPromissoryNote(
   noteId: number,
   paymentMethod: Exclude<PaymentMethod, 'PROMISSORY_NOTE'>,
   amount?: number,
-  chargeInterestAndPenalty = false,
+  interestAmount = 0,
 ) {
   return post<PromissoryNote>(`/api/promissory-notes/${noteId}/payments`, {
     paymentMethod,
     amount: amount && amount > 0 ? amount : null,
-    chargeInterestAndPenalty,
+    chargeInterestAndPenalty: false,
+    interestAmount: interestAmount > 0 ? interestAmount : 0,
   })
 }
 
@@ -57,29 +55,8 @@ export async function getPromissoryNotePayments(noteId: number) {
   return get<PromissoryNotePayment[]>(`/api/promissory-notes/${noteId}/payments`)
 }
 
-export async function addPromissoryNoteCollectionEvent(
-  noteId: number,
-  action: PromissoryNoteCollectionAction,
-  comment?: string,
-  promisedPaymentDate?: string,
-) {
-  return post<PromissoryNoteCollectionEvent>(`/api/promissory-notes/${noteId}/collection-events`, {
-    action,
-    comment: comment?.trim() || null,
-    promisedPaymentDate: promisedPaymentDate || null,
-  })
-}
-
-export async function getPromissoryNoteCollectionEvents(noteId: number) {
-  return get<PromissoryNoteCollectionEvent[]>(`/api/promissory-notes/${noteId}/collection-events`)
-}
-
 export async function getPromissoryDelinquencyReport() {
   return get<PromissoryNoteDelinquencyRange[]>('/api/promissory-notes/delinquency-report')
-}
-
-export async function renegotiatePromissoryNotes(payload: PromissoryRenegotiationPayload) {
-  return post<PromissoryNote[]>('/api/promissory-notes/renegotiations', payload)
 }
 
 export async function getPromissoryWhatsappMessage(noteId: number, pixKey?: string) {
@@ -106,7 +83,7 @@ export function getPromissoryNotesExportUrl(filters: PromissoryNoteFilters = {},
   return `/api/promissory-notes/export.csv${query}${dueToday ? `${separator}dueToday=true` : ''}`
 }
 
-export async function downloadPromissoryNotesCsv(filters: PromissoryNoteFilters = {}) {
+export async function downloadPromissoryNotesExcelReport(filters: PromissoryNoteFilters = {}) {
   const path = getPromissoryNotesExportUrl(filters, false)
   const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: {
@@ -117,14 +94,14 @@ export async function downloadPromissoryNotesCsv(filters: PromissoryNoteFilters 
   })
 
   if (!response.ok) {
-    throw new HttpRequestError(`Failed to download CSV (Status: ${response.status})`, response.status)
+    throw new HttpRequestError(`Failed to download report (Status: ${response.status})`, response.status)
   }
 
   const blob = await response.blob()
   const url = window.URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = 'notas-promissorias.csv'
+  anchor.download = 'relatorio-excel-notas-promissorias.csv'
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()

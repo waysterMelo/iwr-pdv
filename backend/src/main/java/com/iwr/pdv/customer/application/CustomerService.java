@@ -2,6 +2,7 @@ package com.iwr.pdv.customer.application;
 
 import com.iwr.pdv.customer.api.dto.CustomerRequest;
 import com.iwr.pdv.customer.api.dto.CustomerPageResponse;
+import com.iwr.pdv.customer.api.dto.CustomerProfileResponse;
 import com.iwr.pdv.customer.api.dto.CustomerResponse;
 import java.util.List;
 
@@ -12,6 +13,8 @@ public interface CustomerService {
     CustomerPageResponse listPage(String search, int page, int size);
 
     List<CustomerResponse> birthdays();
+
+    CustomerProfileResponse profile(Long customerId);
 
     CustomerResponse create(CustomerRequest request);
 

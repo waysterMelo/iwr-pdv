@@ -181,6 +181,7 @@ export function useSalesCart(options: UseSalesCartOptions = {}) {
       setCartItems([])
       setDiscountAmount('0.00')
       setAmountReceived('')
+      setPaymentMethod('CASH')
       setLastSale(sale)
       showMessage(`Venda #${sale.id} finalizada com sucesso.`, 'success')
       return sale

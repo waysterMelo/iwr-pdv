@@ -7,17 +7,12 @@ import com.iwr.pdv.common.exception.BusinessRuleException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import com.iwr.pdv.customer.domain.Customer;
 import com.iwr.pdv.customer.domain.CustomerRepository;
-import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventRequest;
-import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCalendarDayResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteDelinquencyRangeResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteManualRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentResponse;
-import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteRenegotiationRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteResponse;
-import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEvent;
-import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEventRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePayment;
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
@@ -55,7 +50,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
     private final PromissoryNoteRepository promissoryNoteRepository;
     private final CustomerRepository customerRepository;
     private final PromissoryNotePaymentRepository paymentRepository;
-    private final PromissoryNoteCollectionEventRepository collectionEventRepository;
     private final PromissoryNoteMapper promissoryNoteMapper;
     private final AuditLogService auditLogService;
     private final Clock clock;
@@ -64,7 +58,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             PromissoryNoteRepository promissoryNoteRepository,
             CustomerRepository customerRepository,
             PromissoryNotePaymentRepository paymentRepository,
-            PromissoryNoteCollectionEventRepository collectionEventRepository,
             PromissoryNoteMapper promissoryNoteMapper,
             AuditLogService auditLogService,
             Clock clock
@@ -72,7 +65,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
         this.promissoryNoteRepository = promissoryNoteRepository;
         this.customerRepository = customerRepository;
         this.paymentRepository = paymentRepository;
-        this.collectionEventRepository = collectionEventRepository;
         this.promissoryNoteMapper = promissoryNoteMapper;
         this.auditLogService = auditLogService;
         this.clock = clock;
@@ -204,9 +196,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             throw new BusinessRuleException("Promissory note is cancelled.");
         }
 
-        if (note.getStatus() == PromissoryNoteStatus.RENEGOTIATED) {
-            throw new BusinessRuleException("Promissory note was renegotiated.");
-        }
 
         if (request.paymentMethod() == PaymentMethod.PROMISSORY_NOTE) {
             throw new BusinessRuleException("Promissory note payment must be settled with cash, PIX, debit or credit.");
@@ -303,43 +292,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
         );
     }
 
-    @Override
-    @Transactional
-    public PromissoryNoteCollectionEventResponse addCollectionEvent(
-            Long noteId,
-            PromissoryNoteCollectionEventRequest request,
-            AppUser operator
-    ) {
-        PromissoryNote note = findNote(noteId);
-        PromissoryNoteCollectionEvent event = new PromissoryNoteCollectionEvent();
-        event.setNote(note);
-        event.setAction(request.action());
-        event.setComment(request.comment() == null ? null : request.comment().trim());
-        event.setPromisedPaymentDate(request.promisedPaymentDate());
-        event.setCreatedBy(operator);
-        event.setCreatedAt(OffsetDateTime.now(clock));
-        PromissoryNoteCollectionEvent savedEvent = collectionEventRepository.save(event);
-
-        auditLogService.log(
-                AuditAction.PROMISSORY_NOTE_COLLECTION_REGISTERED,
-                operator,
-                "PROMISSORY_NOTE",
-                note.getId(),
-                "Collection event registered: " + request.action() + "."
-        );
-
-        return promissoryNoteMapper.toCollectionEventResponse(savedEvent);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PromissoryNoteCollectionEventResponse> collectionEvents(Long noteId) {
-        findNote(noteId);
-        return collectionEventRepository.findByNoteIdOrderByCreatedAtDesc(noteId)
-                .stream()
-                .map(promissoryNoteMapper::toCollectionEventResponse)
-                .toList();
-    }
 
     @Override
     @Transactional
@@ -387,82 +339,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
                 .toList();
     }
 
-    @Override
-    @Transactional
-    public List<PromissoryNoteResponse> renegotiate(PromissoryNoteRenegotiationRequest request, AppUser operator) {
-        refreshOverdueStatuses();
-        List<PromissoryNote> notes = promissoryNoteRepository.findByIdIn(request.noteIds());
-        if (notes.size() != request.noteIds().size()) {
-            throw new ResourceNotFoundException("One or more promissory notes were not found.");
-        }
-
-        Long customerId = notes.get(0).getCustomer().getId();
-        if (notes.stream().anyMatch(note -> !note.getCustomer().getId().equals(customerId))) {
-            throw new BusinessRuleException("Renegotiation requires notes from the same customer.");
-        }
-
-        if (notes.stream().anyMatch(note -> note.getStatus() == PromissoryNoteStatus.PAID
-                || note.getStatus() == PromissoryNoteStatus.CANCELLED
-                || note.getStatus() == PromissoryNoteStatus.RENEGOTIATED)) {
-            throw new BusinessRuleException("Only open promissory notes can be renegotiated.");
-        }
-
-        BigDecimal newTotal = request.installments()
-                .stream()
-                .map(PromissoryNoteRenegotiationRequest.Installment::amount)
-                .map(this::money)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal openTotal = notes.stream().map(this::remainingAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (newTotal.compareTo(openTotal) < 0) {
-            throw new BusinessRuleException("Renegotiated amount cannot be less than the current remaining amount.");
-        }
-
-        OffsetDateTime now = OffsetDateTime.now(clock);
-        String reason = request.reason().trim();
-        notes.forEach(note -> {
-            note.setStatus(PromissoryNoteStatus.RENEGOTIATED);
-            note.setRenegotiatedAt(now);
-            note.setRenegotiatedBy(operator);
-            note.setRenegotiationReason(reason);
-            note.setUpdatedAt(now);
-        });
-
-        PromissoryNote baseNote = notes.get(0);
-        int nextInstallmentNumber = baseNote.getSale() == null
-                ? 1
-                : promissoryNoteRepository.findBySaleIdOrderByInstallmentNumberAsc(baseNote.getSale().getId())
-                        .stream()
-                        .map(PromissoryNote::getInstallmentNumber)
-                        .max(Integer::compareTo)
-                        .orElse(0) + 1;
-
-        List<PromissoryNote> newNotes = new java.util.ArrayList<>();
-        for (int index = 0; index < request.installments().size(); index++) {
-            PromissoryNoteRenegotiationRequest.Installment installment = request.installments().get(index);
-            PromissoryNote newNote = new PromissoryNote();
-            newNote.setSale(baseNote.getSale());
-            newNote.setCustomer(baseNote.getCustomer());
-            newNote.setInstallmentNumber(nextInstallmentNumber + index);
-            newNote.setTotalInstallments(request.installments().size());
-            newNote.setAmount(money(installment.amount()));
-            newNote.setPaidAmount(BigDecimal.ZERO);
-            newNote.setDueDate(installment.dueDate());
-            newNote.setStatus(PromissoryNoteStatus.PENDING);
-            newNote.setCreatedAt(now);
-            newNote.setUpdatedAt(now);
-            newNotes.add(promissoryNoteRepository.save(newNote));
-        }
-
-        auditLogService.log(
-                AuditAction.PROMISSORY_NOTE_RENEGOTIATED,
-                operator,
-                "PROMISSORY_NOTE",
-                baseNote.getId(),
-                "Promissory notes renegotiated. Original amount: " + openTotal + ". New amount: " + newTotal + "."
-        );
-
-        return newNotes.stream().map(promissoryNoteMapper::toResponse).toList();
-    }
 
     @Override
     @Transactional
@@ -726,7 +602,6 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
             case PAID -> "Pago";
             case OVERDUE -> "Vencido";
             case CANCELLED -> "Cancelado";
-            case RENEGOTIATED -> "Renegociado";
         };
     }
 

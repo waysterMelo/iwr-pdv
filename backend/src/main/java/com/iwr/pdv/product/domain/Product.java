@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -32,11 +33,17 @@ public class Product {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
+    @Column(name = "cost_price", nullable = false, precision = 12, scale = 2)
+    private BigDecimal costPrice = BigDecimal.ZERO;
+
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
     @Column(nullable = false)
     private Boolean active;
+
+    @Column(name = "lot_date")
+    private LocalDate lotDate;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -84,6 +91,14 @@ public class Product {
         this.price = price;
     }
 
+    public BigDecimal getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(BigDecimal costPrice) {
+        this.costPrice = costPrice;
+    }
+
     public Integer getStockQuantity() {
         return stockQuantity;
     }
@@ -98,6 +113,14 @@ public class Product {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public LocalDate getLotDate() {
+        return lotDate;
+    }
+
+    public void setLotDate(LocalDate lotDate) {
+        this.lotDate = lotDate;
     }
 
     public OffsetDateTime getCreatedAt() {

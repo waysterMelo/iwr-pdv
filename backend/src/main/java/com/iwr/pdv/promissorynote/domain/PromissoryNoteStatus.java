@@ -5,6 +5,5 @@ public enum PromissoryNoteStatus {
     PARTIALLY_PAID,
     PAID,
     OVERDUE,
-    CANCELLED,
-    RENEGOTIATED
+    CANCELLED
 }

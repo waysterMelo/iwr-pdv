@@ -15,8 +15,10 @@ type ProductEditFormState = {
   code: string
   categoryId: string
   price: string
+  costPrice: string
   stockQuantity: string
   active: 'true' | 'false'
+  lotDate: string
 }
 
 type ProductEditPageProps = {
@@ -30,8 +32,10 @@ const emptyForm: ProductEditFormState = {
   code: '',
   categoryId: '',
   price: '',
+  costPrice: '',
   stockQuantity: '',
   active: 'true',
+  lotDate: '',
 }
 
 function toFormState(product: Product): ProductEditFormState {
@@ -40,8 +44,10 @@ function toFormState(product: Product): ProductEditFormState {
     code: product.code,
     categoryId: String(product.categoryId),
     price: product.price.toFixed(2),
+    costPrice: product.costPrice ? product.costPrice.toFixed(2) : '0.00',
     stockQuantity: String(product.stockQuantity),
     active: String(product.active) as 'true' | 'false',
+    lotDate: product.lotDate ?? '',
   }
 }
 
@@ -51,8 +57,10 @@ function toPayload(form: ProductEditFormState): ProductPayload {
     code: form.code.trim().toUpperCase(),
     categoryId: Number(form.categoryId),
     price: Number(form.price),
+    costPrice: Number(form.costPrice) || 0,
     stockQuantity: Number(form.stockQuantity),
     active: form.active === 'true',
+    lotDate: form.lotDate || null,
   }
 }
 
@@ -63,6 +71,10 @@ function validateForm(form: ProductEditFormState) {
 
   if (!form.categoryId) {
     return 'Escolha a categoria do produto.'
+  }
+
+  if (Number.isNaN(Number(form.costPrice)) || Number(form.costPrice) < 0) {
+    return 'Informe um preço de custo maior ou igual a zero.'
   }
 
   if (Number.isNaN(Number(form.price)) || Number(form.price) <= 0) {
@@ -176,7 +188,7 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
             <div className="hero-copy">
               <span className="eyebrow">Estoque</span>
               <h1>Editar produto</h1>
-              <p>Atualize os dados do produto, categoria, preco, estoque e status sem sair do controle de estoque.</p>
+              <p>Atualize os dados do produto, categoria, preco, estoque, lote e status.</p>
             </div>
 
             <div className="checkout-summary">
@@ -192,15 +204,14 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
             <header className="section-header">
               <div>
                 <h2>Dados principais</h2>
-                <p>O codigo e o estoque impactam diretamente a leitura no PDV e a baixa em venda.</p>
+                <p>O codigo interno permanece automatico para leitura no PDV e etiquetas.</p>
               </div>
             </header>
 
             {isLoading ? (
               <div className="product-empty">Carregando produto...</div>
             ) : (
-              <form className="product-form" onSubmit={handleSubmit}>
-                <div className="form-grid product-edit-form-grid">
+              <form className="product-form" onSubmit={handleSubmit}>                 <div className="form-grid product-edit-form-grid">
                   <div className="field-group field-group--full product-edit-field product-edit-field--featured">
                     <label htmlFor="editProductName">Nome do produto</label>
                     <input
@@ -208,18 +219,6 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
                       value={form.name}
                       onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                       placeholder="Ex.: Vestido midi floral"
-                    />
-                  </div>
-
-                  <div className="field-group product-edit-field">
-                    <label htmlFor="editProductCode">Codigo</label>
-                    <input
-                      id="editProductCode"
-                      value={form.code}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, code: event.target.value.toUpperCase() }))
-                      }
-                      placeholder="IWR-000001"
                     />
                   </div>
 
@@ -240,16 +239,6 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
                   </div>
 
                   <div className="field-group product-edit-field">
-                    <label htmlFor="editProductPrice">Preco</label>
-                    <CurrencyInput
-                      id="editProductPrice"
-                      value={form.price}
-                      onChange={(value) => setForm((current) => ({ ...current, price: value }))}
-                      placeholder="R$ 0,00"
-                    />
-                  </div>
-
-                  <div className="field-group product-edit-field">
                     <label htmlFor="editProductStock">Estoque</label>
                     <input
                       id="editProductStock"
@@ -259,6 +248,26 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
                         setForm((current) => ({ ...current, stockQuantity: event.target.value }))
                       }
                       placeholder="0"
+                    />
+                  </div>
+
+                  <div className="field-group product-edit-field">
+                    <label htmlFor="editProductCostPrice">Preço de Custo</label>
+                    <CurrencyInput
+                      id="editProductCostPrice"
+                      value={form.costPrice}
+                      onChange={(value) => setForm((current) => ({ ...current, costPrice: value }))}
+                      placeholder="R$ 0,00"
+                    />
+                  </div>
+
+                  <div className="field-group product-edit-field">
+                    <label htmlFor="editProductPrice">Preço</label>
+                    <CurrencyInput
+                      id="editProductPrice"
+                      value={form.price}
+                      onChange={(value) => setForm((current) => ({ ...current, price: value }))}
+                      placeholder="R$ 0,00"
                     />
                   </div>
 
@@ -278,7 +287,19 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
                       <option value="false">Inativo</option>
                     </select>
                   </div>
-                </div>
+
+                  <div className="field-group product-edit-field">
+                    <label htmlFor="editProductLotDate">Lote</label>
+                    <input
+                      id="editProductLotDate"
+                      type="date"
+                      value={form.lotDate}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, lotDate: event.target.value }))
+                      }
+                    />
+                  </div>
+                </div>>
 
                 {errorMessage ? <div className="feedback-message feedback-message--error">{errorMessage}</div> : null}
                 {successMessage ? (
@@ -322,20 +343,32 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
 
             <div className="product-card-grid product-edit-summary-grid">
               <div>
-                <span>Preco</span>
+                <span>Preço Venda</span>
                 <strong>{formatCurrency(Number(form.price) || 0)}</strong>
+              </div>
+              <div>
+                <span>Preço Custo</span>
+                <strong>{formatCurrency(Number(form.costPrice) || 0)}</strong>
               </div>
               <div>
                 <span>Estoque</span>
                 <strong>{Number(form.stockQuantity) || 0}</strong>
               </div>
               <div>
-                <span>Total</span>
+                <span>Custo Total</span>
+                <strong>{formatCurrency((Number(form.costPrice) || 0) * (Number(form.stockQuantity) || 0))}</strong>
+              </div>
+              <div>
+                <span>Total Venda</span>
                 <strong>{formatCurrency((Number(form.price) || 0) * (Number(form.stockQuantity) || 0))}</strong>
               </div>
               <div>
                 <span>Status</span>
                 <strong>{form.active === 'true' ? 'Ativo' : 'Inativo'}</strong>
+              </div>
+              <div>
+                <span>Lote</span>
+                <strong>{form.lotDate ? form.lotDate.split('-').reverse().join('/') : '-'}</strong>
               </div>
             </div>
           </aside>

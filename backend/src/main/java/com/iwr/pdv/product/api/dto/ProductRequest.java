@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record ProductRequest(
         @Schema(
@@ -40,6 +41,13 @@ public record ProductRequest(
         BigDecimal price,
 
         @Schema(
+                description = "Cost price of the product",
+                example = "49.90"
+        )
+        @DecimalMin(value = "0.00", message = "The cost price must be zero or greater.")
+        BigDecimal costPrice,
+
+        @Schema(
                 description = "Available stock quantity",
                 example = "8"
         )
@@ -52,6 +60,12 @@ public record ProductRequest(
                 example = "true"
         )
         @NotNull(message = "The active flag is required.")
-        Boolean active
+        Boolean active,
+
+        @Schema(
+                description = "Product lot date",
+                example = "2026-05-24"
+        )
+        LocalDate lotDate
 ) {
 }

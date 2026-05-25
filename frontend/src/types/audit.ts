@@ -16,13 +16,12 @@ export type AuditAction =
   | 'SALE_CANCELLED'
   | 'PROMISSORY_NOTE_CREATED'
   | 'PROMISSORY_NOTE_PAID'
-  | 'PROMISSORY_NOTE_COLLECTION_REGISTERED'
-  | 'PROMISSORY_NOTE_RENEGOTIATED'
 
 export type AuditLog = {
   id: number
   userId: number | null
   username: string | null
+  userDisplayName: string | null
   action: AuditAction
   entityType: string | null
   entityId: string | null

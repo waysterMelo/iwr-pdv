@@ -2,6 +2,7 @@ package com.iwr.pdv.customer.api;
 
 import com.iwr.pdv.customer.api.dto.CustomerRequest;
 import com.iwr.pdv.customer.api.dto.CustomerPageResponse;
+import com.iwr.pdv.customer.api.dto.CustomerProfileResponse;
 import com.iwr.pdv.customer.api.dto.CustomerResponse;
 import com.iwr.pdv.customer.application.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,6 +51,12 @@ public class CustomerController {
     @Operation(summary = "List active customers with birthday dates")
     public List<CustomerResponse> birthdays() {
         return customerService.birthdays();
+    }
+
+    @GetMapping("/{customerId}/profile")
+    @Operation(summary = "Return customer profile with purchases and promissory notes")
+    public CustomerProfileResponse profile(@PathVariable Long customerId) {
+        return customerService.profile(customerId);
     }
 
     @PostMapping

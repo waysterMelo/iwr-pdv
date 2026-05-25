@@ -6,8 +6,10 @@ export type Product = {
   categoryName: string
   categoryIcon: string
   price: number
+  costPrice: number
   stockQuantity: number
   active: boolean
+  lotDate: string | null
   createdAt: string
   updatedAt: string
 }
@@ -17,8 +19,10 @@ export type ProductPayload = {
   code: string
   categoryId: number
   price: number
+  costPrice: number
   stockQuantity: number
   active: boolean
+  lotDate?: string | null
 }
 
 export type ProductCategory = {

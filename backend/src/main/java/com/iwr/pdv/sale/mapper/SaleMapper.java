@@ -23,15 +23,16 @@ public class SaleMapper {
         this.customerMapper = customerMapper;
     }
 
-    public SaleItem toItem(Product product, int quantity) {
-        BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+    public SaleItem toItem(Product product, int quantity, BigDecimal unitPrice) {
+        BigDecimal resolvedUnitPrice = unitPrice == null ? product.getPrice() : unitPrice;
+        BigDecimal subtotal = resolvedUnitPrice.multiply(BigDecimal.valueOf(quantity));
 
         SaleItem item = new SaleItem();
         item.setProduct(product);
         item.setProductName(product.getName());
         item.setProductCode(product.getCode());
         item.setQuantity(quantity);
-        item.setUnitPrice(product.getPrice());
+        item.setUnitPrice(resolvedUnitPrice);
         item.setSubtotal(subtotal);
 
         return item;

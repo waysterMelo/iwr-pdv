@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN cost_price NUMERIC(12, 2) DEFAULT 0.00;

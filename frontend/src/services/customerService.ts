@@ -1,4 +1,4 @@
-import type { Customer, CustomerPage, CustomerPayload } from '../types/customer'
+import type { Customer, CustomerPage, CustomerPayload, CustomerProfile } from '../types/customer'
 import { get, post, put } from './httpClient'
 
 export async function getCustomers(search?: string) {
@@ -24,6 +24,10 @@ export async function getCustomerPage(search = '', page = 0, size = 6, signal?: 
 
 export async function getCustomerBirthdays() {
   return get<Customer[]>('/api/customers/birthdays')
+}
+
+export async function getCustomerProfile(customerId: number) {
+  return get<CustomerProfile>(`/api/customers/${customerId}/profile`)
 }
 
 export async function createCustomer(payload: CustomerPayload) {

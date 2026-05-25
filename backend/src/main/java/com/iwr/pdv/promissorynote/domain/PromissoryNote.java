@@ -80,15 +80,6 @@ public class PromissoryNote {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @Column(name = "renegotiated_at")
-    private OffsetDateTime renegotiatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "renegotiated_by_user_id")
-    private AppUser renegotiatedBy;
-
-    @Column(name = "renegotiation_reason", length = 240)
-    private String renegotiationReason;
 
     public Long getId() {
         return id;
@@ -210,27 +201,4 @@ public class PromissoryNote {
         this.updatedAt = updatedAt;
     }
 
-    public OffsetDateTime getRenegotiatedAt() {
-        return renegotiatedAt;
-    }
-
-    public void setRenegotiatedAt(OffsetDateTime renegotiatedAt) {
-        this.renegotiatedAt = renegotiatedAt;
-    }
-
-    public AppUser getRenegotiatedBy() {
-        return renegotiatedBy;
-    }
-
-    public void setRenegotiatedBy(AppUser renegotiatedBy) {
-        this.renegotiatedBy = renegotiatedBy;
-    }
-
-    public String getRenegotiationReason() {
-        return renegotiationReason;
-    }
-
-    public void setRenegotiationReason(String renegotiationReason) {
-        this.renegotiationReason = renegotiationReason;
-    }
 }

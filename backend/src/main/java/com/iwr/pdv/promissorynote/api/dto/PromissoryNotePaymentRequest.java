@@ -12,6 +12,9 @@ public record PromissoryNotePaymentRequest(
         @DecimalMin(value = "0.01", message = "The payment amount must be greater than zero.")
         BigDecimal amount,
 
-        Boolean chargeInterestAndPenalty
+        Boolean chargeInterestAndPenalty,
+
+        @DecimalMin(value = "0.00", message = "The interest amount cannot be negative.")
+        BigDecimal interestAmount
 ) {
 }

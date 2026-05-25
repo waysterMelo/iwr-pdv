@@ -76,7 +76,6 @@ public class SaleServiceImpl implements SaleService {
     @Override
     @Transactional
     public SaleResponse closeSale(SaleRequest request, AppUser operator) {
-        Map<Long, Integer> quantitiesByProductId = consolidateQuantities(request.items());
         OffsetDateTime now = OffsetDateTime.now(clock);
         Customer customer = resolveCustomer(request);
 
@@ -92,15 +91,16 @@ public class SaleServiceImpl implements SaleService {
         sale.setTotalAmount(BigDecimal.ZERO);
         sale.setChangeAmount(BigDecimal.ZERO);
 
-        for (Map.Entry<Long, Integer> entry : quantitiesByProductId.entrySet()) {
-            Product product = findProduct(entry.getKey());
-            int quantity = entry.getValue();
+        for (SaleLine requestedItem : consolidateItems(request.items())) {
+            Product product = findProduct(requestedItem.productId());
+            int quantity = requestedItem.quantity();
+            BigDecimal unitPrice = resolveUnitPrice(requestedItem.unitPrice(), product);
 
             validateProductCanBeSold(product, quantity);
             product.setStockQuantity(product.getStockQuantity() - quantity);
             product.setUpdatedAt(now);
 
-            SaleItem item = saleMapper.toItem(product, quantity);
+            SaleItem item = saleMapper.toItem(product, quantity, unitPrice);
             sale.addItem(item);
             sale.setSubtotalAmount(sale.getSubtotalAmount().add(item.getSubtotal()));
         }
@@ -428,14 +428,20 @@ public class SaleServiceImpl implements SaleService {
         );
     }
 
-    private Map<Long, Integer> consolidateQuantities(List<SaleItemRequest> items) {
-        Map<Long, Integer> quantitiesByProductId = new LinkedHashMap<>();
+    private List<SaleLine> consolidateItems(List<SaleItemRequest> items) {
+        Map<SaleLineKey, SaleLine> lines = new LinkedHashMap<>();
 
         for (SaleItemRequest item : items) {
-            quantitiesByProductId.merge(item.productId(), item.quantity(), Integer::sum);
+            SaleLineKey key = new SaleLineKey(item.productId(), item.unitPrice());
+            SaleLine current = lines.get(key);
+            if (current == null) {
+                lines.put(key, new SaleLine(item.productId(), item.quantity(), item.unitPrice()));
+            } else {
+                lines.put(key, new SaleLine(current.productId(), current.quantity() + item.quantity(), current.unitPrice()));
+            }
         }
 
-        return quantitiesByProductId;
+        return List.copyOf(lines.values());
     }
 
     private Product findProduct(Long productId) {
@@ -458,6 +464,18 @@ public class SaleServiceImpl implements SaleService {
 
     private BigDecimal resolveDiscount(BigDecimal discountAmount) {
         return discountAmount == null ? BigDecimal.ZERO : discountAmount;
+    }
+
+    private BigDecimal resolveUnitPrice(BigDecimal requestedUnitPrice, Product product) {
+        if (requestedUnitPrice == null) {
+            return product.getPrice();
+        }
+
+        if (requestedUnitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("Unit price must be greater than zero.");
+        }
+
+        return requestedUnitPrice;
     }
 
     private void validateDiscount(BigDecimal subtotalAmount, BigDecimal discountAmount) {
@@ -598,5 +616,14 @@ public class SaleServiceImpl implements SaleService {
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;");
+    }
+
+    private record SaleLine(Long productId, int quantity, BigDecimal unitPrice) {
+    }
+
+    private record SaleLineKey(Long productId, BigDecimal unitPrice) {
+        private SaleLineKey {
+            unitPrice = unitPrice == null ? null : unitPrice.stripTrailingZeros();
+        }
     }
 }

@@ -2,13 +2,10 @@ package com.iwr.pdv.promissorynote.api;
 
 import com.iwr.pdv.auth.domain.AppUser;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCalendarDayResponse;
-import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventRequest;
-import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteDelinquencyRangeResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteManualRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentResponse;
-import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteRenegotiationRequest;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteResponse;
 import com.iwr.pdv.promissorynote.application.PromissoryNoteService;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteStatus;
@@ -106,22 +103,6 @@ public class PromissoryNoteController {
                 .body(promissoryNoteService.generatePaymentReceipt(paymentId));
     }
 
-    @PostMapping("/{noteId}/collection-events")
-    @Operation(summary = "Register a collection action for a promissory note")
-    public PromissoryNoteCollectionEventResponse addCollectionEvent(
-            @PathVariable Long noteId,
-            @Valid @RequestBody PromissoryNoteCollectionEventRequest request,
-            HttpServletRequest servletRequest
-    ) {
-        return promissoryNoteService.addCollectionEvent(noteId, request, currentUser(servletRequest));
-    }
-
-    @GetMapping("/{noteId}/collection-events")
-    @Operation(summary = "List collection actions for a promissory note")
-    public List<PromissoryNoteCollectionEventResponse> collectionEvents(@PathVariable Long noteId) {
-        return promissoryNoteService.collectionEvents(noteId);
-    }
-
     @GetMapping("/{noteId}/whatsapp-message")
     @Operation(summary = "Generate a WhatsApp collection message")
     public String whatsappMessage(
@@ -137,17 +118,8 @@ public class PromissoryNoteController {
         return promissoryNoteService.delinquencyReport();
     }
 
-    @PostMapping("/renegotiations")
-    @Operation(summary = "Renegotiate open promissory notes and generate new installments")
-    public List<PromissoryNoteResponse> renegotiate(
-            @Valid @RequestBody PromissoryNoteRenegotiationRequest request,
-            HttpServletRequest servletRequest
-    ) {
-        return promissoryNoteService.renegotiate(request, currentUser(servletRequest));
-    }
-
     @GetMapping(value = "/export.csv", produces = "text/csv")
-    @Operation(summary = "Export promissory notes as CSV")
+    @Operation(summary = "Export promissory notes as an Excel-compatible report")
     public ResponseEntity<String> exportCsv(
             @RequestParam(required = false) PromissoryNoteStatus status,
             @RequestParam(required = false) Long customerId,
@@ -156,7 +128,7 @@ public class PromissoryNoteController {
             @RequestParam(required = false, defaultValue = "false") boolean dueToday
     ) {
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=notas-promissorias.csv")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio-excel-notas-promissorias.csv")
                 .contentType(MediaType.parseMediaType("text/csv; charset=utf-8"))
                 .body("\uFEFF" + promissoryNoteService.exportCsv(status, customerId, startDate, endDate, dueToday));
     }

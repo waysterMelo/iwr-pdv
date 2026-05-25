@@ -50,6 +50,9 @@ public interface PromissoryNoteRepository extends JpaRepository<PromissoryNote, 
     @EntityGraph(attributePaths = {"customer", "sale", "sale.items"})
     List<PromissoryNote> findBySaleIdOrderByInstallmentNumberAsc(Long saleId);
 
+    @EntityGraph(attributePaths = {"customer", "sale", "sale.items", "paidBy", "cashRegister"})
+    List<PromissoryNote> findByCustomerIdOrderByDueDateDesc(Long customerId);
+
     List<PromissoryNote> findByIdIn(List<Long> ids);
 
     @Override

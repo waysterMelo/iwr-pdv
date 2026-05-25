@@ -78,8 +78,10 @@ class ProductServiceImplTest {
                 "iwr-001",
                 1L,
                 new BigDecimal("79.90"),
+                new BigDecimal("49.90"),
                 12,
-                true
+                true,
+                null
         );
 
         when(productRepository.findByCodeIgnoreCase("iwr-001")).thenReturn(Optional.empty());
@@ -105,8 +107,10 @@ class ProductServiceImplTest {
                 "",
                 1L,
                 new BigDecimal("149.90"),
+                new BigDecimal("99.90"),
                 8,
-                true
+                true,
+                null
         );
 
         when(productCodeGenerator.generateNextCode()).thenReturn("IWR-000001");
@@ -130,8 +134,10 @@ class ProductServiceImplTest {
                 "",
                 1L,
                 new BigDecimal("149.90"),
+                new BigDecimal("99.90"),
                 8,
-                true
+                true,
+                null
         );
 
         Product existingProduct = new Product();
@@ -160,8 +166,10 @@ class ProductServiceImplTest {
                 "iwr-001",
                 1L,
                 new BigDecimal("79.90"),
+                new BigDecimal("49.90"),
                 12,
-                true
+                true,
+                null
         );
 
         Product existingProduct = new Product();

@@ -5,6 +5,7 @@ import com.iwr.pdv.product.api.dto.ProductResponse;
 import com.iwr.pdv.product.domain.Product;
 import com.iwr.pdv.product.domain.ProductCategory;
 import java.time.OffsetDateTime;
+import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,8 +17,10 @@ public class ProductMapper {
         product.setCode(code);
         product.setCategory(category);
         product.setPrice(request.price());
+        product.setCostPrice(request.costPrice() != null ? request.costPrice() : BigDecimal.ZERO);
         product.setStockQuantity(request.stockQuantity());
         product.setActive(request.active());
+        product.setLotDate(request.lotDate());
         product.setCreatedAt(now);
         product.setUpdatedAt(now);
 
@@ -35,8 +38,10 @@ public class ProductMapper {
         product.setCode(code);
         product.setCategory(category);
         product.setPrice(request.price());
+        product.setCostPrice(request.costPrice() != null ? request.costPrice() : BigDecimal.ZERO);
         product.setStockQuantity(request.stockQuantity());
         product.setActive(request.active());
+        product.setLotDate(request.lotDate());
         product.setUpdatedAt(updatedAt);
     }
 
@@ -49,8 +54,10 @@ public class ProductMapper {
                 product.getCategory().getName(),
                 product.getCategory().getIcon(),
                 product.getPrice(),
+                product.getCostPrice(),
                 product.getStockQuantity(),
                 product.getActive(),
+                product.getLotDate(),
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );

@@ -30,3 +30,26 @@ export type CustomerPage = {
   first: boolean
   last: boolean
 }
+
+export type CustomerPurchasedItem = {
+  productId: number
+  productName: string
+  productCode: string
+  quantity: number
+  totalAmount: number
+  lastPurchaseAt: string
+}
+
+export type CustomerProfile = {
+  customer: Customer
+  saleCount: number
+  totalPurchasedAmount: number
+  openPromissoryCount: number
+  overduePromissoryCount: number
+  openPromissoryAmount: number
+  overduePromissoryAmount: number
+  paidPromissoryAmount: number
+  purchasedItems: CustomerPurchasedItem[]
+  latestSales: import('./sale').Sale[]
+  promissoryNotes: import('./promissoryNote').PromissoryNote[]
+}

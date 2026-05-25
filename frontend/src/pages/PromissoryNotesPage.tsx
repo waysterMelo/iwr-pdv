@@ -7,21 +7,29 @@ import {
   CheckCircle2,
   FileDown,
   MessageCircle,
+  Package,
   PlusCircle,
   Printer,
   ReceiptText,
   Search,
+  X,
+  UserCheck,
+  RotateCcw,
+  Save,
+  DollarSign,
+  TrendingUp,
+  Briefcase
 } from 'lucide-react'
-import { Metric } from '../components/Metric'
+import { CurrencyInput } from '../components/CurrencyInput'
+import { PercentInput } from '../components/PercentInput'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationControls } from '../components/PaginationControls'
 import { getCustomers } from '../services/customerService'
 import {
   createManualPromissoryNotes,
-  downloadPromissoryNotesCsv,
+  downloadPromissoryNotesExcelReport,
   getPromissoryNotePrintUrl,
   getPromissoryNoteCalendarDays,
-  getPromissoryNoteCollectionEvents,
   getPromissoryNotePayments,
   getPromissoryNotes,
   getPromissoryNotesDueToday,
@@ -29,15 +37,13 @@ import {
   getPromissoryDelinquencyReport,
   getPromissoryWhatsappMessage,
   payPromissoryNote,
-  addPromissoryNoteCollectionEvent,
-  renegotiatePromissoryNotes,
 } from '../services/promissoryNoteService'
+import { getProducts } from '../services/productService'
 import type { Customer } from '../types/customer'
+import type { Product } from '../types/product'
 import type {
   PromissoryNote,
   PromissoryNoteCalendarDay,
-  PromissoryNoteCollectionAction,
-  PromissoryNoteCollectionEvent,
   PromissoryNoteDelinquencyRange,
   PromissoryNoteFilters,
   PromissoryNotePayment,
@@ -56,28 +62,29 @@ const statusLabels: Record<PromissoryNoteStatus, string> = {
   PAID: 'Pago',
   OVERDUE: 'Vencido',
   CANCELLED: 'Cancelado',
-  RENEGOTIATED: 'Renegociado',
-}
-
-const collectionActionLabels: Record<PromissoryNoteCollectionAction, string> = {
-  CALL_MADE: 'Ligacao realizada',
-  MESSAGE_SENT: 'Mensagem enviada',
-  PROMISED_PAYMENT: 'Promessa de pagamento',
-  NO_RESPONSE: 'Sem resposta',
-  AGREEMENT_MADE: 'Acordo realizado',
-  IN_PERSON_COLLECTION: 'Cobranca presencial',
-  NOTE: 'Observacao',
 }
 
 const paymentLabels: Record<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>, string> = {
   CASH: 'Dinheiro',
   PIX: 'Pix',
-  DEBIT_CARD: 'Cartao debito',
-  CREDIT_CARD: 'Cartao credito',
+  DEBIT_CARD: 'Cartão débito',
+  CREDIT_CARD: 'Cartão crédito',
 }
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(`${value}T00:00:00`))
+}
+
+function getDaysInArrears(dueDateStr: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const dueDate = new Date(dueDateStr + 'T00:00:00')
+  dueDate.setHours(0, 0, 0, 0)
+  
+  const diffTime = today.getTime() - dueDate.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays > 0 ? diffDays : 0
 }
 
 function getLocalToday() {
@@ -122,47 +129,65 @@ function monthRange(monthValue: string) {
   }
 }
 
-export function PromissoryNotesPage() {
+type PromissoryNotesPageMode = 'wallet' | 'manual-create' | 'report'
+
+type ManualNoteItem = {
+  productId: number
+  name: string
+  code: string
+  quantity: number
+  unitPrice: number
+  stockQuantity: number
+}
+
+type PromissoryNotesPageProps = {
+  mode?: PromissoryNotesPageMode
+  onModeChange?: (mode: PromissoryNotesPageMode) => void
+}
+
+export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageProps) {
   const { confirm, notify } = useAppMessage()
   const [notes, setNotes] = useState<PromissoryNote[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [selectedNote, setSelectedNote] = useState<PromissoryNote | null>(null)
   const [filters, setFilters] = useState<PromissoryNoteFilters>({})
   const [draftFilters, setDraftFilters] = useState({ status: '', customerId: '', startDate: '', endDate: '' })
-  const [pageMode, setPageMode] = useState<'wallet' | 'manual-create'>('wallet')
+  const [pageMode, setPageMode] = useState<PromissoryNotesPageMode>('wallet')
   const [manualNoteForm, setManualNoteForm] = useState({
     customerId: '',
-    totalAmount: '',
+    discountAmount: '',
     installments: '1',
     firstDueDate: getLocalToday(),
   })
+  const effectiveMode = mode ?? pageMode
+  const [manualProductSearch, setManualProductSearch] = useState('')
+  const [manualProductOptions, setManualProductOptions] = useState<Product[]>([])
+  const [manualSelectedProductId, setManualSelectedProductId] = useState('')
+  const [manualQuantity, setManualQuantity] = useState('1')
+  const [manualUnitPrice, setManualUnitPrice] = useState('')
+  const [manualItems, setManualItems] = useState<ManualNoteItem[]>([])
   const [listMode, setListMode] = useState<'due-today' | 'custom'>('due-today')
   const [calendarMonth, setCalendarMonth] = useState(() => getLocalToday().slice(0, 7))
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => getLocalToday())
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>>('CASH')
   const [paymentAmount, setPaymentAmount] = useState('')
-  const [chargeInterestAndPenalty, setChargeInterestAndPenalty] = useState(false)
+  const [interestAmount, setInterestAmount] = useState('0.00')
+  const [interestRate, setInterestRate] = useState('0')
   const [payments, setPayments] = useState<PromissoryNotePayment[]>([])
-  const [collectionEvents, setCollectionEvents] = useState<PromissoryNoteCollectionEvent[]>([])
   const [delinquencyReport, setDelinquencyReport] = useState<PromissoryNoteDelinquencyRange[]>([])
   const [calendarReceivableDays, setCalendarReceivableDays] = useState<PromissoryNoteCalendarDay[]>([])
-  const [collectionAction, setCollectionAction] = useState<PromissoryNoteCollectionAction>('MESSAGE_SENT')
-  const [collectionComment, setCollectionComment] = useState('')
-  const [promisedPaymentDate, setPromisedPaymentDate] = useState('')
-  const [renegotiationReason, setRenegotiationReason] = useState('')
-  const [renegotiationFirstAmount, setRenegotiationFirstAmount] = useState('')
-  const [renegotiationFirstDueDate, setRenegotiationFirstDueDate] = useState('')
-  const [renegotiationSecondAmount, setRenegotiationSecondAmount] = useState('')
-  const [renegotiationSecondDueDate, setRenegotiationSecondDueDate] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isPaying, setIsPaying] = useState(false)
-  const [isExportingCsv, setIsExportingCsv] = useState(false)
+  const [isExportingReport, setIsExportingReport] = useState(false)
   const [isCreatingManualNote, setIsCreatingManualNote] = useState(false)
-  const [isRegisteringCollection, setIsRegisteringCollection] = useState(false)
-  const [isRenegotiating, setIsRenegotiating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const printFrameRef = useRef<HTMLIFrameElement>(null)
+
+  function changePageMode(nextMode: PromissoryNotesPageMode) {
+    setPageMode(nextMode)
+    onModeChange?.(nextMode)
+  }
 
   const filteredNotes = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -175,8 +200,10 @@ export function PromissoryNotesPage() {
       )
     })
   }, [notes, searchTerm])
+  
   const notePagination = usePagination(filteredNotes, 8)
   const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth])
+  
   const calendarTotals = useMemo(() => {
     const totals = new Map<string, { count: number; amount: number }>()
     calendarReceivableDays.forEach((day) => {
@@ -201,7 +228,7 @@ export function PromissoryNotesPage() {
   }, [filteredNotes, selectedNote])
 
   const metrics = useMemo(() => {
-    const openNotes = notes.filter((note) => !['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(note.status))
+    const openNotes = notes.filter((note) => !['PAID', 'CANCELLED'].includes(note.status))
     const today = getLocalToday()
     return {
       openAmount: openNotes.reduce((sum, note) => sum + note.remainingAmount, 0),
@@ -211,17 +238,23 @@ export function PromissoryNotesPage() {
       openCount: openNotes.length,
     }
   }, [notes])
+  
+  const manualSubtotal = useMemo(
+    () => manualItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    [manualItems],
+  )
+  const manualDiscountAmount = Number(manualNoteForm.discountAmount) || 0
+  const manualTotalAmount = Math.max(manualSubtotal - manualDiscountAmount, 0)
 
   const loadDueToday = useCallback(async () => {
     setIsLoading(true)
-
     try {
       const response = await getPromissoryNotesDueToday()
       setNotes(response)
       setSelectedNote((current) => response.find((note) => note.id === current?.id) ?? response[0] ?? null)
       setErrorMessage(null)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Nao foi possivel carregar notas para cobranca.'))
+      setErrorMessage(getErrorMessage(error, 'Não foi possível carregar notas para cobrança.'))
     } finally {
       setIsLoading(false)
     }
@@ -229,14 +262,13 @@ export function PromissoryNotesPage() {
 
   const loadNotes = useCallback(async (nextFilters: PromissoryNoteFilters = {}) => {
     setIsLoading(true)
-
     try {
       const response = await getPromissoryNotes(nextFilters)
       setNotes(response)
       setSelectedNote((current) => response.find((note) => note.id === current?.id) ?? response[0] ?? null)
       setErrorMessage(null)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Nao foi possivel carregar notas promissorias.'))
+      setErrorMessage(getErrorMessage(error, 'Não foi possível carregar notas promissórias.'))
     } finally {
       setIsLoading(false)
     }
@@ -281,6 +313,24 @@ export function PromissoryNotesPage() {
   }, [loadDelinquencyReport, loadDueToday])
 
   useEffect(() => {
+    if (effectiveMode !== 'manual-create') {
+      return
+    }
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      getProducts(manualProductSearch, controller.signal)
+        .then((products) => setManualProductOptions(products.filter((product) => product.active)))
+        .catch(() => setManualProductOptions([]))
+    }, 180)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timeoutId)
+    }
+  }, [effectiveMode, manualProductSearch])
+
+  useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void loadCalendarDays(calendarMonth)
     }, 0)
@@ -293,27 +343,20 @@ export function PromissoryNotesPage() {
     const timeoutId = window.setTimeout(() => {
       if (!selectedNote) {
         setPayments([])
-        setCollectionEvents([])
         return
       }
 
-      setPaymentAmount(selectedNote.remainingAmount > 0 ? String(selectedNote.remainingAmount) : '')
-      setRenegotiationFirstAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
-      setRenegotiationSecondAmount(selectedNote.remainingAmount > 0 ? String((selectedNote.remainingAmount / 2).toFixed(2)) : '')
+      setPaymentAmount(selectedNote.remainingAmount > 0 ? selectedNote.remainingAmount.toFixed(2) : '')
+      setInterestAmount('0.00')
 
-      Promise.all([
-        getPromissoryNotePayments(selectedNote.id),
-        getPromissoryNoteCollectionEvents(selectedNote.id),
-      ])
-        .then(([nextPayments, nextEvents]) => {
+      getPromissoryNotePayments(selectedNote.id)
+        .then((nextPayments) => {
           if (!isCurrent) return
           setPayments(nextPayments)
-          setCollectionEvents(nextEvents)
         })
         .catch(() => {
           if (!isCurrent) return
           setPayments([])
-          setCollectionEvents([])
         })
     }, 0)
 
@@ -385,6 +428,60 @@ export function PromissoryNotesPage() {
     void loadDelinquencyReport()
   }
 
+  function handleAddManualItem() {
+    const selectedProduct = manualProductOptions.find((product) => String(product.id) === manualSelectedProductId)
+    const quantity = Number(manualQuantity)
+    const unitPrice = Number(manualUnitPrice)
+
+    if (!selectedProduct || !Number.isInteger(quantity) || quantity < 1 || !Number.isFinite(unitPrice) || unitPrice <= 0) {
+      notify({
+        type: 'error',
+        title: 'Produto incompleto',
+        message: 'Selecione o produto, quantidade e valor unitário.',
+      })
+      return
+    }
+
+    if (quantity > selectedProduct.stockQuantity) {
+      notify({
+        type: 'warning',
+        title: 'Estoque insuficiente',
+        message: `Disponível em estoque: ${selectedProduct.stockQuantity}.`,
+      })
+      return
+    }
+
+    setManualItems((current) => {
+      const existingItem = current.find((item) => item.productId === selectedProduct.id && item.unitPrice === unitPrice)
+      if (!existingItem) {
+        return [
+          ...current,
+          {
+            productId: selectedProduct.id,
+            name: selectedProduct.name,
+            code: selectedProduct.code,
+            quantity,
+            unitPrice,
+            stockQuantity: selectedProduct.stockQuantity,
+          },
+        ]
+      }
+
+      return current.map((item) =>
+        item === existingItem
+          ? { ...item, quantity: Math.min(item.quantity + quantity, selectedProduct.stockQuantity) }
+          : item,
+      )
+    })
+    setManualSelectedProductId('')
+    setManualQuantity('1')
+    setManualUnitPrice('')
+  }
+
+  function removeManualItem(productId: number, unitPrice: number) {
+    setManualItems((current) => current.filter((item) => item.productId !== productId || item.unitPrice !== unitPrice))
+  }
+
   function buildManualInstallments(totalAmount: number, installmentsCount: number, firstDueDate: string) {
     const [year, month, day] = firstDueDate.split('-').map(Number)
     const totalInCents = Math.round(totalAmount * 100)
@@ -404,14 +501,13 @@ export function PromissoryNotesPage() {
   async function handleManualNoteSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const customerId = Number(manualNoteForm.customerId)
-    const totalAmount = Number(manualNoteForm.totalAmount)
     const installmentsCount = Number(manualNoteForm.installments)
 
-    if (!customerId || !Number.isFinite(totalAmount) || totalAmount <= 0 || !Number.isInteger(installmentsCount) || installmentsCount < 1) {
+    if (!customerId || manualItems.length === 0 || manualTotalAmount <= 0 || !Number.isInteger(installmentsCount) || installmentsCount < 1) {
       notify({
         type: 'error',
         title: 'Nota incompleta',
-        message: 'Informe cliente, valor total e quantidade de parcelas.',
+        message: 'Informe o cliente, produtos, valores e quantidade de parcelas.',
       })
       return
     }
@@ -420,10 +516,17 @@ export function PromissoryNotesPage() {
     try {
       const newNotes = await createManualPromissoryNotes({
         customerId,
-        installments: buildManualInstallments(totalAmount, installmentsCount, manualNoteForm.firstDueDate),
+        items: manualItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        discountAmount: manualDiscountAmount > 0 ? manualDiscountAmount : 0,
+        installments: buildManualInstallments(manualTotalAmount, installmentsCount, manualNoteForm.firstDueDate),
       })
-      setManualNoteForm({ customerId: '', totalAmount: '', installments: '1', firstDueDate: getLocalToday() })
-      setPageMode('wallet')
+      setManualNoteForm({ customerId: '', discountAmount: '', installments: '1', firstDueDate: getLocalToday() })
+      setManualItems([])
+      changePageMode('wallet')
       setListMode('custom')
       setFilters({})
       setDraftFilters({ status: '', customerId: '', startDate: '', endDate: '' })
@@ -433,49 +536,59 @@ export function PromissoryNotesPage() {
       setSelectedNote(newNotes[0] ?? null)
       notify({
         type: 'success',
-        title: 'Nota avulsa cadastrada',
-        message: `${newNotes.length} parcela(s) adicionada(s) a carteira.`,
+        title: 'Nota cadastrada',
+        message: `${newNotes.length} parcela(s) adicionada(s) à carteira e estoque atualizado.`,
       })
     } catch (error) {
       notify({
         type: 'error',
-        title: 'Nao foi possivel cadastrar',
-        message: getErrorMessage(error, 'Revise os dados da nota promissoria.'),
+        title: 'Não foi possível cadastrar',
+        message: getErrorMessage(error, 'Revise os dados da nota promissória.'),
       })
     } finally {
       setIsCreatingManualNote(false)
     }
   }
 
-  async function handleExportCsv() {
-    setIsExportingCsv(true)
+  async function handleExportReport() {
+    setIsExportingReport(true)
     try {
-      await downloadPromissoryNotesCsv(filters)
+      await downloadPromissoryNotesExcelReport(filters)
       notify({
         type: 'success',
-        title: 'CSV gerado',
-        message: 'A carteira de notas promissorias foi exportada.',
+        title: 'Relatório Excel gerado',
+        message: 'A carteira de notas promissórias foi exportada para Excel com sucesso.',
       })
     } catch (error) {
       notify({
         type: 'error',
-        title: 'CSV indisponivel',
-        message: getErrorMessage(error, 'Nao foi possivel exportar as notas promissorias.'),
+        title: 'Relatório indisponível',
+        message: getErrorMessage(error, 'Não foi possível exportar o relatório.'),
       })
     } finally {
-      setIsExportingCsv(false)
+      setIsExportingReport(false)
     }
   }
 
   async function handlePay() {
-    if (!selectedNote || ['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(selectedNote.status)) return
+    if (!selectedNote || ['PAID', 'CANCELLED'].includes(selectedNote.status)) return
 
     const amount = paymentAmount ? Number(paymentAmount) : undefined
+    const interest = Math.round(montanteJuros * 100) / 100
     if (amount !== undefined && (!Number.isFinite(amount) || amount <= 0)) {
       notify({
         type: 'error',
-        title: 'Valor invalido',
+        title: 'Valor inválido',
         message: 'Informe um valor de pagamento maior que zero.',
+      })
+      return
+    }
+
+    if (!Number.isFinite(interest) || interest < 0) {
+      notify({
+        type: 'error',
+        title: 'Juros inválido',
+        message: 'A taxa de juros informada gerou um valor inválido.',
       })
       return
     }
@@ -483,7 +596,7 @@ export function PromissoryNotesPage() {
     const confirmed = await confirm({
       type: 'warning',
       title: 'Baixar nota?',
-      message: `Registrar recebimento de ${formatCurrency(amount ?? selectedNote.remainingAmount)}?`,
+      message: `Registrar recebimento de ${formatCurrency((amount ?? selectedNote.remainingAmount) + interest)}?`,
       confirmLabel: 'Baixar',
       cancelLabel: 'Voltar',
     })
@@ -492,8 +605,9 @@ export function PromissoryNotesPage() {
     setIsPaying(true)
 
     try {
-      const paidNote = await payPromissoryNote(selectedNote.id, paymentMethod, amount, chargeInterestAndPenalty)
+      const paidNote = await payPromissoryNote(selectedNote.id, paymentMethod, amount, interest)
       setSelectedNote(paidNote)
+      setInterestRate('0')
       await refreshCurrentList()
       notify({
         type: 'success',
@@ -503,718 +617,817 @@ export function PromissoryNotesPage() {
     } catch (error) {
       notify({
         type: 'error',
-        title: 'Nao foi possivel baixar',
-        message: getErrorMessage(error, 'Nao foi possivel registrar o recebimento.'),
+        title: 'Não foi possível baixar',
+        message: getErrorMessage(error, 'Não foi possível registrar o recebimento.'),
       })
     } finally {
       setIsPaying(false)
     }
   }
 
-  async function handleCollectionEvent() {
-    if (!selectedNote) return
 
-    setIsRegisteringCollection(true)
-    try {
-      const event = await addPromissoryNoteCollectionEvent(
-        selectedNote.id,
-        collectionAction,
-        collectionComment,
-        promisedPaymentDate,
-      )
-      setCollectionEvents((current) => [event, ...current])
-      setCollectionComment('')
-      setPromisedPaymentDate('')
-      notify({
-        type: 'success',
-        title: 'Cobranca registrada',
-        message: collectionActionLabels[event.action],
-      })
-    } catch (error) {
-      notify({
-        type: 'error',
-        title: 'Nao foi possivel registrar',
-        message: getErrorMessage(error, 'Revise os dados da cobranca.'),
-      })
-    } finally {
-      setIsRegisteringCollection(false)
-    }
+  async function handlePrintNote() {
+    if (!selectedNote) return
+    const printWindow = window.open(getPromissoryNotePrintUrl(selectedNote.id), '_blank')
+    printWindow?.addEventListener('load', () => {
+      printWindow.print()
+    })
   }
 
   async function handleWhatsappMessage() {
     if (!selectedNote) return
-
     try {
       const message = await getPromissoryWhatsappMessage(selectedNote.id)
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
     } catch (error) {
       notify({
         type: 'error',
-        title: 'Mensagem indisponivel',
-        message: getErrorMessage(error, 'Nao foi possivel gerar a mensagem.'),
+        title: 'Mensagem indisponível',
+        message: getErrorMessage(error, 'Não foi possível gerar a mensagem de cobrança.'),
       })
     }
   }
 
-  async function handleRenegotiate() {
-    if (!selectedNote || ['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(selectedNote.status)) return
-
-    const installments = [
-      { dueDate: renegotiationFirstDueDate, amount: Number(renegotiationFirstAmount) },
-      { dueDate: renegotiationSecondDueDate, amount: Number(renegotiationSecondAmount) },
-    ].filter((installment) => installment.dueDate && Number.isFinite(installment.amount) && installment.amount > 0)
-
-    if (!renegotiationReason.trim() || installments.length === 0) {
-      notify({
-        type: 'error',
-        title: 'Renegociacao incompleta',
-        message: 'Informe motivo, vencimento e valor de pelo menos uma parcela.',
-      })
-      return
+  // Visual do Mapeamento Cromático de Status
+  const getStatusBadgeStyle = (status: PromissoryNoteStatus) => {
+    if (status === 'PAID') {
+      return { border: '1px solid rgba(45, 212, 191, 0.28)', background: 'rgba(45, 212, 191, 0.1)', color: '#8ff2e7' }
     }
-
-    const total = installments.reduce((sum, installment) => sum + installment.amount, 0)
-    if (total < selectedNote.remainingAmount) {
-      notify({
-        type: 'error',
-        title: 'Total insuficiente',
-        message: 'A renegociacao deve cobrir o saldo em aberto.',
-      })
-      return
+    if (status === 'OVERDUE') {
+      return { border: '1px solid rgba(251, 113, 133, 0.28)', background: 'rgba(251, 113, 133, 0.1)', color: '#fb7185' }
     }
-
-    const confirmed = await confirm({
-      type: 'warning',
-      title: 'Renegociar nota?',
-      message: `A nota atual sera marcada como renegociada e novas parcelas somando ${formatCurrency(total)} serao criadas.`,
-      confirmLabel: 'Renegociar',
-      cancelLabel: 'Voltar',
-    })
-    if (!confirmed) return
-
-    setIsRenegotiating(true)
-    try {
-      const newNotes = await renegotiatePromissoryNotes({
-        noteIds: [selectedNote.id],
-        reason: renegotiationReason.trim(),
-        installments,
-      })
-      setRenegotiationReason('')
-      setRenegotiationFirstDueDate('')
-      setRenegotiationSecondDueDate('')
-      await refreshCurrentList()
-      setSelectedNote(newNotes[0] ?? null)
-      notify({
-        type: 'success',
-        title: 'Renegociacao concluida',
-        message: `${newNotes.length} nova(s) parcela(s) criada(s).`,
-      })
-    } catch (error) {
-      notify({
-        type: 'error',
-        title: 'Nao foi possivel renegociar',
-        message: getErrorMessage(error, 'Revise as parcelas informadas.'),
-      })
-    } finally {
-      setIsRenegotiating(false)
+    if (['PENDING', 'PARTIALLY_PAID'].includes(status)) {
+      return { border: '1px solid rgba(215, 173, 85, 0.28)', background: 'rgba(215, 173, 85, 0.1)', color: '#f6d78b' }
     }
+    return { border: '1px solid rgba(226, 232, 240, 0.1)', background: 'rgba(255, 255, 255, 0.05)', color: '#7b8493' }
   }
 
-  if (pageMode === 'manual-create') {
+  /* TELA 2: CADASTRAR COM PRODUTOS (MANUAL CREATE) */
+  if (effectiveMode === 'manual-create') {
     return (
-      <main className="app-shell">
-        <div className="app-container history-container">
-          <PageHeader
-            eyebrow="Recebiveis"
-            title="Nova nota avulsa"
-            subtitle="Cadastre promissorias antigas sem depender de uma venda no PDV."
-            metricLabel="Cadastro"
-            metricValue="Manual"
-            status="Nota sem venda"
-          />
-
-          <section className="product-form-panel product-form-panel--new-product promissory-manual-panel promissory-manual-panel--page">
-            <header className="section-header product-form-header">
-              <div>
-                <h2>Dados da nota</h2>
-                <p>Selecione o cliente e informe como o valor sera dividido.</p>
+      <main className="app-shell customer-premium-shell">
+        <div className="app-container customer-premium-container">
+          
+          <div className="customer-premium-hero">
+            <section className="customer-premium-banner">
+              <div className="customer-premium-badges">
+                <span>★ LANÇAMENTO AVULSO</span>
+                <strong>Lançamento manual</strong>
               </div>
-              <button className="secondary-button" type="button" onClick={() => setPageMode('wallet')} disabled={isCreatingManualNote}>
-                <ArrowLeft size={14} strokeWidth={2.3} aria-hidden="true" />
-                Voltar para carteira
-              </button>
-            </header>
+              <h1>Cadastrar nota com produtos</h1>
+              <p>Monte uma venda a prazo de forma manual. O estoque de peças do Atelier será atualizado automaticamente ao finalizar.</p>
+            </section>
 
-            <form className="product-form" onSubmit={handleManualNoteSubmit}>
-              <div className="form-grid">
-                <div className="field-group field-group--full">
-                  <label htmlFor="manualNoteCustomer">Cliente</label>
+            <section className="customer-premium-target-card">
+              <div>
+                <span>Total Lançado</span>
+                <small>Estoque e parcelas</small>
+              </div>
+              <strong style={{ color: '#f6d78b' }}>{formatCurrency(manualTotalAmount)}</strong>
+              <div className="customer-premium-progress">
+                <span style={{ width: manualItems.length > 0 ? '100%' : '0%' }} />
+              </div>
+            </section>
+          </div>
+
+          <div className="quick-actions" style={{ display: 'flex', gap: '12px', background: '#101117', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
+            <button className="customer-premium-secondary-button" type="button" onClick={() => changePageMode('wallet')} disabled={isCreatingManualNote} style={{ minHeight: '40px' }}>
+              <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Voltar para Carteira
+            </button>
+          </div>
+
+          <div className="sales-checkout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', alignItems: 'start' }}>
+            
+            {/* Lançamento de Itens */}
+            <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
+                <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Pesquisa de produtos</h2>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Pesquise e insira os produtos que compõem o parcelamento.</p>
+              </header>
+
+              <div className="customer-premium-form" style={{ padding: 0, display: 'grid', gap: '14px' }}>
+                <div className="field-group">
+                  <label htmlFor="manualProductSearch">Filtrar Produtos</label>
+                  <div className="customer-premium-search-input" style={{ width: '100%' }}>
+                    <Search size={16} />
+                    <input
+                      id="manualProductSearch"
+                      value={manualProductSearch}
+                      onChange={(event) => setManualProductSearch(event.target.value)}
+                      placeholder="Pesquise por nome ou código do produto..."
+                    />
+                  </div>
+                </div>
+
+                <div className="field-group">
+                  <label htmlFor="manualProductSelect">Selecione o Produto</label>
+                  <select
+                    id="manualProductSelect"
+                    value={manualSelectedProductId}
+                    onChange={(event) => {
+                      setManualSelectedProductId(event.target.value)
+                      const prod = manualProductOptions.find((p) => String(p.id) === event.target.value)
+                      if (prod) {
+                        setManualUnitPrice(prod.price.toFixed(2))
+                      }
+                    }}
+                    style={{ minHeight: '48px', borderRadius: '12px' }}
+                  >
+                    <option value="">Selecione na lista...</option>
+                    {manualProductOptions.map((product) => (
+                      <option value={product.id} key={product.id}>
+                        {product.name} ({product.code}) — Preço: {formatCurrency(product.price)} — Estoque: {product.stockQuantity} un.
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="field-group">
+                    <label htmlFor="manualQuantity">Quantidade</label>
+                    <input
+                      id="manualQuantity"
+                      inputMode="numeric"
+                      value={manualQuantity}
+                      onChange={(event) => setManualQuantity(event.target.value)}
+                      style={{ minHeight: '48px', borderRadius: '12px' }}
+                    />
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="manualUnitPrice">Preço Unitário R$</label>
+                    <CurrencyInput
+                      id="manualUnitPrice"
+                      value={manualUnitPrice}
+                      onChange={(value) => setManualUnitPrice(value)}
+                      style={{ minHeight: '48px', borderRadius: '12px' }}
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="button" 
+                  className="customer-premium-primary-button" 
+                  onClick={handleAddManualItem}
+                  style={{ minHeight: '44px', width: '100%', marginTop: '10px' }}
+                >
+                  <PlusCircle size={16} style={{ marginRight: '6px' }} /> Inserir Item na Nota
+                </button>
+              </div>
+            </section>
+
+            {/* Configuração Financeira e Finalização */}
+            <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
+                <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Configuração da nota</h2>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Revise o cliente associado e as parcelas.</p>
+              </header>
+
+              <form className="customer-premium-form" onSubmit={handleManualNoteSubmit} style={{ padding: 0, display: 'grid', gap: '14px' }}>
+                <div className="field-group">
+                  <label htmlFor="manualNoteCustomer">Cliente Associado</label>
                   <select
                     id="manualNoteCustomer"
                     value={manualNoteForm.customerId}
                     onChange={(event) => setManualNoteForm((current) => ({ ...current, customerId: event.target.value }))}
                     required
+                    style={{ minHeight: '48px', borderRadius: '12px' }}
                   >
-                    <option value="">Selecione o cliente</option>
+                    <option value="">Selecione o cliente na base de dados...</option>
                     {customers.map((customer) => (
                       <option value={customer.id} key={customer.id}>{customer.name}</option>
                     ))}
                   </select>
                 </div>
-                <div className="field-group">
-                  <label htmlFor="manualNoteAmount">Valor total</label>
-                  <input
-                    id="manualNoteAmount"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={manualNoteForm.totalAmount}
-                    onChange={(event) => setManualNoteForm((current) => ({ ...current, totalAmount: event.target.value }))}
-                    placeholder="Ex.: 300.00"
-                    required
-                  />
+
+                <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="field-group">
+                    <label htmlFor="manualDiscount">Desconto R$</label>
+                    <CurrencyInput
+                      id="manualDiscount"
+                      value={manualNoteForm.discountAmount}
+                      onChange={(value) => setManualNoteForm((current) => ({ ...current, discountAmount: value }))}
+                    />
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="manualInstallments">Quantidade Parcelas</label>
+                    <select
+                      id="manualInstallments"
+                      value={manualNoteForm.installments}
+                      onChange={(event) => setManualNoteForm((current) => ({ ...current, installments: event.target.value }))}
+                      style={{ minHeight: '48px', borderRadius: '12px' }}
+                    >
+                      {[1, 2, 3, 4, 5, 6, 8, 10, 12].map((c) => (
+                        <option value={c} key={c}>{c}x</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
                 <div className="field-group">
-                  <label htmlFor="manualNoteInstallments">Parcelas</label>
+                  <label htmlFor="manualFirstDueDate">Primeiro Vencimento</label>
                   <input
-                    id="manualNoteInstallments"
-                    type="number"
-                    min="1"
-                    max="36"
-                    step="1"
-                    value={manualNoteForm.installments}
-                    onChange={(event) => setManualNoteForm((current) => ({ ...current, installments: event.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="field-group field-group--full">
-                  <label htmlFor="manualNoteDueDate">Primeiro vencimento</label>
-                  <input
-                    id="manualNoteDueDate"
+                    id="manualFirstDueDate"
                     type="date"
                     value={manualNoteForm.firstDueDate}
                     onChange={(event) => setManualNoteForm((current) => ({ ...current, firstDueDate: event.target.value }))}
                     required
+                    style={{ colorScheme: 'dark', minHeight: '48px', borderRadius: '12px' }}
                   />
                 </div>
-              </div>
-              <div className="form-actions">
-                <button className="action-button" type="submit" disabled={isCreatingManualNote}>
-                  {isCreatingManualNote ? 'Cadastrando...' : 'Cadastrar nota avulsa'}
+
+                {/* Resumo de itens adicionados */}
+                <div style={{ borderTop: '1px solid rgba(226,232,240,0.06)', paddingTop: '14px' }}>
+                  <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Itens na Nota</span>
+                  {manualItems.length === 0 ? (
+                    <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '16px 0' }}>Nenhum item inserido ainda.</div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '8px', marginTop: '6px', maxHeight: '180px', overflowY: 'auto' }}>
+                      {manualItems.map((item) => (
+                        <div key={item.productId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '10px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{item.name}</strong>
+                            <small style={{ color: '#7b8493', fontSize: '0.7rem' }}>Código: {item.code} — {item.quantity} un. x {formatCurrency(item.unitPrice)}</small>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <strong style={{ color: '#f6d78b', fontSize: '0.85rem' }}>{formatCurrency(item.unitPrice * item.quantity)}</strong>
+                            <button type="button" onClick={() => removeManualItem(item.productId, item.unitPrice)} style={{ border: 0, background: 'transparent', color: '#fb7185', cursor: 'pointer', fontSize: '0.75rem' }}>Excluir</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button 
+                  className="customer-premium-primary-button" 
+                  type="submit" 
+                  disabled={isCreatingManualNote || manualItems.length === 0}
+                  style={{ minHeight: '44px', width: '100%', marginTop: '10px' }}
+                >
+                  <Save size={16} style={{ marginRight: '6px' }} />
+                  {isCreatingManualNote ? 'Lançando Nota...' : 'Gerar e Finalizar Notas Promissórias'}
                 </button>
-                <button className="secondary-button" type="button" onClick={() => setPageMode('wallet')} disabled={isCreatingManualNote}>
-                  Cancelar
-                </button>
+              </form>
+            </section>
+
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  /* TELA 3: RELATÓRIO DE INADIMPLÊNCIA / EXCEL */
+  if (effectiveMode === 'report') {
+    return (
+      <main className="app-shell customer-premium-shell">
+        <div className="app-container customer-premium-container">
+          
+          <div className="customer-premium-hero">
+            <section className="customer-premium-banner">
+              <div className="customer-premium-badges">
+                <span>★ RELATÓRIO EXCEL</span>
+                <strong>Exportação</strong>
               </div>
-            </form>
+              <h1>Relatório de Inadimplência</h1>
+              <p>Exporte a carteira de promissórias ou filtre devedores para gerar arquivos Excel consolidados.</p>
+            </section>
+          </div>
+
+          <div className="quick-actions" style={{ display: 'flex', gap: '12px', background: '#101117', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
+            <button className="customer-premium-secondary-button" type="button" onClick={() => changePageMode('wallet')} style={{ minHeight: '40px' }}>
+              <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Voltar para Carteira
+            </button>
+            <button 
+              className="customer-premium-primary-button" 
+              type="button" 
+              onClick={handleExportReport} 
+              disabled={isExportingReport}
+              style={{ minHeight: '40px' }}
+            >
+              <FileDown size={14} style={{ marginRight: '6px' }} /> Exportar Toda a Carteira (Excel)
+            </button>
+          </div>
+
+          {/* Grid de Inadimplência */}
+          <section className="customer-premium-list-panel" style={{ padding: '24px' }}>
+            <header style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Divisão de Atrasos por Período</h2>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Veja a quantidade de notas promissórias e valores totais pendentes agrupados por faixas de dias.</p>
+            </header>
+
+            <div className="customer-premium-card-grid">
+              {delinquencyReport.length === 0 ? (
+                <div className="product-empty">Nenhuma faixa de atraso encontrada na base de dados.</div>
+              ) : (
+                delinquencyReport.map((range, index) => (
+                  <article key={index} className="customer-premium-card" style={{ borderLeft: '4px solid #fb7185' }}>
+                    <div className="customer-premium-card-header">
+                      <div>
+                        <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: '0 0 4px' }}>Atraso: {range.daysRange} dias</h3>
+                        <span style={{ fontSize: '0.68rem', background: '#151922', padding: '2px 6px', borderRadius: '4px', color: '#fb7185', fontWeight: 'bold' }}>
+                          Inadimplente
+                        </span>
+                      </div>
+                      <strong className="customer-premium-status" style={{ border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.1)', color: '#fb7185' }}>
+                        {range.count} nota(s)
+                      </strong>
+                    </div>
+
+                    <div className="customer-premium-contact-box" style={{ marginTop: '10px' }}>
+                      <div>
+                        <span>Valor Total em Atraso</span>
+                        <strong style={{ color: '#fb7185', fontSize: '1.15rem' }}>{formatCurrency(range.amount)}</strong>
+                      </div>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
           </section>
         </div>
       </main>
     )
   }
 
-  return (
-    <main className="app-shell">
-      <div className="app-container history-container">
-        <PageHeader
-          eyebrow="Recebiveis"
-          title="Carteira de notas promissorias"
-          subtitle="Acompanhe vencimentos, imprima parcelas e registre baixas de promissorias."
-          metricLabel="Aberto"
-          metricValue={formatCurrency(metrics.openAmount)}
-          status={listMode === 'due-today' ? 'Cobranca do dia' : `${metrics.openCount} parcela(s) em aberto`}
-        />
+  const diasAtraso = selectedNote ? getDaysInArrears(selectedNote.dueDate) : 0
+  const valorPrincipal = Number(paymentAmount) || 0
+  const taxaJuros = Number(interestRate) || 0
+  const montanteJuros = valorPrincipal * (taxaJuros / 100) * diasAtraso
+  const valorTotalBaixa = valorPrincipal + montanteJuros
 
-        <div className="metric-grid metric-grid--4">
-          <Metric label="A receber" value={formatCurrency(metrics.openAmount)} tone="gold" icon={ReceiptText} />
-          <Metric label="Vence hoje" value={formatCurrency(metrics.dueTodayAmount)} tone="gold" icon={CalendarClock} />
-          <Metric label="Vencido" value={formatCurrency(metrics.overdueAmount)} tone="danger" icon={AlertCircle} />
-          <Metric label="Recebido" value={formatCurrency(metrics.paidAmount)} tone="success" icon={CheckCircle2} />
+  /* TELA 1: CARTEIRA DE COBRANÇA (WALLET) - TELA PRINCIPAL */
+  return (
+    <main className="app-shell customer-premium-shell">
+      <div className="app-container customer-premium-container">
+        
+        {/* Banner do Topo */}
+        <div className="customer-premium-hero">
+          <section className="customer-premium-banner">
+            <div className="customer-premium-badges">
+              <span>★ RECEBÍVEIS</span>
+              <strong>{notes.length} parcela(s) encontradas</strong>
+            </div>
+            <h1>Carteira de notas promissórias</h1>
+            <p>Gerencie o faturamento a prazo, liquidações, registros de cobrança e renegociações de parcelas do Atelier.</p>
+          </section>
+
+          <section className="customer-premium-target-card">
+            <div>
+              <span>Vence Hoje</span>
+              <small>Foco do dia</small>
+            </div>
+            <strong style={{ color: '#f6d78b' }}>{formatCurrency(metrics.dueTodayAmount)}</strong>
+            <div className="customer-premium-progress">
+              <span style={{ width: notes.length > 0 ? '100%' : '0%' }} />
+            </div>
+          </section>
         </div>
 
-        {delinquencyReport.length > 0 ? (
-          <section className="scanner-panel promissory-summary-panel">
-            <header className="section-header">
-              <div>
-                <h2>Inadimplencia</h2>
-                <p>Saldo aberto por faixa de atraso.</p>
-              </div>
-            </header>
-            <div className="promissory-mini-grid">
-              {delinquencyReport.map((range) => (
-                <div className="promissory-mini-card" key={range.range}>
-                  <span>{range.range}</span>
-                  <strong>{formatCurrency(range.amount)}</strong>
-                  <small>{range.count} parcela(s)</small>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <button className="promissory-create-card" type="button" onClick={() => setPageMode('manual-create')}>
-          <span className="promissory-create-card__icon" aria-hidden="true">
-            <PlusCircle size={22} strokeWidth={2.4} />
-          </span>
-          <span>
-            <strong>Nova nota</strong>
-            <small>Cadastrar promissoria avulsa sem venda</small>
-          </span>
-        </button>
-
-        <section className="relationship-calendar-panel">
-          <header className="section-header">
+        {/* Métricas e Botões Rápidos */}
+        <div className="customer-premium-metrics">
+          <article>
             <div>
-              <h2><CalendarDays size={18} strokeWidth={2.3} aria-hidden="true" /> Calendario de cobrancas</h2>
-              <p>Clique em um dia para ver as promissorias com vencimento na data.</p>
+              <span>Saldo em aberto</span>
+              <strong>{formatCurrency(metrics.openAmount)}</strong>
             </div>
-            <div className="calendar-nav">
-              <button className="secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))}>
-                Anterior
-              </button>
-              <strong>{new Date(`${calendarMonth}-01T00:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</strong>
-              <button className="secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))}>
-                Proximo
-              </button>
-            </div>
-          </header>
-          <div className="calendar-weekdays" aria-hidden="true">
-            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day) => <span key={day}>{day}</span>)}
-          </div>
-          <div className="collection-calendar-grid">
-            {calendarDays.map((day, index) => {
-              const total = day.date ? calendarTotals.get(day.date) : undefined
-              const buttonClassName = [
-                'collection-calendar-day',
-                day.date === selectedCalendarDate ? 'collection-calendar-day--selected' : '',
-                total ? 'collection-calendar-day--has-receivables' : '',
-              ].filter(Boolean).join(' ')
-              return (
-                <button
-                  className={buttonClassName}
-                  type="button"
-                  key={day.date || `empty-${index}`}
-                  disabled={day.muted}
-                  onClick={() => handleCalendarDateClick(day.date)}
-                >
-                  <span>{day.day || ''}</span>
-                  {total ? <small>{total.count} cobr. {formatCurrency(total.amount)}</small> : null}
-                </button>
-              )
-            })}
-          </div>
-        </section>
+            <ReceiptText size={19} aria-hidden="true" />
+          </article>
 
-        <section className="scanner-panel promissory-filter-panel">
-          <div className="qr-modal-actions">
-            <button className="action-button" type="button" onClick={showDueToday} disabled={isLoading}>
-              Cobranca de hoje
+          <article style={{ borderColor: metrics.overdueAmount > 0 ? 'rgba(251,113,133,0.4)' : undefined }}>
+            <div>
+              <span>Total vencido</span>
+              <strong style={{ color: metrics.overdueAmount > 0 ? '#fb7185' : '#fff' }}>{formatCurrency(metrics.overdueAmount)}</strong>
+            </div>
+            <AlertCircle size={19} aria-hidden="true" style={{ color: '#fb7185', background: 'rgba(251,113,133,0.1)' }} />
+          </article>
+
+          <article>
+            <div>
+              <span>Vence hoje</span>
+              <strong style={{ color: '#f6d78b' }}>{formatCurrency(metrics.dueTodayAmount)}</strong>
+            </div>
+            <CalendarClock size={19} aria-hidden="true" style={{ color: '#d7ad55', background: 'rgba(215, 173, 85, 0.1)' }} />
+          </article>
+
+          <article>
+            <div>
+              <span>Total recebido</span>
+              <strong style={{ color: '#2dd4bf' }}>{formatCurrency(metrics.paidAmount)}</strong>
+            </div>
+            <CheckCircle2 size={19} aria-hidden="true" style={{ color: '#2dd4bf', background: 'rgba(45, 212, 191, 0.1)' }} />
+          </article>
+        </div>
+
+        {/* Ações e Sub-Navegação */}
+        <div className="quick-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#101117', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              className={listMode === 'due-today' ? 'customer-premium-primary-button' : 'customer-premium-secondary-button'} 
+              type="button" 
+              onClick={showDueToday}
+              style={{ minHeight: '38px', fontSize: '0.72rem' }}
+            >
+              Vencem Hoje
             </button>
-            <button className="secondary-button" type="button" onClick={clearFilters} disabled={isLoading}>
-              Todas
+            <button 
+              className={listMode === 'custom' ? 'customer-premium-primary-button' : 'customer-premium-secondary-button'} 
+              type="button" 
+              onClick={() => void loadNotes(filters)}
+              style={{ minHeight: '38px', fontSize: '0.72rem' }}
+            >
+              Exibir Filtradas / Todas
             </button>
           </div>
 
-          <form className="notes-filter-form" onSubmit={handleFilterSubmit}>
-            <div className="field-group">
-              <label htmlFor="noteStatus">Status</label>
-              <select
-                id="noteStatus"
-                value={draftFilters.status}
-                onChange={(event) => setDraftFilters((current) => ({ ...current, status: event.target.value }))}
-              >
-                <option value="">Todos</option>
-                <option value="PENDING">Pendentes</option>
-                <option value="PARTIALLY_PAID">Parciais</option>
-                <option value="OVERDUE">Vencidos</option>
-                <option value="PAID">Pagos</option>
-                <option value="CANCELLED">Cancelados</option>
-                <option value="RENEGOTIATED">Renegociados</option>
-              </select>
-            </div>
-            <div className="field-group">
-              <label htmlFor="noteCustomer">Cliente</label>
-              <select
-                id="noteCustomer"
-                value={draftFilters.customerId}
-                onChange={(event) => setDraftFilters((current) => ({ ...current, customerId: event.target.value }))}
-              >
-                <option value="">Todos</option>
-                {customers.map((customer) => (
-                  <option value={customer.id} key={customer.id}>{customer.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="field-group">
-              <label htmlFor="noteStart">Inicio</label>
-              <input
-                id="noteStart"
-                type="date"
-                value={draftFilters.startDate}
-                onChange={(event) => setDraftFilters((current) => ({ ...current, startDate: event.target.value }))}
-              />
-            </div>
-            <div className="field-group">
-              <label htmlFor="noteEnd">Fim</label>
-              <input
-                id="noteEnd"
-                type="date"
-                value={draftFilters.endDate}
-                onChange={(event) => setDraftFilters((current) => ({ ...current, endDate: event.target.value }))}
-              />
-            </div>
-            <button className="action-button" type="submit" disabled={isLoading}>Filtrar</button>
-            <button className="secondary-button" type="button" onClick={clearFilters} disabled={isLoading}>Limpar</button>
-            <button className="icon-link" type="button" onClick={handleExportCsv} disabled={isExportingCsv}>
-              <FileDown size={14} strokeWidth={2.3} aria-hidden="true" />
-              {isExportingCsv ? 'Gerando...' : 'CSV'}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              className="customer-premium-primary-button" 
+              type="button" 
+              onClick={() => changePageMode('manual-create')}
+              style={{ minHeight: '38px', fontSize: '0.72rem' }}
+            >
+              <PlusCircle size={14} style={{ marginRight: '6px' }} /> Novo Lançamento Manual
             </button>
-          </form>
-
-          <div className="field-group notes-search">
-            <label htmlFor="noteSearch">Busca rapida</label>
-            <div className="search-with-icon">
-              <Search size={16} strokeWidth={2.3} aria-hidden="true" />
-              <input
-                id="noteSearch"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Cliente, CPF ou venda"
-              />
-            </div>
+            <button 
+              className="customer-premium-secondary-button" 
+              type="button" 
+              onClick={() => changePageMode('report')}
+              style={{ minHeight: '38px', fontSize: '0.72rem' }}
+            >
+              <FileDown size={14} style={{ marginRight: '6px' }} /> Relatório Inadimplência
+            </button>
           </div>
+        </div>
 
-          {errorMessage ? <div className="feedback-message feedback-message--error">{errorMessage}</div> : null}
-        </section>
+        {/* Layout da Carteira (Filtro e Grid Lado a Lado) */}
+        <div className="sales-checkout-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '22px', alignItems: 'start' }}>
+          
+          {/* COLUNA ESQUERDA: Busca, Filtros e Lista */}
+          <div style={{ display: 'grid', gap: '22px' }}>
+            
+            {/* Filtros da Carteira */}
+            <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
+              <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
+                <h2 style={{ fontSize: '1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Filtros da carteira</h2>
+              </header>
 
-        <div className="history-grid">
-          <section className="cart-panel">
-            <header className="section-header">
-              <div>
-                <h2>Parcelas</h2>
-                <p>Ordenadas por vencimento.</p>
-              </div>
-            </header>
-            {isLoading ? (
-              <div className="product-empty">Carregando notas...</div>
-            ) : filteredNotes.length === 0 ? (
-              <div className="product-empty">Nenhuma nota encontrada.</div>
-            ) : (
-              <div className="sale-history-list">
-                {notePagination.pageItems.map((note) => (
-                  <button
-                    className={selectedNote?.id === note.id ? 'sale-history-item sale-history-item--active' : 'sale-history-item'}
-                    type="button"
-                    key={note.id}
-                    onClick={() => setSelectedNote(note)}
+              <form className="customer-premium-search" onSubmit={handleFilterSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto auto', gap: '12px', alignItems: 'end' }}>
+                <div className="field-group">
+                  <label htmlFor="filterStatus">Status</label>
+                  <select
+                    id="filterStatus"
+                    value={draftFilters.status}
+                    onChange={(event) => setDraftFilters((current) => ({ ...current, status: event.target.value }))}
+                    style={{ minHeight: '48px', borderRadius: '12px' }}
                   >
-                    <span><CalendarClock size={14} strokeWidth={2.3} aria-hidden="true" />Vence {formatDate(note.dueDate)}</span>
-                    <strong>{formatCurrency(note.remainingAmount)}</strong>
-                    <small>
-                      {note.customer.name} - {statusLabels[note.status]} - {note.saleId ? `Venda #${note.saleId}` : 'Nota avulsa'} - Parcela {note.installmentNumber}/{note.totalInstallments}
-                    </small>
-                  </button>
-                ))}
-                <PaginationControls
-                  itemLabel="parcelas"
-                  page={notePagination.page}
-                  pageSize={notePagination.pageSize}
-                  totalItems={notePagination.totalItems}
-                  totalPages={notePagination.totalPages}
-                  onPageChange={notePagination.setPage}
-                />
+                    <option value="">Todos</option>
+                    <option value="PENDING">Pendente</option>
+                    <option value="PARTIALLY_PAID">Parcial</option>
+                    <option value="PAID">Pago</option>
+                    <option value="OVERDUE">Vencido</option>
+                    <option value="CANCELLED">Cancelado</option>
+                  </select>
+                </div>
+
+                <div className="field-group">
+                  <label htmlFor="filterCustomer">Cliente</label>
+                  <select
+                    id="filterCustomer"
+                    value={draftFilters.customerId}
+                    onChange={(event) => setDraftFilters((current) => ({ ...current, customerId: event.target.value }))}
+                    style={{ minHeight: '48px', borderRadius: '12px' }}
+                  >
+                    <option value="">Todos</option>
+                    {customers.map((c) => (
+                      <option value={c.id} key={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="field-group">
+                  <label htmlFor="filterSearch">Busca rápida</label>
+                  <div className="customer-premium-search-input" style={{ width: '100%' }}>
+                    <Search size={16} />
+                    <input
+                      id="filterSearch"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Cliente, CPF ou Venda..."
+                    />
+                  </div>
+                </div>
+
+                <button className="customer-premium-primary-button" type="submit" style={{ minHeight: '48px' }}>
+                  Filtrar
+                </button>
+                
+                <button className="customer-premium-secondary-button" type="button" onClick={clearFilters} style={{ minHeight: '48px' }}>
+                  Limpar
+                </button>
+              </form>
+            </section>
+
+            {/* Listagem de Notas Promissórias */}
+            <section className="customer-premium-list-panel" style={{ padding: '24px' }}>
+              <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
+                <h2 style={{ fontSize: '1rem', color: '#fff', margin: 0, fontWeight: 500 }}>
+                  {listMode === 'due-today' ? 'Parcelas vencendo hoje' : 'Todas as parcelas filtradas'}
+                </h2>
+              </header>
+
+              {isLoading ? (
+                <div className="product-empty">Carregando carteira de recebíveis...</div>
+              ) : filteredNotes.length === 0 ? (
+                <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Nenhuma nota promissória pendente para o filtro selecionado.</div>
+              ) : (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {notePagination.pageItems.map((note) => {
+                    const isSelected = selectedNote?.id === note.id
+                    return (
+                      <div 
+                        key={note.id}
+                        onClick={() => setSelectedNote(note)}
+                        style={{
+                          background: isSelected ? 'rgba(215, 173, 85, 0.05)' : '#0d1016',
+                          border: isSelected ? '1px solid rgba(215, 173, 85, 0.55)' : '1px solid rgba(226, 232, 240, 0.06)',
+                          borderRadius: '12px',
+                          padding: '14px 18px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ display: 'grid', gap: '3px' }}>
+                          <span style={{ fontSize: '0.62rem', background: '#151922', color: '#aeb8c8', fontFamily: 'monospace', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
+                            Nota #{note.id}
+                          </span>
+                          <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{note.customer.name}</strong>
+                          <small style={{ color: '#7b8493', fontSize: '0.72rem' }}>
+                            Vence em: {note.dueDate.split('-').reverse().join('/')} — {note.saleId ? `Venda #${note.saleId}` : 'Nota Avulsa'}
+                          </small>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '0.62rem', color: '#707b8c', textTransform: 'uppercase', display: 'block' }}>Saldo Devedor</span>
+                            <strong style={{ color: '#f6d78b', fontSize: '0.95rem' }}>{formatCurrency(note.remainingAmount)}</strong>
+                          </div>
+                          
+                          <span 
+                            className="status-badge" 
+                            style={{ 
+                              ...getStatusBadgeStyle(note.status),
+                              fontSize: '0.62rem',
+                              fontWeight: 900,
+                              textTransform: 'uppercase',
+                              padding: '2px 8px',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            {statusLabels[note.status]}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  <PaginationControls
+                    itemLabel="notas"
+                    page={notePagination.page}
+                    pageSize={notePagination.pageSize}
+                    totalItems={notePagination.totalItems}
+                    totalPages={notePagination.totalPages}
+                    onPageChange={notePagination.setPage}
+                  />
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* COLUNA DIREITA: Painel de Cobrança / Baixa (Nota Selecionada) */}
+          <div style={{ display: 'grid', gap: '22px' }}>
+            
+            {/* Calendário Compacto */}
+            <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
+              <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '10px', marginBottom: '14px' }}>
+                <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: 0, fontWeight: 500 }}>Vencimentos no mês</h3>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <button type="button" className="customer-premium-secondary-button" onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))} style={{ minHeight: '26px', padding: '0 8px', fontSize: '0.6rem' }}>&lt;</button>
+                  <span style={{ fontSize: '0.72rem', color: '#fff', fontWeight: 'bold', padding: '0 4px' }}>
+                    {new Date(`${calendarMonth}-01T00:00:00`).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
+                  </span>
+                  <button type="button" className="customer-premium-secondary-button" onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))} style={{ minHeight: '26px', padding: '0 8px', fontSize: '0.6rem' }}>&gt;</button>
+                </div>
+              </header>
+
+              <div className="calendar-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900, marginBottom: '6px' }}>
+                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => <span key={day}>{day}</span>)}
               </div>
-            )}
-          </section>
-
-          <section className="cart-panel">
-            <header className="section-header">
-              <div>
-                <h2>Detalhe da nota</h2>
-                <p>{selectedNote ? `Nota #${selectedNote.id} - ${selectedNote.saleId ? `venda #${selectedNote.saleId}` : 'avulsa'}` : 'Selecione uma parcela.'}</p>
+              <div className="collection-calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                {calendarDays.map((day, index) => {
+                  const total = day.date ? calendarTotals.get(day.date) : undefined
+                  const isSelected = day.date === selectedCalendarDate
+                  return (
+                    <button
+                      key={day.date || `cal-empty-${index}`}
+                      type="button"
+                      disabled={day.muted}
+                      onClick={() => handleCalendarDateClick(day.date)}
+                      style={{
+                        minHeight: '34px',
+                        background: isSelected ? 'rgba(215, 173, 85, 0.25)' : total ? 'rgba(215, 173, 85, 0.08)' : '#0d1016',
+                        border: isSelected ? '1px solid #d7ad55' : total ? '1px solid rgba(215, 173, 85, 0.25)' : '1px solid rgba(226, 232, 240, 0.04)',
+                        borderRadius: '6px',
+                        color: day.muted ? '#7b8493' : '#fff',
+                        cursor: day.muted ? 'default' : 'pointer',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative'
+                      }}
+                    >
+                      <span>{day.day || ''}</span>
+                      {total ? <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#f6d78b', marginTop: '2px' }} /> : null}
+                    </button>
+                  )
+                })}
               </div>
-            </header>
+            </section>
 
-            {!selectedNote ? (
-              <div className="product-empty">Selecione uma nota para visualizar.</div>
-            ) : (
-              <div className="cart-list">
-                <article className="cart-item">
-                  <div className="cart-item-main">
-                    <span><ReceiptText size={14} strokeWidth={2.3} aria-hidden="true" />{statusLabels[selectedNote.status]}</span>
-                    <strong>{selectedNote.customer.name}</strong>
-                    <small>
-                      {[
-                        selectedNote.customer.cpf ? maskCpf(selectedNote.customer.cpf) : '',
-                        selectedNote.customer.phone ? maskPhone(selectedNote.customer.phone) : '',
-                      ].filter(Boolean).join(' - ') || 'Sem documento'}
-                    </small>
-                  </div>
-                  <div className="cart-price">
-                    <span>Saldo</span>
-                    <strong>{formatCurrency(selectedNote.remainingAmount)}</strong>
-                  </div>
-                  <div className="cart-price">
-                    <span>Pago</span>
-                    <strong>{formatCurrency(selectedNote.paidAmount)}</strong>
-                  </div>
-                  <div className="cart-price">
-                    <span>Vencimento</span>
-                    <strong>{formatDate(selectedNote.dueDate)}</strong>
-                  </div>
-                </article>
+            {/* Painel da Nota Selecionada */}
+            {selectedNote ? (
+              <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                
+                {/* Cabeçalho da Nota */}
+                <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
+                  <span style={{ fontSize: '0.62rem', background: '#151922', color: '#aeb8c8', fontFamily: 'monospace', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
+                    Parcela selecionada: #{selectedNote.id}
+                  </span>
+                  <h2 style={{ fontSize: '1.2rem', color: '#fff', margin: '4px 0 2px', fontWeight: 500 }}>{selectedNote.customer.name}</h2>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#aeb8c8' }}>
+                    Vencimento em: <strong>{selectedNote.dueDate.split('-').reverse().join('/')}</strong>
+                  </p>
+                </header>
 
-                <div className="promissory-mini-grid">
-                  <div className="promissory-mini-card">
-                    <span>Valor original</span>
+                {/* Dados Consolidados */}
+                <div className="customer-premium-contact-box" style={{ padding: '12px' }}>
+                  <div>
+                    <span>Total da Parcela</span>
                     <strong>{formatCurrency(selectedNote.amount)}</strong>
                   </div>
-                  <div className="promissory-mini-card">
-                    <span>Atualizado</span>
-                    <strong>{formatCurrency(selectedNote.updatedAmount)}</strong>
+                  <div>
+                    <span>Saldo Recebido</span>
+                    <strong>{formatCurrency(selectedNote.paidAmount)}</strong>
                   </div>
-                  <div className="promissory-mini-card">
-                    <span>Atraso</span>
-                    <strong>{selectedNote.daysOverdue} dia(s)</strong>
+                  <div>
+                    <span>Saldo Restante</span>
+                    <strong style={{ color: '#f6d78b', fontSize: '1.1rem' }}>{formatCurrency(selectedNote.remainingAmount)}</strong>
                   </div>
+                  {selectedNote.customer.phone && (
+                    <div>
+                      <span>Telefone</span>
+                      <strong>{maskPhone(selectedNote.customer.phone)}</strong>
+                    </div>
+                  )}
                 </div>
 
-                {selectedNote.status === 'PAID' ? (
-                  <div className="feedback-message feedback-message--success">
-                    Pago em {formatNullableDateTime(selectedNote.paidAt)} por {selectedNote.paymentMethod ?? '-'}.
-                  </div>
-                ) : selectedNote.status === 'CANCELLED' ? (
-                  <div className="feedback-message feedback-message--warning">
-                    Nota cancelada{selectedNote.saleId ? ` junto com a venda #${selectedNote.saleId}` : ''}.
-                  </div>
-                ) : selectedNote.status === 'RENEGOTIATED' ? (
-                  <div className="feedback-message feedback-message--warning">
-                    Nota substituida por renegociacao.
-                  </div>
-                ) : (
-                  <div className="promissory-pay-panel">
-                    <div className="field-group">
-                      <label htmlFor="payMethod">Forma de baixa</label>
-                      <select
-                        id="payMethod"
-                        value={paymentMethod}
-                        onChange={(event) => setPaymentMethod(event.target.value as Exclude<PaymentMethod, 'PROMISSORY_NOTE'>)}
-                      >
-                        {Object.entries(paymentLabels).map(([value, label]) => (
-                          <option value={value} key={value}>{label}</option>
-                        ))}
-                      </select>
+                {/* Ações de Impressão e WhatsApp */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <button className="customer-premium-secondary-button" type="button" onClick={handlePrintNote} style={{ minHeight: '34px', fontSize: '0.65rem' }}>
+                    <Printer size={12} /> Imprimir Promissória
+                  </button>
+                  <button className="customer-premium-secondary-button" type="button" onClick={handleWhatsappMessage} style={{ minHeight: '34px', fontSize: '0.65rem', background: 'rgba(37, 211, 102, 0.08)', border: '1px solid rgba(37, 211, 102, 0.25)', color: '#25D366' }}>
+                    <MessageCircle size={12} /> WhatsApp Cobrança
+                  </button>
+                </div>
+
+                {/* Histórico de Pagamentos */}
+                <div style={{ borderTop: '1px solid rgba(226,232,240,0.06)', paddingTop: '14px' }}>
+                  <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Histórico de Recebimentos</span>
+                  {payments.length === 0 ? (
+                    <div style={{ color: '#7b8493', fontSize: '0.72rem', padding: '8px 0' }}>Nenhum pagamento recebido nesta parcela.</div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '6px', marginTop: '6px' }}>
+                      {payments.map((p) => (
+                        <div key={p.id} style={{ background: '#0d1016', borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <strong style={{ color: '#fff', fontSize: '0.75rem', display: 'block' }}>Recebimento #{p.id}</strong>
+                            <small style={{ color: '#7b8493', fontSize: '0.68rem' }}>Método: {paymentLabels[p.paymentMethod]} — {formatNullableDateTime(p.paidAt)}</small>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <strong style={{ color: '#2dd4bf', fontSize: '0.78rem' }}>+{formatCurrency(p.amount)}</strong>
+                            {p.interestAmount > 0 && <small style={{ display: 'block', fontSize: '0.65rem', color: '#fb7185' }}>Juros: {formatCurrency(p.interestAmount)}</small>}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="field-group">
-                      <label htmlFor="payAmount">Valor recebido</label>
-                      <input
-                        id="payAmount"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        value={paymentAmount}
-                        onChange={(event) => setPaymentAmount(event.target.value)}
-                      />
+                  )}
+                </div>
+
+                {/* Seção de Baixa / Recebimento */}
+                {selectedNote.remainingAmount > 0 && (
+                  <div style={{ borderTop: '1px solid rgba(226,232,240,0.06)', paddingTop: '14px', display: 'grid', gap: '12px' }}>
+                    <span style={{ fontSize: '0.62rem', color: '#f6d78b', textTransform: 'uppercase', fontWeight: 900 }}>Registrar Pagamento / Baixa</span>
+                    
+                    <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div className="field-group">
+                        <label htmlFor="payMethod">Forma de Pagamento</label>
+                        <select
+                          id="payMethod"
+                          value={paymentMethod}
+                          onChange={(e) => setPaymentMethod(e.target.value as Exclude<PaymentMethod, 'PROMISSORY_NOTE'>)}
+                          style={{ minHeight: '38px', borderRadius: '8px', padding: '0 8px', fontSize: '0.75rem' }}
+                        >
+                          <option value="CASH">Dinheiro</option>
+                          <option value="PIX">Pix</option>
+                          <option value="DEBIT_CARD">Débito</option>
+                          <option value="CREDIT_CARD">Crédito</option>
+                        </select>
+                      </div>
+
+                      <div className="field-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <label style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900, marginBottom: '4px' }}>Dias em Atraso</label>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          width: 'fit-content',
+                          background: diasAtraso > 0 ? 'rgba(251,113,133,0.1)' : 'rgba(45,212,191,0.1)',
+                          border: diasAtraso > 0 ? '1px solid rgba(251,113,133,0.3)' : '1px solid rgba(45,212,191,0.3)',
+                          color: diasAtraso > 0 ? '#fb7185' : '#2dd4bf'
+                        }}>
+                          {diasAtraso > 0 ? `${diasAtraso} dia(s) em atraso` : 'Em dia'}
+                        </span>
+                      </div>
                     </div>
-                    <label className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={chargeInterestAndPenalty}
-                        onChange={(event) => setChargeInterestAndPenalty(event.target.checked)}
-                      />
-                      Cobrar multa e juros
-                    </label>
-                    <button className="action-button" type="button" disabled={isPaying} onClick={() => void handlePay()}>
-                      {isPaying ? 'Baixando...' : 'Registrar pagamento'}
+
+                    <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div className="field-group">
+                        <label htmlFor="interestRateInput">Juros % (ao dia)</label>
+                        <PercentInput
+                          id="interestRateInput"
+                          value={interestRate}
+                          onChange={(val) => setInterestRate(val)}
+                          style={{ minHeight: '38px', borderRadius: '8px', padding: '0 8px', fontSize: '0.75rem' }}
+                        />
+                      </div>
+
+                      <div className="field-group">
+                        <label htmlFor="payAmount">Valor da Baixa R$</label>
+                        <CurrencyInput
+                          id="payAmount"
+                          value={paymentAmount}
+                          onChange={(val) => setPaymentAmount(val)}
+                          style={{ minHeight: '38px', borderRadius: '8px', padding: '0 8px', fontSize: '0.75rem' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px', background: 'rgba(215, 173, 85, 0.04)', border: '1px solid rgba(215, 173, 85, 0.1)', padding: '12px', borderRadius: '8px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Valor Juros</span>
+                        <strong style={{ fontSize: '1rem', color: montanteJuros > 0 ? '#fb7185' : '#aeb8c8' }}>
+                          {formatCurrency(montanteJuros)}
+                        </strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.62rem', color: '#f6d78b', textTransform: 'uppercase', fontWeight: 900 }}>Total a Baixar</span>
+                        <strong style={{ fontSize: '1.1rem', color: '#2dd4bf' }}>
+                          {formatCurrency(valorTotalBaixa)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="button" 
+                      className="customer-premium-primary-button" 
+                      onClick={handlePay} 
+                      disabled={isPaying}
+                      style={{ minHeight: '38px', width: '100%', marginTop: '4px' }}
+                    >
+                      {isPaying ? 'Registrando...' : 'Confirmar e Baixar Parcela'}
                     </button>
                   </div>
                 )}
 
-                <div className="qr-modal-actions">
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => printFrameRef.current?.contentWindow?.print()}
-                  >
-                    <Printer size={14} strokeWidth={2.3} aria-hidden="true" />Imprimir
-                  </button>
-                  <a className="icon-link" href={getPromissoryNotePrintUrl(selectedNote.id)} target="_blank" rel="noreferrer">
-                    Abrir modelo
-                  </a>
-                  <button className="secondary-button" type="button" onClick={() => void handleWhatsappMessage()}>
-                    <MessageCircle size={14} strokeWidth={2.3} aria-hidden="true" />WhatsApp
-                  </button>
-                </div>
 
-                <section className="promissory-detail-section">
-                  <header className="section-header">
-                    <div>
-                      <h2>Pagamentos</h2>
-                      <p>{payments.length} registro(s).</p>
-                    </div>
-                  </header>
-                  {payments.length === 0 ? (
-                    <div className="product-empty">Nenhum pagamento registrado.</div>
-                  ) : (
-                    <div className="promissory-history-list">
-                      {payments.map((payment) => (
-                        <div className="promissory-history-item" key={payment.id}>
-                          <div>
-                            <strong>{formatCurrency(payment.amount)}</strong>
-                            <small>
-                              {paymentLabels[payment.paymentMethod]} - {formatNullableDateTime(payment.paidAt)}
-                            </small>
-                          </div>
-                          <div>
-                            <span>Total recebido</span>
-                            <strong>{formatCurrency(payment.totalReceived)}</strong>
-                          </div>
-                          <a className="icon-link" href={getPromissoryPaymentReceiptUrl(payment.id)} target="_blank" rel="noreferrer">
-                            Recibo
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
 
-                <section className="promissory-detail-section">
-                  <header className="section-header">
-                    <div>
-                      <h2>Cobranca</h2>
-                      <p>Historico de contato com o cliente.</p>
-                    </div>
-                  </header>
-                  <div className="promissory-form-grid">
-                    <div className="field-group">
-                      <label htmlFor="collectionAction">Acao</label>
-                      <select
-                        id="collectionAction"
-                        value={collectionAction}
-                        onChange={(event) => setCollectionAction(event.target.value as PromissoryNoteCollectionAction)}
-                      >
-                        {Object.entries(collectionActionLabels).map(([value, label]) => (
-                          <option value={value} key={value}>{label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="field-group">
-                      <label htmlFor="promisedPaymentDate">Promessa</label>
-                      <input
-                        id="promisedPaymentDate"
-                        type="date"
-                        value={promisedPaymentDate}
-                        onChange={(event) => setPromisedPaymentDate(event.target.value)}
-                      />
-                    </div>
-                    <div className="field-group promissory-grid-wide">
-                      <label htmlFor="collectionComment">Comentario</label>
-                      <input
-                        id="collectionComment"
-                        value={collectionComment}
-                        onChange={(event) => setCollectionComment(event.target.value)}
-                        placeholder="Resumo do contato"
-                      />
-                    </div>
-                    <button className="secondary-button" type="button" disabled={isRegisteringCollection} onClick={() => void handleCollectionEvent()}>
-                      {isRegisteringCollection ? 'Registrando...' : 'Registrar cobranca'}
-                    </button>
-                  </div>
-                  {collectionEvents.length === 0 ? (
-                    <div className="product-empty">Nenhuma cobranca registrada.</div>
-                  ) : (
-                    <div className="promissory-history-list">
-                      {collectionEvents.map((event) => (
-                        <div className="promissory-history-item" key={event.id}>
-                          <div>
-                            <strong>{collectionActionLabels[event.action]}</strong>
-                            <small>
-                              {formatNullableDateTime(event.createdAt)}
-                              {event.promisedPaymentDate ? ` - Promessa ${formatDate(event.promisedPaymentDate)}` : ''}
-                            </small>
-                          </div>
-                          <span>{event.comment || '-'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {!['PAID', 'CANCELLED', 'RENEGOTIATED'].includes(selectedNote.status) ? (
-                  <section className="promissory-detail-section">
-                    <header className="section-header">
-                      <div>
-                        <h2>Renegociacao</h2>
-                        <p>Gere novas parcelas para substituir o saldo atual.</p>
-                      </div>
-                    </header>
-                    <div className="promissory-form-grid">
-                      <div className="field-group promissory-grid-wide">
-                        <label htmlFor="renegotiationReason">Motivo</label>
-                        <input
-                          id="renegotiationReason"
-                          value={renegotiationReason}
-                          onChange={(event) => setRenegotiationReason(event.target.value)}
-                          placeholder="Ex.: acordo com cliente"
-                        />
-                      </div>
-                      <div className="field-group">
-                        <label htmlFor="renegotiationFirstDueDate">1o vencimento</label>
-                        <input
-                          id="renegotiationFirstDueDate"
-                          type="date"
-                          value={renegotiationFirstDueDate}
-                          onChange={(event) => setRenegotiationFirstDueDate(event.target.value)}
-                        />
-                      </div>
-                      <div className="field-group">
-                        <label htmlFor="renegotiationFirstAmount">1o valor</label>
-                        <input
-                          id="renegotiationFirstAmount"
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          value={renegotiationFirstAmount}
-                          onChange={(event) => setRenegotiationFirstAmount(event.target.value)}
-                        />
-                      </div>
-                      <div className="field-group">
-                        <label htmlFor="renegotiationSecondDueDate">2o vencimento</label>
-                        <input
-                          id="renegotiationSecondDueDate"
-                          type="date"
-                          value={renegotiationSecondDueDate}
-                          onChange={(event) => setRenegotiationSecondDueDate(event.target.value)}
-                        />
-                      </div>
-                      <div className="field-group">
-                        <label htmlFor="renegotiationSecondAmount">2o valor</label>
-                        <input
-                          id="renegotiationSecondAmount"
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          value={renegotiationSecondAmount}
-                          onChange={(event) => setRenegotiationSecondAmount(event.target.value)}
-                        />
-                      </div>
-                      <button className="secondary-button" type="button" disabled={isRenegotiating} onClick={() => void handleRenegotiate()}>
-                        {isRenegotiating ? 'Renegociando...' : 'Renegociar'}
-                      </button>
-                    </div>
-                  </section>
-                ) : null}
-
-                <iframe
-                  className="promissory-print-frame"
-                  ref={printFrameRef}
-                  src={getPromissoryNotePrintUrl(selectedNote.id)}
-                  title={`Nota promissoria ${selectedNote.id}`}
-                />
-              </div>
+              </section>
+            ) : (
+              <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Selecione uma nota promissória na carteira para realizar baixas ou registrar cobranças.</div>
             )}
-          </section>
+          </div>
+
         </div>
+
       </div>
     </main>
   )

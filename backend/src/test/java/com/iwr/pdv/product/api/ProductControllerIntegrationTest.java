@@ -15,7 +15,7 @@ import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductCodeControl;
 import com.iwr.pdv.product.domain.ProductCodeControlRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
-import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEventRepository;
+
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
@@ -60,8 +60,7 @@ class ProductControllerIntegrationTest {
     @Autowired
     private PromissoryNotePaymentRepository promissoryNotePaymentRepository;
 
-    @Autowired
-    private PromissoryNoteCollectionEventRepository promissoryNoteCollectionEventRepository;
+
 
     @Autowired
     private AuthService authService;
@@ -73,7 +72,7 @@ class ProductControllerIntegrationTest {
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         authHeader = "Bearer " + authService.login(new LoginRequest("admin", "admin123")).token();
-        promissoryNoteCollectionEventRepository.deleteAll();
+
         promissoryNotePaymentRepository.deleteAll();
         stockMovementRepository.deleteAll();
         promissoryNoteRepository.deleteAll();
@@ -87,11 +86,13 @@ class ProductControllerIntegrationTest {
         String payload = """
                 {
                   "name": "Vestido Midi",
-                  "code": "IWR-001",
+                  "code": "",
                   "categoryId": %d,
                   "price": 149.90,
+                  "costPrice": 99.90,
                   "stockQuantity": 8,
-                  "active": true
+                  "active": true,
+                  "lotDate": "2026-05-24"
                 }
                 """.formatted(categoryId());
 
@@ -101,15 +102,17 @@ class ProductControllerIntegrationTest {
                         .content(payload))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Vestido Midi"))
-                .andExpect(jsonPath("$.code").value("IWR-001"))
+                .andExpect(jsonPath("$.code").value("IWR-000001"))
                 .andExpect(jsonPath("$.stockQuantity").value(8))
+                .andExpect(jsonPath("$.lotDate").value("2026-05-24"))
+                .andExpect(jsonPath("$.costPrice").value(99.90))
                 .andExpect(jsonPath("$.active").value(true));
 
         mockMvc.perform(get("/api/products")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Vestido Midi"))
-                .andExpect(jsonPath("$[0].code").value("IWR-001"));
+                .andExpect(jsonPath("$[0].code").value("IWR-000001"));
     }
 
     @Test
@@ -150,6 +153,7 @@ class ProductControllerIntegrationTest {
                   "code": "IWR-003",
                   "categoryId": %d,
                   "price": 89.90,
+                  "costPrice": 49.90,
                   "stockQuantity": 15,
                   "active": true
                 }
@@ -162,6 +166,7 @@ class ProductControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Camisa Polo Premium"))
                 .andExpect(jsonPath("$.price").value(89.90))
+                .andExpect(jsonPath("$.costPrice").value(49.90))
                 .andExpect(jsonPath("$.stockQuantity").value(15));
     }
 
@@ -383,6 +388,7 @@ class ProductControllerIntegrationTest {
         product.setCode(code);
         product.setCategory(category());
         product.setPrice(price);
+        product.setCostPrice(BigDecimal.ZERO);
         product.setStockQuantity(stockQuantity);
         product.setActive(active);
         product.setCreatedAt(OffsetDateTime.now());

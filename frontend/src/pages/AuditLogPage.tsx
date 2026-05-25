@@ -16,6 +16,9 @@ const auditActions: AuditAction[] = [
   'USER_CREATED',
   'USER_UPDATED',
   'USER_PASSWORD_CHANGED',
+  'CASH_REGISTER_OPENED',
+  'CASH_REGISTER_CLOSED',
+  'CASH_MOVEMENT_CREATED',
   'PRODUCT_CREATED',
   'PRODUCT_UPDATED',
   'PRODUCT_PRICE_CHANGED',
@@ -23,8 +26,6 @@ const auditActions: AuditAction[] = [
   'SALE_CANCELLED',
   'PROMISSORY_NOTE_CREATED',
   'PROMISSORY_NOTE_PAID',
-  'PROMISSORY_NOTE_COLLECTION_REGISTERED',
-  'PROMISSORY_NOTE_RENEGOTIATED',
 ]
 
 function actionLabel(action: AuditAction) {
@@ -36,6 +37,9 @@ function actionLabel(action: AuditAction) {
     USER_CREATED: 'Usuario criado',
     USER_UPDATED: 'Usuario alterado',
     USER_PASSWORD_CHANGED: 'Senha alterada',
+    CASH_REGISTER_OPENED: 'Caixa aberto',
+    CASH_REGISTER_CLOSED: 'Caixa fechado',
+    CASH_MOVEMENT_CREATED: 'Movimento de caixa',
     PRODUCT_CREATED: 'Produto criado',
     PRODUCT_UPDATED: 'Produto alterado',
     PRODUCT_PRICE_CHANGED: 'Preco alterado',
@@ -43,8 +47,6 @@ function actionLabel(action: AuditAction) {
     SALE_CANCELLED: 'Venda cancelada',
     PROMISSORY_NOTE_CREATED: 'Promissoria criada',
     PROMISSORY_NOTE_PAID: 'Promissoria baixada',
-    PROMISSORY_NOTE_COLLECTION_REGISTERED: 'Cobranca registrada',
-    PROMISSORY_NOTE_RENEGOTIATED: 'Promissoria renegociada',
   }
 
   return labels[action] ?? action
@@ -69,6 +71,9 @@ function actionTone(action: AuditAction) {
 function entityLabel(entityType?: string | null) {
   const labels: Record<string, string> = {
     AUTH: 'Acesso',
+    AUTHORIZATION: 'Autorizacao',
+    CASH_REGISTER: 'Caixa',
+    CASH_MOVEMENT: 'Movimento de caixa',
     PRODUCT: 'Produto',
     PROMISSORY_NOTE: 'Promissoria',
     SALE: 'Venda',
@@ -92,7 +97,54 @@ function latestEventHint(logs: AuditLog[] = []) {
 }
 
 function uniqueUserCount(logs: AuditLog[] = []) {
-  return new Set(logs.map((log) => log.username).filter(Boolean)).size
+  return new Set(logs.map((log) => userName(log)).filter(Boolean)).size
+}
+
+function userName(log: AuditLog) {
+  return log.userDisplayName?.trim() || log.username?.trim() || 'Sistema'
+}
+
+function detailText(log: AuditLog) {
+  if (!log.details) {
+    return null
+  }
+
+  const replacements: Array<[RegExp, string]> = [
+    [/^Admin access is required\.$/, 'Acesso de administrador obrigatorio.'],
+    [/^Authenticated access is required\.$/, 'Login obrigatorio para acessar.'],
+    [/^Invalid username\.$/, 'Usuario nao encontrado.'],
+    [/^User temporarily locked\.$/, 'Usuario temporariamente bloqueado.'],
+    [/^Invalid password\.$/, 'Senha invalida.'],
+    [/^Login successful\.$/, 'Login realizado com sucesso.'],
+    [/^Logout successful\.$/, 'Logout realizado com sucesso.'],
+    [/^User created: (.+)\.$/, 'Usuario criado: $1.'],
+    [/^User updated: (.+)\.$/, 'Usuario atualizado: $1.'],
+    [/^Password updated\.$/, 'Senha atualizada.'],
+    [/^Product created: (.+)\.$/, 'Produto criado: $1.'],
+    [/^Initial price: (.+)\.$/, 'Preco inicial: $1.'],
+    [/^Initial stock: (.+)\.$/, 'Estoque inicial: $1.'],
+    [/^Product updated: (.+)\.$/, 'Produto atualizado: $1.'],
+    [/^Price changed from (.+) to (.+)\.$/, 'Preco alterado de $1 para $2.'],
+    [/^Stock changed from (.+) to (.+)\.$/, 'Estoque alterado de $1 para $2.'],
+    [/^Product activation updated to true\.$/, 'Produto ativado.'],
+    [/^Product activation updated to false\.$/, 'Produto desativado.'],
+    [/^Sale cancelled\. Reason: (.+)$/, 'Venda cancelada. Motivo: $1'],
+    [/^Opening amount: (.+)\.$/, 'Valor de abertura: $1.'],
+    [/^CASH_IN amount: (.+)\. Reason: (.+)$/, 'Entrada de caixa: $1. Motivo: $2'],
+    [/^CASH_OUT amount: (.+)\. Reason: (.+)$/, 'Saida de caixa: $1. Motivo: $2'],
+    [/^Declared: (.+)\. Expected: (.+)\. Difference: (.+)\.$/, 'Valor declarado: $1. Valor esperado: $2. Diferenca: $3.'],
+    [/^Declared: (.+)\. Expected: (.+)\. Difference: (.+)\. Reason: (.+)\.$/, 'Valor declarado: $1. Valor esperado: $2. Diferenca: $3. Motivo: $4.'],
+    [/^Cash register reopened\. Reason: (.+)\.$/, 'Caixa reaberto. Motivo: $1.'],
+    [/^Promissory note payment with (.+)\. Amount: (.+)\. Remaining: (.+)\.$/, 'Nota baixada com $1. Valor: $2. Saldo restante: $3.'],
+    [/^Manual promissory sale created\. Customer: (.+)\. Sale: (.+)\. Installments: (.+)\. Amount: (.+)\.$/, 'Nota com produtos criada. Cliente: $1. Venda: $2. Parcelas: $3. Valor: $4.'],
+  ]
+
+  return replacements
+    .reduce((text, [pattern, replacement]) => text.replace(pattern, replacement), log.details)
+    .replaceAll('CASH', 'Dinheiro')
+    .replaceAll('DEBIT_CARD', 'Cartao de debito')
+    .replaceAll('CREDIT_CARD', 'Cartao de credito')
+    .replaceAll('PIX', 'PIX')
 }
 
 export function AuditLogPage() {
@@ -270,14 +322,15 @@ export function AuditLogPage() {
                       </span>
                       <span className="audit-log-row__entity">{entityReference(log)}</span>
                     </div>
-                    {log.details ? (
-                      <p className="audit-log-row__details" title={log.details}>
-                        {log.details}
+                    {detailText(log) ? (
+                      <p className="audit-log-row__details" title={detailText(log) ?? undefined}>
+                        {detailText(log)}
                       </p>
                     ) : null}
                   </div>
-                  <div className="audit-log-row__user" title={log.username ?? 'Sistema'}>
-                    {log.username ?? 'Sistema'}
+                  <div className="audit-log-row__user" title={userName(log)}>
+                    <span>Usuario</span>
+                    <strong>{userName(log)}</strong>
                   </div>
                 </article>
               ))

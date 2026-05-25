@@ -16,7 +16,6 @@ import com.iwr.pdv.product.domain.ProductCategory;
 import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
-import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEventRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
@@ -63,9 +62,6 @@ class AdminDashboardControllerIntegrationTest {
 
     @Autowired
     private PromissoryNotePaymentRepository promissoryNotePaymentRepository;
-
-    @Autowired
-    private PromissoryNoteCollectionEventRepository promissoryNoteCollectionEventRepository;
 
     @Autowired
     private StockMovementRepository stockMovementRepository;
@@ -244,7 +240,6 @@ class AdminDashboardControllerIntegrationTest {
     }
 
     private void cleanDatabase() {
-        promissoryNoteCollectionEventRepository.deleteAll();
         promissoryNotePaymentRepository.deleteAll();
         stockMovementRepository.deleteAll();
         promissoryNoteRepository.deleteAll();

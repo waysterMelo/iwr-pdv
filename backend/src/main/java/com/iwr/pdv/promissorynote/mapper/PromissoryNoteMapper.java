@@ -2,10 +2,8 @@ package com.iwr.pdv.promissorynote.mapper;
 
 import com.iwr.pdv.auth.mapper.AuthMapper;
 import com.iwr.pdv.customer.mapper.CustomerMapper;
-import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteCollectionEventResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNotePaymentResponse;
 import com.iwr.pdv.promissorynote.api.dto.PromissoryNoteResponse;
-import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEvent;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePayment;
 import com.iwr.pdv.sale.api.dto.SaleItemResponse;
@@ -64,17 +62,6 @@ public class PromissoryNoteMapper {
                 payment.getPaymentMethod(),
                 authMapper.toResponse(payment.getPaidBy()),
                 payment.getPaidAt()
-        );
-    }
-
-    public PromissoryNoteCollectionEventResponse toCollectionEventResponse(PromissoryNoteCollectionEvent event) {
-        return new PromissoryNoteCollectionEventResponse(
-                event.getId(),
-                event.getAction(),
-                event.getComment(),
-                event.getPromisedPaymentDate(),
-                authMapper.toResponse(event.getCreatedBy()),
-                event.getCreatedAt()
         );
     }
 

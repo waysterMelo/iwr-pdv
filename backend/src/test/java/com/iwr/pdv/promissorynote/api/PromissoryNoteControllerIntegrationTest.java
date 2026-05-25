@@ -19,7 +19,7 @@ import com.iwr.pdv.product.domain.ProductCategory;
 import com.iwr.pdv.product.domain.ProductCategoryRepository;
 import com.iwr.pdv.product.domain.ProductRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNote;
-import com.iwr.pdv.promissorynote.domain.PromissoryNoteCollectionEventRepository;
+
 import com.iwr.pdv.promissorynote.domain.PromissoryNotePaymentRepository;
 import com.iwr.pdv.promissorynote.domain.PromissoryNoteRepository;
 import com.iwr.pdv.sale.domain.SaleRepository;
@@ -67,8 +67,7 @@ class PromissoryNoteControllerIntegrationTest {
     @Autowired
     private PromissoryNotePaymentRepository paymentRepository;
 
-    @Autowired
-    private PromissoryNoteCollectionEventRepository collectionEventRepository;
+
 
     @Autowired
     private StockMovementRepository stockMovementRepository;
@@ -148,18 +147,7 @@ class PromissoryNoteControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].amount").value(20.00))
                 .andExpect(jsonPath("$[0].totalReceived").value(22.00));
 
-        mockMvc.perform(post("/api/promissory-notes/{noteId}/collection-events", overdueNote.getId())
-                        .header("Authorization", authHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"action\":\"PROMISED_PAYMENT\",\"comment\":\"Cliente prometeu pagar sexta\",\"promisedPaymentDate\":\"%s\"}"
-                                .formatted(today.plusDays(3))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.action").value("PROMISED_PAYMENT"));
 
-        mockMvc.perform(get("/api/promissory-notes/{noteId}/collection-events", overdueNote.getId())
-                        .header("Authorization", authHeader))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].comment").value("Cliente prometeu pagar sexta"));
 
         mockMvc.perform(get("/api/promissory-notes/{noteId}/whatsapp-message", overdueNote.getId())
                         .header("Authorization", authHeader)
@@ -174,23 +162,7 @@ class PromissoryNoteControllerIntegrationTest {
                 .andExpect(jsonPath("$[2].amount").value(20.00))
                 .andExpect(jsonPath("$[2].count").value(greaterThan(0)));
 
-        mockMvc.perform(post("/api/promissory-notes/renegotiations")
-                        .header("Authorization", authHeader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "noteIds": [%d],
-                                  "reason": "Cliente solicitou novo prazo",
-                                  "installments": [
-                                    {"dueDate": "%s", "amount": 20.00},
-                                    {"dueDate": "%s", "amount": 20.00}
-                                  ]
-                                }
-                                """.formatted(futureNote.getId(), today.plusDays(20), today.plusDays(40))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].status").value("PENDING"))
-                .andExpect(jsonPath("$[0].amount").value(20.00));
+
     }
 
     @Test
@@ -231,6 +203,7 @@ class PromissoryNoteControllerIntegrationTest {
 
     @Test
     void shouldCreateManualPromissoryNotesWithoutSaleAndExportThem() throws Exception {
+        Product product = productRepository.save(buildProduct("Produto Manual", "PROM-MAN-001", new BigDecimal("150.00"), 10));
         Customer customer = customerRepository.save(buildCustomer("Cliente Legado"));
         LocalDate today = LocalDate.now(clock);
 
@@ -240,12 +213,16 @@ class PromissoryNoteControllerIntegrationTest {
                         .content("""
                                 {
                                   "customerId": %d,
+                                  "items": [
+                                    {"productId": %d, "quantity": 1, "unitPrice": 150.00}
+                                  ],
+                                  "discountAmount": 0.00,
                                   "installments": [
                                     {"dueDate": "%s", "amount": 75.00},
                                     {"dueDate": "%s", "amount": 75.00}
                                   ]
                                 }
-                                """.formatted(customer.getId(), today.plusDays(5), today.plusDays(35))))
+                                """.formatted(customer.getId(), product.getId(), today.plusDays(5), today.plusDays(35))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].saleId").value(nullValue()))
@@ -347,7 +324,6 @@ class PromissoryNoteControllerIntegrationTest {
     }
 
     private void cleanDatabase() {
-        collectionEventRepository.deleteAll();
         paymentRepository.deleteAll();
         stockMovementRepository.deleteAll();
         promissoryNoteRepository.deleteAll();

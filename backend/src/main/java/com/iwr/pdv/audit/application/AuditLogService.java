@@ -133,6 +133,7 @@ public class AuditLogService {
                 auditLog.getId(),
                 auditLog.getUser() == null ? null : auditLog.getUser().getId(),
                 auditLog.getUsername(),
+                auditLog.getUser() == null ? null : auditLog.getUser().getDisplayName(),
                 auditLog.getAction(),
                 auditLog.getEntityType(),
                 auditLog.getEntityId(),

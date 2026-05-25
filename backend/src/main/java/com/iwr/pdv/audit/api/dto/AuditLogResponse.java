@@ -7,6 +7,7 @@ public record AuditLogResponse(
         Long id,
         Long userId,
         String username,
+        String userDisplayName,
         AuditAction action,
         String entityType,
         String entityId,

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, ClipboardList, Gift, History, Package, ReceiptText, ShieldCheck, Users } from 'lucide-react'
+import { BarChart3, ChevronDown, ClipboardList, FileSpreadsheet, Gift, History, Package, PlusCircle, ReceiptText, Search, ShieldCheck, Tags, UserPlus, Users } from 'lucide-react'
 import './App.css'
 
 import { LoginPage } from './pages/LoginPage'
@@ -9,7 +9,23 @@ import { clearAuthToken, getAuthToken } from './services/httpClient'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import type { AuthUser } from './types/auth'
 
-type AppView = 'checkout' | 'admin-dashboard' | 'promissory-notes' | 'loyalty' | 'customers' | 'products' | 'product-edit' | 'history' | 'audit' | 'users'
+type AppView =
+  | 'checkout'
+  | 'history'
+  | 'admin-dashboard'
+  | 'promissory-notes'
+  | 'promissory-create'
+  | 'promissory-report'
+  | 'loyalty'
+  | 'customers-create'
+  | 'customers-list'
+  | 'customer-profile'
+  | 'products-create'
+  | 'products-list'
+  | 'products-labels'
+  | 'product-edit'
+  | 'audit'
+  | 'users'
 type MobileView = 'home' | 'sale'
 
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage').then((module) => ({ default: module.AuditLogPage })))
@@ -26,13 +42,19 @@ const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(
 
 const menuIcons: Record<AppView, LucideIcon> = {
   checkout: ReceiptText,
+  history: History,
   'admin-dashboard': BarChart3,
   'promissory-notes': ClipboardList,
+  'promissory-create': PlusCircle,
+  'promissory-report': FileSpreadsheet,
   loyalty: Gift,
-  customers: Users,
-  history: History,
+  'customers-create': UserPlus,
+  'customers-list': Users,
+  'customer-profile': Search,
   audit: ShieldCheck,
-  products: Package,
+  'products-create': PlusCircle,
+  'products-list': Package,
+  'products-labels': Tags,
   'product-edit': Package,
   users: Users,
 }
@@ -48,20 +70,60 @@ function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [isSessionChecking, setIsSessionChecking] = useState(() => Boolean(getAuthToken()))
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [openMenuGroups, setOpenMenuGroups] = useState<Record<string, boolean>>({ Vendas: true })
   const isMobileLayout = useMediaQuery('(max-width: 900px), (pointer: coarse) and (max-width: 1100px)')
-  const allMenuItems: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }> = [
-    { id: 'checkout', label: 'Vendas', eyebrow: 'PDV' },
-    { id: 'admin-dashboard', label: 'Painel Admin', eyebrow: 'Admin', adminOnly: true },
-    { id: 'promissory-notes', label: 'Notas', eyebrow: 'Promissorias' },
-    { id: 'loyalty', label: 'Fidelidade', eyebrow: 'Clientes' },
-    { id: 'customers', label: 'Clientes', eyebrow: 'Cadastro' },
-    { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
-    { id: 'audit', label: 'Auditoria', eyebrow: 'Admin', adminOnly: true },
-    { id: 'products', label: 'Produtos', eyebrow: 'Estoque' },
-
-    { id: 'users', label: 'Usuarios', eyebrow: 'Acessos', adminOnly: true },
+  const allMenuGroups: Array<{
+    label: string
+    items: Array<{ id: AppView; label: string; eyebrow: string; adminOnly?: boolean }>
+  }> = [
+    {
+      label: 'Vendas',
+      items: [
+        { id: 'checkout', label: 'Nova venda', eyebrow: 'PDV' },
+        { id: 'history', label: 'Historico', eyebrow: 'Consultas', adminOnly: true },
+      ],
+    },
+    {
+      label: 'Clientes',
+      items: [
+        { id: 'customers-create', label: 'Cadastrar', eyebrow: 'Clientes' },
+        { id: 'customers-list', label: 'Listar', eyebrow: 'Clientes' },
+        { id: 'customer-profile', label: 'Consulta completa', eyebrow: 'Clientes' },
+        { id: 'loyalty', label: 'Aniversarios', eyebrow: 'Clientes' },
+      ],
+    },
+    {
+      label: 'Produtos',
+      items: [
+        { id: 'products-create', label: 'Cadastrar', eyebrow: 'Estoque' },
+        { id: 'products-list', label: 'Listar/estoque', eyebrow: 'Estoque' },
+        { id: 'products-labels', label: 'Etiquetas', eyebrow: 'Estoque' },
+      ],
+    },
+    {
+      label: 'Notas',
+      items: [
+        { id: 'promissory-notes', label: 'Listar/baixar', eyebrow: 'Promissorias' },
+        { id: 'promissory-create', label: 'Cadastrar', eyebrow: 'Promissorias' },
+        { id: 'promissory-report', label: 'Relatorio Excel', eyebrow: 'Promissorias' },
+      ],
+    },
+    {
+      label: 'Admin',
+      items: [
+        { id: 'admin-dashboard', label: 'Painel Admin', eyebrow: 'Admin', adminOnly: true },
+        { id: 'users', label: 'Usuarios', eyebrow: 'Acessos', adminOnly: true },
+        { id: 'audit', label: 'Auditoria', eyebrow: 'Admin', adminOnly: true },
+      ],
+    },
   ]
-  const menuItems = allMenuItems.filter((item) => currentUser?.role === 'ADMIN' || !item.adminOnly)
+  const visibleMenuGroups = allMenuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => currentUser?.role === 'ADMIN' || !item.adminOnly),
+    }))
+    .filter((group) => group.items.length > 0)
+  const menuItems = visibleMenuGroups.flatMap((group) => group.items)
   const canEditProduct = currentView === 'product-edit' && editingProductId !== null
   const visibleView = menuItems.some((item) => item.id === currentView) || canEditProduct ? currentView : 'checkout'
 
@@ -91,6 +153,20 @@ function App() {
 
     void loadCurrentUser()
   }, [])
+
+  useEffect(() => {
+    const activeGroup = allMenuGroups.find((group) =>
+      group.items.some((item) => item.id === visibleView) ||
+      (group.label === 'Produtos' && visibleView === 'product-edit')
+    )
+    if (activeGroup) {
+      setOpenMenuGroups({ [activeGroup.label]: true })
+    }
+  }, [visibleView])
+
+  function toggleMenuGroup(groupLabel: string) {
+    setOpenMenuGroups((current) => ({ ...current, [groupLabel]: !current[groupLabel] }))
+  }
 
   async function handleLogout() {
     setIsLoggingOut(true)
@@ -187,27 +263,46 @@ function App() {
         ) : null}
 
         <nav className="side-navigation" aria-label="Navegacao principal">
-          {menuItems.map((item) => (
-            (() => {
-              const MenuIcon = menuIcons[item.id]
+          {visibleMenuGroups.map((group) => (
+            <div className="side-nav-group" key={group.label}>
+              <button
+                className={`side-nav-dropdown-trigger${openMenuGroups[group.label] ? ' side-nav-dropdown-trigger--open' : ''}`}
+                type="button"
+                onClick={() => toggleMenuGroup(group.label)}
+                aria-expanded={Boolean(openMenuGroups[group.label])}
+              >
+                <span>{group.label}</span>
+                <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+              <div
+                className={`side-navigation-submenu${openMenuGroups[group.label] ? ' side-navigation-submenu--open' : ''}`}
+                hidden={!openMenuGroups[group.label]}
+              >
+                {group.items.map((item) => {
+                  const MenuIcon = menuIcons[item.id]
 
-              return (
-            <button
-              className={visibleView === item.id ? 'side-nav-button side-nav-button--active' : 'side-nav-button'}
-              type="button"
-              key={item.id}
-              onClick={() => setCurrentView(item.id)}
-            >
-              <span className="side-nav-icon">
-                <MenuIcon size={21} strokeWidth={2.25} aria-hidden="true" />
-              </span>
-              <span className="side-nav-copy">
-                <span>{item.eyebrow}</span>
-                <strong>{item.label}</strong>
-              </span>
-            </button>
-              )
-            })()
+                  return (
+                    <button
+                      className={visibleView === item.id ? 'side-nav-button side-nav-button--active' : 'side-nav-button'}
+                      type="button"
+                      key={item.id}
+                      onClick={() => {
+                        setOpenMenuGroups((current) => ({ ...current, [group.label]: true }))
+                        setCurrentView(item.id)
+                      }}
+                    >
+                      <span className="side-nav-icon">
+                        <MenuIcon size={21} strokeWidth={2.25} aria-hidden="true" />
+                      </span>
+                      <span className="side-nav-copy">
+                        <span>{item.eyebrow}</span>
+                        <strong>{item.label}</strong>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           ))}
         </nav>
 
@@ -259,13 +354,57 @@ function App() {
         <Suspense fallback={<LoadingView />}>
           {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
           {visibleView === 'admin-dashboard' ? <AdminDashboardPage /> : null}
-          {visibleView === 'promissory-notes' ? <PromissoryNotesPage /> : null}
+          {visibleView === 'promissory-notes' ? (
+            <PromissoryNotesPage
+              mode="wallet"
+              onModeChange={(nextMode) => {
+                setCurrentView(nextMode === 'manual-create' ? 'promissory-create' : nextMode === 'report' ? 'promissory-report' : 'promissory-notes')
+              }}
+            />
+          ) : null}
+          {visibleView === 'promissory-create' ? (
+            <PromissoryNotesPage
+              mode="manual-create"
+              onModeChange={(nextMode) => {
+                setCurrentView(nextMode === 'manual-create' ? 'promissory-create' : nextMode === 'report' ? 'promissory-report' : 'promissory-notes')
+              }}
+            />
+          ) : null}
+          {visibleView === 'promissory-report' ? (
+            <PromissoryNotesPage
+              mode="report"
+              onModeChange={(nextMode) => {
+                setCurrentView(nextMode === 'manual-create' ? 'promissory-create' : nextMode === 'report' ? 'promissory-report' : 'promissory-notes')
+              }}
+            />
+          ) : null}
           {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
-          {visibleView === 'customers' ? <CustomerManagementPage /> : null}
+          {visibleView === 'customers-create' ? <CustomerManagementPage mode="create" /> : null}
+          {visibleView === 'customers-list' ? <CustomerManagementPage mode="list" /> : null}
+          {visibleView === 'customer-profile' ? <CustomerManagementPage mode="profile" /> : null}
           {visibleView === 'history' ? <SalesHistoryPage /> : null}
           {visibleView === 'audit' ? <AuditLogPage /> : null}
-          {visibleView === 'products' ? (
+          {visibleView === 'products-create' ? (
             <ProductManagementPage
+              mode="create"
+              onEditProduct={(productId) => {
+                setEditingProductId(productId)
+                setCurrentView('product-edit')
+              }}
+            />
+          ) : null}
+          {visibleView === 'products-list' ? (
+            <ProductManagementPage
+              mode="list"
+              onEditProduct={(productId) => {
+                setEditingProductId(productId)
+                setCurrentView('product-edit')
+              }}
+            />
+          ) : null}
+          {visibleView === 'products-labels' ? (
+            <ProductManagementPage
+              mode="labels"
               onEditProduct={(productId) => {
                 setEditingProductId(productId)
                 setCurrentView('product-edit')
@@ -277,11 +416,11 @@ function App() {
               productId={editingProductId}
               onBack={() => {
                 setEditingProductId(null)
-                setCurrentView('products')
+                setCurrentView('products-list')
               }}
               onSaved={() => {
                 setEditingProductId(null)
-                setCurrentView('products')
+                setCurrentView('products-list')
               }}
             />
           ) : null}
