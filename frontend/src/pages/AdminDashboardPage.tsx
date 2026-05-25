@@ -459,29 +459,54 @@ export function AdminDashboardPage() {
               {!summary.topProducts || summary.topProducts.length === 0 ? (
                 <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '20px 0' }}>Sem movimentações no período.</div>
               ) : (
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {summary.topProducts.map((product) => {
+                <div style={{ display: 'grid', gap: '4px' }}>
+                  {summary.topProducts.map((product, index) => {
                     const maxQty = Math.max(...summary.topProducts.map((p) => p.quantity), 1)
                     return (
-                      <div className="admin-chart-row" key={product.productCode} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', width: '120px' }}>
-                          <strong style={{ color: '#fff', fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div key={product.productCode} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: index < summary.topProducts.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                        {/* Indicador de Ranking Premium */}
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          width: '24px', 
+                          height: '24px', 
+                          borderRadius: '6px', 
+                          background: index === 0 ? 'rgba(215, 173, 85, 0.15)' : 'rgba(255, 255, 255, 0.04)', 
+                          border: index === 0 ? '1px solid rgba(215, 173, 85, 0.3)' : '1px solid rgba(255,255,255,0.06)',
+                          color: index === 0 ? '#f6d78b' : '#aeb8c8',
+                          fontSize: '0.72rem',
+                          fontWeight: 700
+                        }}>
+                          {index + 1}
+                        </div>
+
+                        {/* Informação do Produto */}
+                        <div style={{ display: 'flex', flexDirection: 'column', width: '130px', minWidth: '0' }}>
+                          <strong style={{ color: '#fff', fontSize: '0.76rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {product.productName}
                           </strong>
-                          <small style={{ color: '#7b8493', fontSize: '0.6rem' }}>{product.productCode}</small>
+                          <span style={{ color: '#7b8493', fontSize: '0.62rem', fontFamily: 'monospace' }}>{product.productCode}</span>
                         </div>
-                        <div style={{ flex: 1, height: '8px', background: '#11141a', borderRadius: '4px', overflow: 'hidden' }}>
-                          <i style={{ 
-                            display: 'block', 
-                            height: '100%', 
-                            borderRadius: 'inherit',
-                            background: 'linear-gradient(90deg, #d7ad55, #f6d78b)', 
-                            width: `${Math.max(6, (product.quantity / maxQty) * 100)}%` 
-                          }} />
+
+                        {/* Trilha e Barra de Progresso Elegantes */}
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                          <div style={{ width: '100%', height: '6px', background: '#090b0e', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.02)' }}>
+                            <div style={{ 
+                              height: '100%', 
+                              borderRadius: 'inherit',
+                              background: index === 0 
+                                ? 'linear-gradient(90deg, #d7ad55, #f6d78b)' 
+                                : 'linear-gradient(90deg, rgba(215, 173, 85, 0.6), rgba(246, 215, 139, 0.7))', 
+                              width: `${Math.max(6, (product.quantity / maxQty) * 100)}%` 
+                            }} />
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', width: '80px', textAlign: 'right' }}>
-                          <strong style={{ color: '#fff', fontSize: '0.75rem' }}>{product.quantity} un.</strong>
-                          <small style={{ color: '#2dd4bf', fontSize: '0.62rem' }}>{formatCurrency(product.totalRevenue)}</small>
+
+                        {/* Métricas alinhadas à direita */}
+                        <div style={{ display: 'flex', flexDirection: 'column', width: '90px', textAlign: 'right' }}>
+                          <strong style={{ color: '#fff', fontSize: '0.76rem', fontWeight: 600 }}>{product.quantity} un.</strong>
+                          <span style={{ color: '#2dd4bf', fontSize: '0.66rem', fontWeight: 500 }}>{formatCurrency(product.totalRevenue)}</span>
                         </div>
                       </div>
                     )
