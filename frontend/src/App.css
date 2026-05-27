@@ -526,7 +526,8 @@ h3 {
 .product-card,
 .cart-item,
 .customer-premium-card,
-.customer-premium-metrics article {
+.customer-premium-metrics article,
+.sale-history-item {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(91, 58, 10, 0.16) !important;
@@ -6538,23 +6539,20 @@ button:disabled,
   gap: 8px;
 }
 
-.product-card-grid div,
-.cart-item,
-.sale-history-item {
+.product-card-grid div {
   border-color: rgba(226, 232, 240, 0.1) !important;
   background: rgba(15, 19, 26, 0.78) !important;
 }
 
-.product-card:hover,
-.cart-item:hover,
-.sale-history-item:hover {
+.product-card:hover {
   transform: translateY(-1px);
   border-color: rgba(226, 232, 240, 0.2) !important;
 }
 
 .sale-history-item--active {
-  border-color: rgba(215, 173, 85, 0.5) !important;
-  background: rgba(215, 173, 85, 0.11) !important;
+  background: linear-gradient(135deg, #f9e7b5 0%, #e2c074 100%) !important;
+  border: 2px solid #5b3a0a !important;
+  box-shadow: 0 12px 28px rgba(91, 58, 10, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
 }
 
 .product-empty {
@@ -8019,14 +8017,19 @@ button:disabled,
 
 .customer-premium-secondary-button,
 .customer-premium-card-actions button {
-  border: 1px solid rgba(226, 232, 240, 0.12);
-  background: rgba(226, 232, 240, 0.06);
-  color: #e7edf6;
+  border: 1px solid rgba(33, 22, 9, 0.22) !important;
+  background: rgba(33, 22, 9, 0.05) !important;
+  color: #211609 !important;
 }
 
-.customer-premium-primary-button:hover,
+.customer-premium-primary-button:hover {
+  transform: translateY(-1px);
+}
+
 .customer-premium-secondary-button:hover,
 .customer-premium-card-actions button:hover {
+  background: rgba(33, 22, 9, 0.12) !important;
+  border-color: #211609 !important;
   transform: translateY(-1px);
 }
 
@@ -8125,8 +8128,9 @@ button:disabled,
   align-items: center;
   padding: 0 9px;
   border-radius: 8px;
-  background: #151922;
-  color: #b9c4d4;
+  background: rgba(33, 22, 9, 0.08) !important;
+  color: #211609 !important;
+  border: 1px solid rgba(33, 22, 9, 0.15) !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.68rem;
 }
@@ -8300,7 +8304,8 @@ button:disabled,
 .customer-premium-card h1, .customer-premium-card h2, .customer-premium-card h3, .customer-premium-card p, .customer-premium-card span:not(.side-nav-icon), .customer-premium-card strong, .customer-premium-card label,
 .customer-premium-form-panel h1, .customer-premium-form-panel h2, .customer-premium-form-panel h3, .customer-premium-form-panel p, .customer-premium-form-panel span:not(.side-nav-icon), .customer-premium-form-panel strong, .customer-premium-form-panel label,
 .customer-premium-edit-modal h1, .customer-premium-edit-modal h2, .customer-premium-edit-modal h3, .customer-premium-edit-modal p, .customer-premium-edit-modal span:not(.side-nav-icon), .customer-premium-edit-modal strong, .customer-premium-edit-modal label,
-.customer-premium-metrics article h1, .customer-premium-metrics article h2, .customer-premium-metrics article h3, .customer-premium-metrics article p, .customer-premium-metrics article span:not(.side-nav-icon), .customer-premium-metrics article strong, .customer-premium-metrics article label {
+.customer-premium-metrics article h1, .customer-premium-metrics article h2, .customer-premium-metrics article h3, .customer-premium-metrics article p, .customer-premium-metrics article span:not(.side-nav-icon), .customer-premium-metrics article strong, .customer-premium-metrics article label,
+.sale-history-item h1, .sale-history-item h2, .sale-history-item h3, .sale-history-item p, .sale-history-item span:not(.side-nav-icon), .sale-history-item strong, .sale-history-item label, .sale-history-item small {
   color: #211609 !important;
 }
 

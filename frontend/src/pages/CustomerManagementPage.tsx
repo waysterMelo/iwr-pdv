@@ -937,19 +937,19 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
             <section className="customer-premium-list-panel">
               <header className="section-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <span aria-hidden="true" style={{ background: 'rgba(215, 173, 85, 0.15)', padding: '10px', borderRadius: '12px', color: '#d7ad55', display: 'inline-flex' }}>
+                  <span aria-hidden="true" style={{ background: 'rgba(91, 58, 10, 0.12)', padding: '10px', borderRadius: '12px', color: '#5b3a0a', display: 'inline-flex' }}>
                     <Users size={22} strokeWidth={2.4} />
                   </span>
                   <div>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Listar / editar clientes</h2>
-                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#aeb8c8' }}>Busca rápida por nome ou CPF para visualizar e gerenciar perfis no sistema.</p>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#211609' }}>Listar / editar clientes</h2>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'rgba(33, 22, 9, 0.75)' }}>Busca rápida por nome ou CPF para visualizar e gerenciar perfis no sistema.</p>
                   </div>
                 </div>
               </header>
 
               <form className="customer-premium-search" onSubmit={handleSearchSubmit} style={{ gap: '16px', background: '#211609', padding: '18px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', margin: '20px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'end' }}>
                 <div className="field-group" style={{ flex: 1, minWidth: '200px' }}>
-                  <label htmlFor="customerListSearch" style={{ color: '#aeb8c8', fontWeight: 'bold', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente</label>
+                  <label htmlFor="customerListSearch" style={{ color: '#f9e7b5', fontWeight: 'bold', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente</label>
                   <div className="customer-premium-search-input" style={{ position: 'relative' }}>
                     <Search size={16} aria-hidden="true" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#d7ad55' }} />
                     <input
@@ -957,7 +957,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       placeholder="Nome do cliente ou CPF..."
-                      style={{ paddingLeft: '44px', width: '100%', height: '52px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                      style={{ paddingLeft: '44px', width: '100%', height: '52px', background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(91, 58, 10, 0.35)', borderRadius: '12px', color: '#f9e7b5' }}
                     />
                     {search ? (
                       <button
@@ -968,7 +968,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                           setCustomerPage(0)
                         }}
                         aria-label="Limpar busca"
-                        style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                        style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#f9e7b5', cursor: 'pointer' }}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
@@ -993,8 +993,8 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                         <div>
                           <div className="customer-premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                             <div>
-                              <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#fff', fontWeight: 600 }}>{customer.name}</h3>
-                              <span style={{ fontSize: '0.72rem', color: '#aeb8c8', fontFamily: 'monospace' }}>
+                              <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#211609', fontWeight: 600 }}>{customer.name}</h3>
+                              <span style={{ fontSize: '0.72rem', color: 'rgba(33, 22, 9, 0.65)', fontFamily: 'monospace' }}>
                                 {customer.cpf ? maskCpf(customer.cpf) : 'Sem CPF'}
                               </span>
                             </div>
