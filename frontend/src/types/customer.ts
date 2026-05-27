@@ -9,6 +9,8 @@ export type Customer = {
   active: boolean
   createdAt: string
   updatedAt: string
+  observations: string | null
+  creditLimit: number | null
 }
 
 export type CustomerPayload = {
@@ -19,6 +21,8 @@ export type CustomerPayload = {
   address?: string
   birthDate?: string
   active?: boolean
+  observations?: string
+  creditLimit?: number
 }
 
 export type CustomerPage = {

@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { CreditCard, DollarSign, Download, Edit3, FileText, Gift, Mail, MapPin, Phone, Receipt, RotateCcw, Save, Search, ShoppingBag, UserCheck, UserPlus, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState, useRef, type FormEvent } from 'react'
+import { AlertTriangle, CheckCircle2, Clock, Copy, CreditCard, DollarSign, Download, Edit3, Eye, FileText, Gift, Heart, Mail, MapPin, Phone, Printer, Receipt, RotateCcw, Save, Search, ShoppingBag, TrendingUp, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { createCustomer, downloadCustomerProfileExcelReport, getCustomerPage, getCustomerProfile, getCustomers, updateCustomer } from '../services/customerService'
-import type { Customer, CustomerPayload, CustomerProfile } from '../types/customer'
+import { getSaleReceiptUrl } from '../services/saleService'
+import { getPromissoryNotePrintUrl, getPromissoryPaymentReceiptUrl } from '../services/promissoryNoteService'
+import type { Customer, CustomerPayload, CustomerProfile, CustomerPromissoryNote } from '../types/customer'
 import type { PromissoryNoteStatus } from '../types/promissoryNote'
 import type { Sale, SaleStatus } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
@@ -19,6 +21,8 @@ const initialForm: CustomerPayload = {
   address: '',
   birthDate: '',
   active: true,
+  observations: '',
+  creditLimit: undefined,
 }
 
 function toForm(customer: Customer): CustomerPayload {
@@ -30,6 +34,8 @@ function toForm(customer: Customer): CustomerPayload {
     address: customer.address ?? '',
     birthDate: customer.birthDate ?? '',
     active: customer.active,
+    observations: customer.observations ?? '',
+    creditLimit: customer.creditLimit ?? undefined,
   }
 }
 
@@ -37,8 +43,9 @@ type CustomerManagementMode = 'create' | 'list' | 'profile'
 
 type CustomerManagementPageProps = {
   mode?: CustomerManagementMode
+  onViewChange?: (view: any) => void
 }
-type ProfileTab = 'summary' | 'sales' | 'products' | 'notes' | 'cancelled'
+type ProfileTab = 'summary' | 'timeline' | 'sales' | 'products' | 'notes' | 'cancelled'
 
 type ProfileFilters = {
   startDate: string
@@ -46,6 +53,10 @@ type ProfileFilters = {
   saleStatus: SaleStatus | ''
   noteStatus: PromissoryNoteStatus | ''
   query: string
+  onlyOverdue: boolean
+  onlyOpenBalance: boolean
+  minAmount: string
+  maxAmount: string
 }
 
 const initialProfileFilters: ProfileFilters = {
@@ -54,6 +65,10 @@ const initialProfileFilters: ProfileFilters = {
   saleStatus: '',
   noteStatus: '',
   query: '',
+  onlyOverdue: false,
+  onlyOpenBalance: false,
+  minAmount: '',
+  maxAmount: '',
 }
 
 const noteStatusLabels: Record<PromissoryNoteStatus, string> = {
@@ -91,7 +106,7 @@ function saleMatchesQuery(sale: Sale, query: string) {
   return haystack.includes(query)
 }
 
-export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPageProps) {
+export function CustomerManagementPage({ mode = 'list', onViewChange }: CustomerManagementPageProps) {
   const { notify } = useAppMessage()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [form, setForm] = useState<CustomerPayload>(initialForm)
@@ -107,12 +122,21 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [profileSearch, setProfileSearch] = useState('')
   const [profileOptions, setProfileOptions] = useState<Customer[]>([])
-  const [selectedProfileCustomerId, setSelectedProfileCustomerId] = useState('')
+  const [selectedProfileCustomerId, setSelectedProfileCustomerId] = useState(() => {
+    return localStorage.getItem('selected_profile_customer_id') || ''
+  })
   const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null)
   const [isProfileLoading, setIsProfileLoading] = useState(false)
   const [isProfileExporting, setIsProfileExporting] = useState(false)
   const [profileTab, setProfileTab] = useState<ProfileTab>('summary')
   const [profileFilters, setProfileFilters] = useState<ProfileFilters>(initialProfileFilters)
+  const [isSavingObs, setIsSavingObs] = useState(false)
+  const [groupBySale, setGroupBySale] = useState(false)
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null)
+  const [receiptTitle, setReceiptTitle] = useState<string>('')
+  const receiptFrameRef = useRef<HTMLIFrameElement>(null)
+  const [hoverPrintProfile, setHoverPrintProfile] = useState(false)
+  const [hoverExportProfile, setHoverExportProfile] = useState(false)
 
   const activeCustomers = useMemo(() => customers.filter((customer) => customer.active).length, [customers])
   const showForm = mode === 'create'
@@ -127,12 +151,17 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
 
     return profileSales.filter((sale) => {
       const saleDate = sale.soldAt.slice(0, 10)
+      const hasOpenNotes = profilePromissoryNotes.some((n) => n.saleId === sale.id && n.remainingAmount > 0)
+      
       return (!profileFilters.startDate || saleDate >= profileFilters.startDate)
         && (!profileFilters.endDate || saleDate <= profileFilters.endDate)
         && (!profileFilters.saleStatus || sale.status === profileFilters.saleStatus)
+        && (!profileFilters.minAmount || sale.totalAmount >= Number(profileFilters.minAmount))
+        && (!profileFilters.maxAmount || sale.totalAmount <= Number(profileFilters.maxAmount))
+        && (!profileFilters.onlyOpenBalance || hasOpenNotes)
         && saleMatchesQuery(sale, profileFilterQuery)
     })
-  }, [customerProfile, profileFilterQuery, profileFilters.endDate, profileFilters.saleStatus, profileFilters.startDate, profileSales])
+  }, [customerProfile, profileFilterQuery, profileFilters.endDate, profileFilters.saleStatus, profileFilters.startDate, profileFilters.minAmount, profileFilters.maxAmount, profileFilters.onlyOpenBalance, profileSales, profilePromissoryNotes])
   const filteredCancelledSales = useMemo(() => (
     filteredSales.filter((sale) => sale.status === 'CANCELLED')
   ), [filteredSales])
@@ -154,13 +183,17 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
       return (!profileFilters.startDate || note.dueDate >= profileFilters.startDate)
         && (!profileFilters.endDate || note.dueDate <= profileFilters.endDate)
         && (!profileFilters.noteStatus || note.status === profileFilters.noteStatus)
+        && (!profileFilters.onlyOverdue || note.status === 'OVERDUE')
+        && (!profileFilters.onlyOpenBalance || note.remainingAmount > 0)
+        && (!profileFilters.minAmount || note.amount >= Number(profileFilters.minAmount))
+        && (!profileFilters.maxAmount || note.amount <= Number(profileFilters.maxAmount))
         && (!profileFilterQuery || [
           String(note.id),
           note.saleId ? String(note.saleId) : 'avulsa',
           (note.saleItems ?? []).map((item) => `${item.productName} ${item.productCode}`).join(' '),
         ].join(' ').toLowerCase().includes(profileFilterQuery))
     })
-  }, [customerProfile, profileFilterQuery, profileFilters.endDate, profileFilters.noteStatus, profileFilters.startDate, profilePromissoryNotes])
+  }, [customerProfile, profileFilterQuery, profileFilters.endDate, profileFilters.noteStatus, profileFilters.startDate, profileFilters.onlyOverdue, profileFilters.onlyOpenBalance, profileFilters.minAmount, profileFilters.maxAmount, profilePromissoryNotes])
   const completedProfileSales = useMemo(() => (
     profileSales.filter((sale) => sale.status === 'COMPLETED')
   ), [profileSales])
@@ -194,6 +227,350 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
   const notesPagination = usePagination(filteredNotes, 8)
   const cancelledSalesPagination = usePagination(filteredCancelledSales, 8)
   const cancelledNotesPagination = usePagination(filteredCancelledNotes, 8)
+
+  const clientScores = useMemo(() => {
+    if (!customerProfile) return []
+    const scores: string[] = []
+    
+    const hasOverdue = overdueProfileNotes.length > 0
+    if (!hasOverdue) {
+      scores.push('Em dia')
+    } else {
+      const maxOverdueDays = Math.max(...overdueProfileNotes.map((n) => n.daysOverdue || 0))
+      if (maxOverdueDays > 10) {
+        scores.push('Inadimplente')
+      } else {
+        scores.push('Atenção')
+      }
+    }
+    
+    if (completedSaleCount >= 4) {
+      scores.push('Cliente recorrente')
+    }
+    
+    if (averageTicketAmount > 300 || totalPurchasedAmount > 1500) {
+      scores.push('Alto valor')
+    }
+
+    if (customerProfile.customer.birthDate) {
+      const birth = new Date(customerProfile.customer.birthDate)
+      const today = new Date()
+      if (birth.getMonth() === today.getMonth() && Math.abs(birth.getDate() - today.getDate()) <= 7) {
+        scores.push('Aniversariante')
+      }
+    }
+    
+    return scores
+  }, [customerProfile, overdueProfileNotes, completedSaleCount, averageTicketAmount, totalPurchasedAmount])
+
+  const consolidatedWhatsappMessage = useMemo(() => {
+    if (!customerProfile) return ''
+    const customer = customerProfile.customer
+    const openNotes = profilePromissoryNotes.filter((n) => ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(n.status))
+    
+    if (openNotes.length === 0) {
+      return encodeURIComponent(`Olá, *${customer.name}*! Tudo bem?\n\nPassando para informar que não constam pendências financeiras em seu nome no Atelier. Agradecemos a preferência!`)
+    }
+    
+    let text = `Olá, *${customer.name}*! Tudo bem?\n\nPassando para enviar o resumo financeiro consolidado do seu perfil no Atelier:\n\n`
+    text += `• Total de parcelas em aberto: *${openNotes.length} parcela(s)*\n`
+    
+    if (overdueProfileNotes.length > 0) {
+      const maxOverdueDays = Math.max(...overdueProfileNotes.map((n) => n.daysOverdue || 0))
+      text += `• Parcelas vencidas: *${overdueProfileNotes.length} parcela(s)* (atraso de até *${maxOverdueDays} dia(s)*)\n`
+      text += `• Total já vencido: *${formatCurrency(overduePromissoryAmount)}*\n`
+    }
+    
+    text += `• Valor total em aberto: *${formatCurrency(openPromissoryAmount)}*\n\n`
+    text += `Como prefere realizar o pagamento? Aceitamos PIX, dinheiro ou cartão.\nSe tiver alguma dúvida ou quiser o detalhamento das parcelas, estamos à inteira disposição!`
+    
+    return encodeURIComponent(text)
+  }, [customerProfile, profilePromissoryNotes, overdueProfileNotes, openPromissoryAmount, overduePromissoryAmount])
+
+  const handlePrintProfile = useCallback(() => {
+    if (!customerProfile) return
+    const customer = customerProfile.customer
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      notify({ type: 'error', title: 'Erro ao imprimir', message: 'Pop-up bloqueado pelo navegador.' })
+      return
+    }
+
+    const scoresHtml = clientScores.map((score) => `
+      <span style="display:inline-block;padding:4px 8px;margin-right:6px;border-radius:4px;font-size:0.8rem;font-weight:bold;background:#eaeaea;color:#333;">
+        ${score}
+      </span>
+    `).join('')
+
+    const salesRows = filteredCompletedSales.map((sale) => `
+      <tr>
+        <td>#${sale.id}</td>
+        <td>${formatNullableDateTime(sale.soldAt)}</td>
+        <td>${paymentMethodLabels[sale.paymentMethod] || sale.paymentMethod}</td>
+        <td>${formatCurrency(sale.totalAmount)}</td>
+        <td>${sale.operator?.displayName || '-'}</td>
+      </tr>
+    `).join('')
+
+    const notesRows = filteredNotes.map((note) => `
+      <tr>
+        <td>#${note.id}</td>
+        <td>${note.saleId ? `#${note.saleId}` : 'Avulsa'}</td>
+        <td>${note.installmentNumber}/${note.totalInstallments}</td>
+        <td>${noteStatusLabels[note.status as PromissoryNoteStatus] || note.status}</td>
+        <td>${formatDate(note.dueDate)}</td>
+        <td>${formatCurrency(note.amount)}</td>
+        <td>${formatCurrency(note.remainingAmount)}</td>
+      </tr>
+    `).join('')
+
+    const productsRows = filteredPurchasedItems.slice(0, 10).map((item) => `
+      <tr>
+        <td>${item.productName}</td>
+        <td>${item.productCode}</td>
+        <td>${item.quantity} un</td>
+        <td>${formatCurrency(item.totalAmount)}</td>
+        <td>${formatNullableDateTime(item.lastPurchaseAt)}</td>
+      </tr>
+    `).join('')
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Ficha do Cliente - ${customer.name}</title>
+          <style>
+            body { font-family: sans-serif; color: #333; padding: 20px; line-height: 1.4; }
+            h1, h2, h3 { margin-top: 0; }
+            .section { border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+            .metric-card { border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; background: #fafafa; }
+            .metric-card strong { display: block; font-size: 1.2rem; margin-top: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .badge-bar { margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <div style="text-align:center;margin-bottom:20px;">
+            <h2>Ficha Administrativa do Cliente</h2>
+            <p>Gerada em: ${new Date().toLocaleString('pt-BR')}</p>
+          </div>
+          
+          <div class="section">
+            <h3>Dados Cadastrais</h3>
+            <div class="grid">
+              <div>
+                <p><strong>Nome:</strong> ${customer.name}</p>
+                <p><strong>CPF:</strong> ${customer.cpf ? maskCpf(customer.cpf) : 'Não informado'}</p>
+                <p><strong>Telefone:</strong> ${customer.phone ? maskPhone(customer.phone) : 'Não informado'}</p>
+                <p><strong>Email:</strong> ${customer.email || 'Não informado'}</p>
+              </div>
+              <div>
+                <p><strong>Endereço:</strong> ${customer.address || 'Não informado'}</p>
+                <p><strong>Aniversário:</strong> ${customer.birthDate ? formatDate(customer.birthDate) : 'Não informado'}</p>
+                <p><strong>Limite de Crédito:</strong> ${customer.creditLimit ? formatCurrency(customer.creditLimit) : 'Sem limite'}</p>
+                <div class="badge-bar"><strong>Tags/Score:</strong> ${scoresHtml || 'Sem classificações'}</div>
+              </div>
+            </div>
+            ${customer.observations ? `<div style="margin-top:10px;padding:8px;background:#fcf8e3;border-left:4px solid #f0ad4e;"><strong>Observações:</strong> ${customer.observations}</div>` : ''}
+          </div>
+
+          <div class="metrics">
+            <div class="metric-card">Total Comprado<strong>${formatCurrency(totalPurchasedAmount)}</strong></div>
+            <div class="metric-card">Saldo em Aberto<strong>${formatCurrency(openPromissoryAmount)}</strong></div>
+            <div class="metric-card">Valor Vencido<strong>${formatCurrency(overduePromissoryAmount)}</strong></div>
+            <div class="metric-card">Total Pago<strong>${formatCurrency(paidPromissoryAmount)}</strong></div>
+          </div>
+
+          <div class="section">
+            <h3>Notas Promissórias Pendentes/Vencidas</h3>
+            ${notesRows ? `
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nota</th>
+                    <th>Venda</th>
+                    <th>Parcela</th>
+                    <th>Status</th>
+                    <th>Vencimento</th>
+                    <th>Valor Nota</th>
+                    <th>Saldo Devedor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${notesRows}
+                </tbody>
+              </table>
+            ` : '<p>Nenhuma nota promissória pendente.</p>'}
+          </div>
+
+          <div class="section">
+            <h3>Últimas Compras</h3>
+            ${salesRows ? `
+              <table>
+                <thead>
+                  <tr>
+                    <th>Venda</th>
+                    <th>Data</th>
+                    <th>Forma Pagto</th>
+                    <th>Total</th>
+                    <th>Operador</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${salesRows}
+                </tbody>
+              </table>
+            ` : '<p>Nenhuma compra realizada.</p>'}
+          </div>
+
+          <div class="section">
+            <h3>Produtos Mais Comprados</h3>
+            ${productsRows ? `
+              <table>
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Código</th>
+                    <th>Qtd Comprada</th>
+                    <th>Valor Total</th>
+                    <th>Última Compra</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${productsRows}
+                </tbody>
+              </table>
+            ` : '<p>Nenhum produto no histórico.</p>'}
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+  }, [customerProfile, clientScores, filteredCompletedSales, filteredNotes, filteredPurchasedItems, totalPurchasedAmount, openPromissoryAmount, overduePromissoryAmount, paidPromissoryAmount, notify])
+
+  const timelineEvents = useMemo(() => {
+    if (!customerProfile) return []
+
+    const events: { id: string; type: string; date: string; title: string; description: string; value?: number; icon: any; color: string }[] = []
+
+    profileSales.forEach((sale) => {
+      events.push({
+        id: `sale-${sale.id}`,
+        type: 'sale',
+        date: sale.soldAt,
+        title: sale.status === 'CANCELLED' ? `Compra #${sale.id} Cancelada` : `Compra #${sale.id}`,
+        description: sale.status === 'CANCELLED' 
+          ? `Venda cancelada. Motivo: ${sale.cancellationReason || 'Não informado'}` 
+          : `Efetuada via ${paymentMethodLabels[sale.paymentMethod] || sale.paymentMethod}. Operador: ${sale.operator?.displayName || '-'}`,
+        value: sale.totalAmount,
+        icon: sale.status === 'CANCELLED' ? X : ShoppingBag,
+        color: sale.status === 'CANCELLED' ? '#fb7185' : '#f6d78b'
+      })
+    })
+
+    profilePromissoryNotes.forEach((note) => {
+      events.push({
+        id: `note-created-${note.id}`,
+        type: 'promissory_created',
+        date: note.createdAt,
+        title: `Nota Promissória #${note.id} Gerada`,
+        description: `Parcela ${note.installmentNumber}/${note.totalInstallments} referente à Venda ${note.saleId ? `#${note.saleId}` : 'Avulsa'}`,
+        value: note.amount,
+        icon: FileText,
+        color: '#aeb8c8'
+      })
+
+      if (note.status !== 'CANCELLED') {
+        events.push({
+          id: `note-due-${note.id}`,
+          type: 'due',
+          date: note.dueDate + 'T23:59:59',
+          title: `Vencimento da Nota #${note.id}`,
+          description: `Vencimento da Parcela ${note.installmentNumber}/${note.totalInstallments}. Status atual: ${noteStatusLabels[note.status as PromissoryNoteStatus]}`,
+          value: note.remainingAmount,
+          icon: Clock,
+          color: note.status === 'OVERDUE' ? '#fb7185' : '#f2cf7a'
+        })
+      }
+
+      if (note.payments && note.payments.length > 0) {
+        note.payments.forEach((payment) => {
+          events.push({
+            id: `payment-${payment.id}`,
+            type: 'payment',
+            date: payment.paidAt,
+            title: `Pagamento da Nota #${note.id}`,
+            description: `Baixa recebida via ${paymentMethodLabels[payment.paymentMethod] || payment.paymentMethod}. Recebido por: ${payment.paidBy?.displayName || '-'}`,
+            value: payment.totalReceived,
+            icon: CheckCircle2,
+            color: '#2dd4bf'
+          })
+        })
+      }
+    })
+
+    return events.sort((a, b) => b.date.localeCompare(a.date))
+  }, [customerProfile, profileSales, profilePromissoryNotes])
+
+  const timelinePagination = usePagination(timelineEvents, 8)
+
+  const handleSaveObservations = async (newObs: string) => {
+    if (!customerProfile) return
+    setIsSavingObs(true)
+    try {
+      const payload: CustomerPayload = {
+        ...toForm(customerProfile.customer),
+        observations: newObs,
+      }
+      await updateCustomer(customerProfile.customer.id, payload)
+      setCustomerProfile((current) => current ? {
+        ...current,
+        customer: {
+          ...current.customer,
+          observations: newObs
+        }
+      } : null)
+      notify({ type: 'success', title: 'Observação salva', message: 'Observações internas salvas com sucesso.' })
+    } catch (err) {
+      notify({ type: 'error', title: 'Erro ao salvar', message: getErrorMessage(err, 'Não foi possível salvar as observações.') })
+    } finally {
+      setIsSavingObs(false)
+    }
+  }
+
+  const promissoryNotesGroupedBySale = useMemo(() => {
+    if (!customerProfile) return []
+    const groups: Record<string, { saleId: number | null; saleTotal: number; saleDate: string | null; notes: CustomerPromissoryNote[] }> = {}
+    
+    filteredNotes.forEach((note) => {
+      const key = note.saleId ? String(note.saleId) : 'avulsa'
+      if (!groups[key]) {
+        const sale = profileSales.find((s) => s.id === note.saleId)
+        groups[key] = {
+          saleId: note.saleId,
+          saleTotal: sale ? sale.totalAmount : note.amount,
+          saleDate: sale ? sale.soldAt : note.createdAt,
+          notes: []
+        }
+      }
+      groups[key].notes.push(note)
+    })
+    
+    return Object.values(groups).sort((a, b) => {
+      if (!a.saleDate || !b.saleDate) return 0
+      return b.saleDate.localeCompare(a.saleDate)
+    })
+  }, [customerProfile, filteredNotes, profileSales])
 
   const loadCustomers = useCallback(async (nextSearch = appliedSearch, nextPage = customerPage) => {
     setIsLoading(true)
@@ -290,6 +667,8 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
         email: form.email?.trim() || undefined,
         address: form.address?.trim() || undefined,
         birthDate: form.birthDate || undefined,
+        observations: form.observations?.trim() || undefined,
+        creditLimit: form.creditLimit !== undefined && form.creditLimit !== null ? Number(form.creditLimit) : undefined,
       }
 
       if (editingCustomerId === null) {
@@ -346,6 +725,39 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
 
   return (
     <main className="app-shell customer-premium-shell">
+      <style>{`
+        .customer-premium-card {
+          background: rgba(255, 250, 235, 0.72) !important;
+          border: 1px solid rgba(91, 58, 10, 0.16) !important;
+          border-radius: 16px !important;
+          padding: 18px !important;
+          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
+          color: #211609 !important;
+        }
+        .customer-premium-card:hover {
+          transform: translateY(-3px) scale(1.01);
+          border-color: rgba(33, 22, 9, 0.34) !important;
+          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+        }
+        .customer-premium-list-panel {
+          background: radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.46), transparent 32%), linear-gradient(135deg, #f8dc91 0%, #d8ad53 50%, #b97e24 100%) !important;
+          color: #211609 !important;
+          border: 1px solid rgba(91, 58, 10, 0.22) !important;
+          border-radius: 18px !important;
+          padding: 22px !important;
+          box-shadow: 0 26px 64px rgba(91, 58, 10, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+        }
+        .customer-premium-edit-btn:hover, .customer-premium-felicitar-btn:hover {
+          transform: scale(1.02);
+          box-shadow: 0 4px 12px rgba(33, 22, 9, 0.3) !important;
+        }
+        .product-premium-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(215, 173, 85, 0.45) !important;
+          box-shadow: 0 8px 25px rgba(215, 173, 85, 0.12) !important;
+        }
+      `}</style>
       <div className="app-container customer-premium-container">
         {!showProfile ? (
           <>
@@ -355,7 +767,7 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                   <span>★ CLIENTES</span>
                   <strong>{customerTotal} cliente(s) encontrados</strong>
                 </div>
-                <h1>{showForm ? 'Cadastrar cliente' : 'Clientes cadastrados'}</h1>
+                <h1>{showForm ? 'Cadastrar cliente' : 'Listar / editar clientes'}</h1>
                 <p>Mantenha os dados usados nas vendas a prazo e na impressão das notas promissórias.</p>
               </section>
 
@@ -399,7 +811,7 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
 
         <div className={showProfile ? 'content-grid' : 'customer-premium-content'}>
           {showForm ? (
-            <section className="customer-premium-form-panel" style={{ background: 'linear-gradient(135deg, rgba(215, 173, 85, 0.18), rgba(16, 17, 23, 0.98))', borderColor: 'rgba(215, 173, 85, 0.45)' }}>
+            <section className="customer-premium-form-panel">
               <header>
                 <UserPlus size={26} aria-hidden="true" />
                 <div>
@@ -480,6 +892,29 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                       placeholder="Rua, número, bairro e cidade"
                     />
                   </div>
+                  <div className="field-group">
+                    <label htmlFor="customerCreditLimit">Limite de Crédito (R$)</label>
+                    <input
+                      id="customerCreditLimit"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={form.creditLimit ?? ''}
+                      onChange={(event) => setForm((current) => ({ ...current, creditLimit: event.target.value ? Number(event.target.value) : undefined }))}
+                      placeholder="Sem limite"
+                    />
+                  </div>
+                  <div className="field-group field-group--full">
+                    <label htmlFor="customerObservations">Observações Internas</label>
+                    <textarea
+                      id="customerObservations"
+                      value={form.observations ?? ''}
+                      onChange={(event) => setForm((current) => ({ ...current, observations: event.target.value }))}
+                      placeholder="Preferências, histórico de negociação, restrições..."
+                      rows={3}
+                      style={{ background: 'rgba(0, 0, 0, 0.65)', color: '#fff', border: '1px solid rgba(91, 58, 10, 0.35)', borderRadius: '12px', padding: '12px', width: '100%', resize: 'vertical' }}
+                    />
+                  </div>
                 </div>
 
                 {errorMessage ? <div className="feedback-message feedback-message--error">{errorMessage}</div> : null}
@@ -500,23 +935,29 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
 
           {showList ? (
             <section className="customer-premium-list-panel">
-              <header>
-                <div>
-                  <h2>Clientes</h2>
-                  <p>Busca rápida por nome ou CPF para vincular vendas a prazo.</p>
+              <header className="section-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span aria-hidden="true" style={{ background: 'rgba(215, 173, 85, 0.15)', padding: '10px', borderRadius: '12px', color: '#d7ad55', display: 'inline-flex' }}>
+                    <Users size={22} strokeWidth={2.4} />
+                  </span>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Listar / editar clientes</h2>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#aeb8c8' }}>Busca rápida por nome ou CPF para visualizar e gerenciar perfis no sistema.</p>
+                  </div>
                 </div>
               </header>
 
-              <form className="customer-premium-search" onSubmit={handleSearchSubmit}>
-                <div className="field-group">
-                  <label htmlFor="customerListSearch">Buscar</label>
-                  <div className="customer-premium-search-input">
-                    <Search size={16} aria-hidden="true" />
+              <form className="customer-premium-search" onSubmit={handleSearchSubmit} style={{ gap: '16px', background: '#211609', padding: '18px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', margin: '20px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'end' }}>
+                <div className="field-group" style={{ flex: 1, minWidth: '200px' }}>
+                  <label htmlFor="customerListSearch" style={{ color: '#aeb8c8', fontWeight: 'bold', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente</label>
+                  <div className="customer-premium-search-input" style={{ position: 'relative' }}>
+                    <Search size={16} aria-hidden="true" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#d7ad55' }} />
                     <input
                       id="customerListSearch"
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       placeholder="Nome do cliente ou CPF..."
+                      style={{ paddingLeft: '44px', width: '100%', height: '52px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
                     />
                     {search ? (
                       <button
@@ -527,13 +968,16 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                           setCustomerPage(0)
                         }}
                         aria-label="Limpar busca"
+                        style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
                     ) : null}
                   </div>
                 </div>
-                <button className="customer-premium-secondary-button" type="submit" disabled={isLoading}>Buscar</button>
+                <button className="customer-premium-primary-button" type="submit" disabled={isLoading} style={{ height: '52px', padding: '0 24px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                  Buscar
+                </button>
               </form>
 
               {isLoading ? (
@@ -541,36 +985,114 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
               ) : customers.length === 0 ? (
                 <div className="product-empty">Nenhum cliente encontrado.</div>
               ) : (
-                <div className="customer-premium-card-grid">
-                  {customers.map((customer) => (
-                    <article className="customer-premium-card" key={customer.id}>
-                      <div className="customer-premium-card-header">
+                <div className="customer-premium-card-grid" style={{ marginTop: '20px' }}>
+                  {customers.map((customer) => {
+                    const isProfileComplete = Boolean(customer.cpf && customer.phone && customer.email && customer.address);
+                    return (
+                      <article className="customer-premium-card" key={customer.id} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
                         <div>
-                          <h3>{customer.name}</h3>
-                          <span>{customer.cpf ? maskCpf(customer.cpf) : 'Sem CPF'}</span>
+                          <div className="customer-premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+                            <div>
+                              <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#fff', fontWeight: 600 }}>{customer.name}</h3>
+                              <span style={{ fontSize: '0.72rem', color: '#aeb8c8', fontFamily: 'monospace' }}>
+                                {customer.cpf ? maskCpf(customer.cpf) : 'Sem CPF'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', flexDirection: 'column', alignItems: 'flex-end' }}>
+                              <strong className={customer.active ? 'customer-premium-status customer-premium-status--active' : 'customer-premium-status'} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                                {customer.active ? 'Ativo' : 'Inativo'}
+                              </strong>
+                              <span style={{
+                                display: 'inline-block',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.62rem',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                background: isProfileComplete ? 'rgba(45,212,191,0.15)' : 'rgba(245,158,11,0.15)',
+                                color: isProfileComplete ? '#2dd4bf' : '#fbbf24',
+                                border: isProfileComplete ? '1px solid rgba(45,212,191,0.25)' : '1px solid rgba(245,158,11,0.25)'
+                              }}>
+                                {isProfileComplete ? '★ Premium' : 'Básico'}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="customer-premium-contact-box" style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: '10px', display: 'grid', gap: '8px', marginBottom: '14px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Phone size={13} style={{ color: '#d7ad55' }} />
+                                <span style={{ color: '#94a3b8', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>Tel</span>
+                              </div>
+                              <strong>{customer.phone ? maskPhone(customer.phone) : 'Não informado'}</strong>
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Mail size={13} style={{ color: '#d7ad55' }} />
+                                <span style={{ color: '#94a3b8', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>E-mail</span>
+                              </div>
+                              <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{customer.email || 'Não informado'}</strong>
+                            </div>
+                            {customer.birthDate && (
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Gift size={13} style={{ color: '#d7ad55' }} />
+                                  <span style={{ color: '#94a3b8', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>Aniversário</span>
+                                </div>
+                                <strong>{customer.birthDate.split('-').reverse().join('/')}</strong>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <strong className={customer.active ? 'customer-premium-status customer-premium-status--active' : 'customer-premium-status'}>
-                          {customer.active ? 'Ativo' : 'Inativo'}
-                        </strong>
-                      </div>
-                      <div className="customer-premium-contact-box">
-                        <div>
-                          <span>Telefone</span>
-                          <strong>{customer.phone ? maskPhone(customer.phone) : 'Não informado'}</strong>
+
+                        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(customer)}
+                            className="customer-premium-secondary-button"
+                            style={{
+                              flex: 1,
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '8px 12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              borderRadius: '10px'
+                            }}
+                          >
+                            <Edit3 size={13} />
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              localStorage.setItem('selected_profile_customer_id', String(customer.id));
+                              if (onViewChange) {
+                                onViewChange('customer-profile');
+                              }
+                            }}
+                            className="customer-premium-primary-button"
+                            style={{
+                              flex: 1.4,
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '8px 12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              borderRadius: '10px'
+                            }}
+                          >
+                            <Search size={13} />
+                            Ficha Completa
+                          </button>
                         </div>
-                        <div>
-                          <span>Email</span>
-                          <strong>{customer.email || 'Não informado'}</strong>
-                        </div>
-                      </div>
-                      <div className="customer-premium-card-actions">
-                        <button type="button" onClick={() => handleEdit(customer)}>
-                          <Edit3 size={14} aria-hidden="true" />
-                          Editar
-                        </button>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                   <PaginationControls
                     itemLabel="clientes"
                     page={customerPage}
@@ -582,7 +1104,7 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                 </div>
               )}
 
-              <footer className="customer-premium-list-footer">
+              <footer className="customer-premium-list-footer" style={{ marginTop: '20px' }}>
                 <span>Exibindo {customers.length} de {customerTotal} registros cadastrados</span>
                 <strong>Sincronizado com o Atelier</strong>
               </footer>
@@ -590,28 +1112,85 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
           ) : null}
 
           {showProfile ? (
-            <section className="product-list-panel customer-list-panel relationship-client-panel" style={{ background: '#080b12', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '18px', padding: '22px', color: '#e5e7eb', boxShadow: '0 24px 70px rgba(0,0,0,0.26)' }}>
-              <header className="section-header relationship-client-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px' }}>
-                <div className="relationship-client-title">
-                  <span className="relationship-client-icon" aria-hidden="true">
+            <section className="product-list-panel customer-list-panel relationship-client-panel" style={{ background: '#18140a', border: '1px solid rgba(215, 173, 85, 0.18)', borderRadius: '18px', padding: '22px', color: '#e5e7eb', boxShadow: '0 24px 70px rgba(0,0,0,0.26)' }}>
+              <header className="section-header relationship-client-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div className="relationship-client-title" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span className="relationship-client-icon" aria-hidden="true" style={{ background: 'rgba(215, 173, 85, 0.15)', padding: '10px', borderRadius: '12px', color: '#d7ad55' }}>
                     <Search size={22} strokeWidth={2.4} />
                   </span>
                   <div>
-                    <h2>Consulta completa do cliente</h2>
-                    <p>Visao administrativa com compras, produtos, dividas, promissorias e exportacao Excel.</p>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Consulta completa do cliente</h2>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#aeb8c8' }}>Visão administrativa com compras, linha do tempo, produtos, promissórias e análise de risco.</p>
                   </div>
                 </div>
-                {customerProfile ? (
-                  <button className="customer-premium-secondary-button" type="button" onClick={() => void handleProfileExport()} disabled={isProfileExporting}>
-                    <Download size={16} aria-hidden="true" />
-                    {isProfileExporting ? 'Exportando...' : 'Exportar Excel'}
-                  </button>
-                ) : null}
+
+                {customerProfile && (
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handlePrintProfile}
+                      onMouseEnter={() => setHoverPrintProfile(true)}
+                      onMouseLeave={() => setHoverPrintProfile(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #e5ba6b, #c6943c)',
+                        color: '#080b12',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '10px 20px',
+                        fontWeight: 'bold',
+                        fontSize: '0.8rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        cursor: 'pointer',
+                        boxShadow: hoverPrintProfile
+                          ? '0 6px 20px rgba(215, 173, 85, 0.4)'
+                          : '0 4px 15px rgba(215, 173, 85, 0.25)',
+                        transform: hoverPrintProfile ? 'scale(1.03)' : 'scale(1)',
+                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
+                    >
+                      <Printer size={16} strokeWidth={2.5} style={{ color: '#080b12' }} />
+                      Ficha Impressa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleProfileExport()}
+                      disabled={isProfileExporting}
+                      onMouseEnter={() => setHoverExportProfile(true)}
+                      onMouseLeave={() => setHoverExportProfile(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: hoverExportProfile ? 'rgba(16, 185, 129, 0.14)' : 'rgba(16, 185, 129, 0.06)',
+                        color: '#10b981',
+                        border: hoverExportProfile ? '1px solid rgba(16, 185, 129, 0.7)' : '1px solid rgba(16, 185, 129, 0.35)',
+                        borderRadius: '12px',
+                        padding: '10px 20px',
+                        fontWeight: 'bold',
+                        fontSize: '0.8rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        cursor: 'pointer',
+                        transform: hoverExportProfile ? 'scale(1.03)' : 'scale(1)',
+                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
+                        opacity: isProfileExporting ? 0.6 : 1
+                      }}
+                    >
+                      <Download size={16} strokeWidth={2.5} style={{ color: '#10b981' }} />
+                      {isProfileExporting ? 'Exportando...' : 'Excel (CSV)'}
+                    </button>
+                  </div>
+                )}
               </header>
 
-              <div className="history-filter-form customer-profile-search" style={{ gap: '16px', background: '#0d1016', padding: '18px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.08)', margin: '20px 0' }}>
-                <div className="field-group" style={{ flex: 1 }}>
-                  <label htmlFor="customerProfileSearch">Filtrar lista</label>
+              <div className="history-filter-form customer-profile-search" style={{ gap: '16px', background: '#211609', padding: '18px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', margin: '20px 0', display: 'flex', flexWrap: 'wrap' }}>
+                <div className="field-group" style={{ flex: 1, minWidth: '200px' }}>
+                  <label htmlFor="customerProfileSearch">Filtrar lista de clientes</label>
                   <input
                     id="customerProfileSearch"
                     value={profileSearch}
@@ -619,8 +1198,8 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                     placeholder="Filtrar por nome do cliente..."
                   />
                 </div>
-                <div className="field-group" style={{ flex: 1 }}>
-                  <label htmlFor="customerProfileSelect">Cliente</label>
+                <div className="field-group" style={{ flex: 1, minWidth: '250px' }}>
+                  <label htmlFor="customerProfileSelect">Cliente selecionado para análise</label>
                   <select
                     id="customerProfileSelect"
                     value={selectedProfileCustomerId}
@@ -628,6 +1207,7 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                       setSelectedProfileCustomerId(event.target.value)
                       setProfileTab('summary')
                       setProfileFilters(initialProfileFilters)
+                      setGroupBySale(false)
                       if (!event.target.value) setCustomerProfile(null)
                     }}
                   >
@@ -640,25 +1220,25 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
               </div>
 
               {customerProfile ? (
-                <div className="history-filter-form" style={{ gap: '12px', alignItems: 'end', background: '#0d1016', padding: '16px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.08)', marginBottom: '20px' }}>
+                <div className="history-filter-form" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: '#211609', padding: '16px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', marginBottom: '20px' }}>
                   <div className="field-group">
-                    <label htmlFor="profileStartDate">Inicio</label>
-                    <input id="profileStartDate" type="date" value={profileFilters.startDate} onChange={(event) => setProfileFilters((current) => ({ ...current, startDate: event.target.value }))} />
+                    <label htmlFor="profileStartDate">Início Venc./Compra</label>
+                    <input id="profileStartDate" type="date" value={profileFilters.startDate} onChange={(event) => setProfileFilters((current) => ({ ...current, startDate: event.target.value }))} style={{ colorScheme: 'dark' }} />
                   </div>
                   <div className="field-group">
-                    <label htmlFor="profileEndDate">Fim</label>
-                    <input id="profileEndDate" type="date" value={profileFilters.endDate} onChange={(event) => setProfileFilters((current) => ({ ...current, endDate: event.target.value }))} />
+                    <label htmlFor="profileEndDate">Fim Venc./Compra</label>
+                    <input id="profileEndDate" type="date" value={profileFilters.endDate} onChange={(event) => setProfileFilters((current) => ({ ...current, endDate: event.target.value }))} style={{ colorScheme: 'dark' }} />
                   </div>
                   <div className="field-group">
-                    <label htmlFor="profileSaleStatus">Venda</label>
+                    <label htmlFor="profileSaleStatus">Status da Venda</label>
                     <select id="profileSaleStatus" value={profileFilters.saleStatus} onChange={(event) => setProfileFilters((current) => ({ ...current, saleStatus: event.target.value as SaleStatus | '' }))}>
                       <option value="">Todas</option>
-                      <option value="COMPLETED">Concluidas</option>
+                      <option value="COMPLETED">Concluídas</option>
                       <option value="CANCELLED">Canceladas</option>
                     </select>
                   </div>
                   <div className="field-group">
-                    <label htmlFor="profileNoteStatus">Promissoria</label>
+                    <label htmlFor="profileNoteStatus">Status da Promissória</label>
                     <select id="profileNoteStatus" value={profileFilters.noteStatus} onChange={(event) => setProfileFilters((current) => ({ ...current, noteStatus: event.target.value as PromissoryNoteStatus | '' }))}>
                       <option value="">Todas</option>
                       <option value="PENDING">Pendentes</option>
@@ -668,29 +1248,67 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                       <option value="CANCELLED">Canceladas</option>
                     </select>
                   </div>
-                  <div className="field-group" style={{ flex: 1, minWidth: '220px' }}>
-                    <label htmlFor="profileQuery">Produto, codigo ou venda</label>
-                    <input id="profileQuery" value={profileFilters.query} onChange={(event) => setProfileFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Buscar no historico..." />
+                  <div className="field-group">
+                    <label htmlFor="profileMinAmount">Valor Mínimo (R$)</label>
+                    <input id="profileMinAmount" type="number" value={profileFilters.minAmount} onChange={(event) => setProfileFilters((current) => ({ ...current, minAmount: event.target.value }))} placeholder="Min" />
                   </div>
-                  <button className="customer-premium-secondary-button" type="button" onClick={() => setProfileFilters(initialProfileFilters)}>
-                    <X size={15} aria-hidden="true" />
-                    Limpar
-                  </button>
+                  <div className="field-group">
+                    <label htmlFor="profileMaxAmount">Valor Máximo (R$)</label>
+                    <input id="profileMaxAmount" type="number" value={profileFilters.maxAmount} onChange={(event) => setProfileFilters((current) => ({ ...current, maxAmount: event.target.value }))} placeholder="Max" />
+                  </div>
+                  <div className="field-group" style={{ gridColumn: 'span 2', display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                      <input type="checkbox" checked={profileFilters.onlyOverdue} onChange={(e) => setProfileFilters(curr => ({ ...curr, onlyOverdue: e.target.checked }))} />
+                      Apenas vencidas
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                      <input type="checkbox" checked={profileFilters.onlyOpenBalance} onChange={(e) => setProfileFilters(curr => ({ ...curr, onlyOpenBalance: e.target.checked }))} />
+                      Apenas com saldo aberto
+                    </label>
+                  </div>
+                  <div className="field-group" style={{ gridColumn: 'span 2' }}>
+                    <label htmlFor="profileQuery">Busca por Produto ou Código</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input id="profileQuery" style={{ flex: 1 }} value={profileFilters.query} onChange={(event) => setProfileFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Buscar..." />
+                      <button className="customer-premium-secondary-button" type="button" onClick={() => setProfileFilters(initialProfileFilters)} style={{ minHeight: 'auto', padding: '0 12px' }}>
+                        Limpar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : null}
 
               {isProfileLoading ? (
                 <div className="product-empty">Carregando perfil do cliente...</div>
               ) : !customerProfile ? (
-                <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Selecione um cliente para visualizar o perfil completo.</div>
+                <div className="product-empty" style={{ background: '#211609', borderRadius: '16px', padding: '40px', border: '1px solid rgba(91, 58, 10, 0.35)', color: '#f9e7b5' }}>Selecione um cliente para visualizar o perfil completo.</div>
               ) : (
                 <div style={{ display: 'grid', gap: '20px' }}>
+                  {/* Perfil e Scores */}
                   <article className="cart-item" style={{ background: '#121722', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '14px', padding: '22px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
                     <div>
-                      <span style={{ display: 'inline-block', background: '#151922', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace', marginBottom: '8px' }}>
-                        {customerProfile.customer.cpf ? maskCpf(customerProfile.customer.cpf) : 'Sem CPF'}
-                      </span>
-                      <h3 style={{ margin: '0 0 8px', color: '#fff' }}>{customerProfile.customer.name}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                        <span style={{ display: 'inline-block', background: '#151922', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace' }}>
+                          {customerProfile.customer.cpf ? maskCpf(customerProfile.customer.cpf) : 'Sem CPF'}
+                        </span>
+                        
+                        {clientScores.map((score) => {
+                          let style = { background: 'rgba(74,85,104,0.2)', color: '#a0aec0', border: 'none' }
+                          if (score === 'Em dia') style = { background: 'rgba(45,212,191,0.15)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.25)' }
+                          if (score === 'Atenção') style = { background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
+                          if (score === 'Inadimplente') style = { background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }
+                          if (score === 'Cliente recorrente') style = { background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }
+                          if (score === 'Alto valor') style = { background: 'rgba(215,173,85,0.15)', color: '#f6d78b', border: '1px solid rgba(215,173,85,0.35)' }
+                          if (score === 'Aniversariante') style = { background: 'rgba(244,63,94,0.15)', color: '#fb7185', border: '1px solid rgba(244,63,94,0.25)' }
+
+                          return (
+                            <span key={score} style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '6px', fontSize: '0.66rem', fontWeight: 'bold', textTransform: 'uppercase', ...style }}>
+                              {score}
+                            </span>
+                          )
+                        })}
+                      </div>
+                      <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: '1.4rem' }}>{customerProfile.customer.name}</h3>
                       <small style={{ color: '#aeb8c8', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                         <span><Phone size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.phone ? maskPhone(customerProfile.customer.phone) : 'Sem telefone'}</span>
                         {customerProfile.customer.email ? <span><Mail size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.email}</span> : null}
@@ -698,17 +1316,51 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                       </small>
                       {customerProfile.customer.address ? <p style={{ margin: '8px 0 0', color: '#8d98a8', fontSize: '0.82rem' }}><MapPin size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.address}</p> : null}
                     </div>
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(120px, 1fr))', gap: '12px', minWidth: '300px' }}>
-                      <strong style={{ color: '#f6d78b' }}>{formatCurrency(totalPurchasedAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Total comprado</span></strong>
-                      <strong style={{ color: '#fb7185' }}>{formatCurrency(openPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Saldo aberto</span></strong>
-                      <strong style={{ color: '#fb7185' }}>{formatCurrency(overduePromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Vencido</span></strong>
-                      <strong style={{ color: '#2dd4bf' }}>{formatCurrency(paidPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Pago</span></strong>
+                      <strong style={{ color: '#f6d78b', fontSize: '1.2rem' }}>{formatCurrency(totalPurchasedAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Total comprado</span></strong>
+                      <strong style={{ color: '#fb7185', fontSize: '1.2rem' }}>{formatCurrency(openPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Saldo aberto</span></strong>
+                      <strong style={{ color: '#fb7185', fontSize: '1.2rem' }}>{formatCurrency(overduePromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Vencido</span></strong>
+                      <strong style={{ color: '#2dd4bf', fontSize: '1.2rem' }}>{formatCurrency(paidPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Pago</span></strong>
                     </div>
                   </article>
 
-                  <div className="promissory-mini-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(130px, 1fr))', gap: '12px' }}>
+                  {/* Limite de Crédito Rápido */}
+                  {customerProfile.customer.creditLimit ? (
+                    <article style={{ background: '#111622', border: '1px solid rgba(226,232,240,0.08)', padding: '16px', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.8rem', color: '#b9c4d4' }}>
+                        <span>
+                          <CreditCard size={14} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#d7ad55' }} />
+                          Limite de Crédito Consumido
+                        </span>
+                        <strong style={{ color: openPromissoryAmount > customerProfile.customer.creditLimit ? '#fb7185' : '#2dd4bf' }}>
+                          {formatCurrency(openPromissoryAmount)} / {formatCurrency(customerProfile.customer.creditLimit)} ({Math.min(Math.round((openPromissoryAmount / customerProfile.customer.creditLimit) * 100), 100)}%)
+                        </strong>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', background: '#0b0d13', borderRadius: '10px', overflow: 'hidden' }}>
+                        <div
+                          style={{
+                            height: '100%',
+                            width: `${Math.min((openPromissoryAmount / customerProfile.customer.creditLimit) * 100, 100)}%`,
+                            background: openPromissoryAmount > customerProfile.customer.creditLimit ? 'linear-gradient(90deg, #fb7185, #f43f5e)' : 'linear-gradient(90deg, #2dd4bf, #0d9488)',
+                            borderRadius: '10px',
+                            transition: 'width 0.4s ease'
+                          }}
+                        />
+                      </div>
+                      {openPromissoryAmount > customerProfile.customer.creditLimit ? (
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px', color: '#fb7185', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                          <AlertTriangle size={13} />
+                          Aviso: O cliente excedeu o limite de crédito contratado!
+                        </div>
+                      ) : null}
+                    </article>
+                  ) : null}
+
+                  {/* Mini-Métricas adicionais */}
+                  <div className="promissory-mini-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
                     {[
-                      ['Compras', completedSaleCount, `${formatCurrency(averageTicketAmount)} ticket medio`, Receipt],
+                      ['Compras', completedSaleCount, `${formatCurrency(averageTicketAmount)} ticket médio`, Receipt],
                       ['Canceladas', cancelledSaleCount, 'vendas separadas', X],
                       ['Abertas', openPromissoryCount, formatCurrency(openPromissoryAmount), DollarSign],
                       ['Vencidas', overduePromissoryCount, formatCurrency(overduePromissoryAmount), CreditCard],
@@ -720,46 +1372,283 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                           <MetricIcon size={16} style={{ color: '#d7ad55', marginBottom: '8px' }} />
                           <span style={{ display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', color: '#aeb8c8', fontWeight: 900 }}>{String(label)}</span>
                           <strong style={{ display: 'block', fontSize: '1.35rem', color: '#fff' }}>{String(value)}</strong>
-                          <small style={{ color: '#707b8c' }}>{String(caption)}</small>
+                          <small style={{ color: '#707b8c', fontSize: '0.72rem' }}>{String(caption)}</small>
                         </div>
                       )
                     })}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {/* Seleção de Abas */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', background: '#211609', padding: '6px', borderRadius: '12px', border: '1px solid rgba(91, 58, 10, 0.35)' }}>
                     {[
-                      ['summary', 'Resumo'],
+                      ['summary', 'Painel de Controle'],
+                      ['timeline', `Linha do Tempo (${timelineEvents.length})`],
                       ['sales', `Compras (${filteredCompletedSales.length})`],
                       ['products', `Produtos (${filteredPurchasedItems.length})`],
-                      ['notes', `Promissorias (${filteredNotes.length})`],
+                      ['notes', `Promissórias (${filteredNotes.length})`],
                       ['cancelled', `Cancelados (${filteredCancelledSales.length})`],
                     ].map(([tab, label]) => (
-                      <button key={tab} className={profileTab === tab ? 'customer-premium-primary-button' : 'customer-premium-secondary-button'} type="button" onClick={() => setProfileTab(tab as ProfileTab)}>
+                      <button key={tab} className={profileTab === tab ? 'customer-premium-primary-button' : 'customer-premium-secondary-button'} style={{ border: 'none', margin: 0 }} type="button" onClick={() => setProfileTab(tab as ProfileTab)}>
                         {String(label)}
                       </button>
                     ))}
                   </div>
 
+                  {/* Aba Resumo / Painel de Controle */}
                   {profileTab === 'summary' ? (
-                    <section className="promissory-detail-section" style={{ background: '#101620', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '14px', padding: '22px', color: '#e5e7eb' }}>
-                      <header style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '16px', flexWrap: 'wrap' }}>
-                        <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.22rem', fontFamily: 'inherit', fontWeight: 800 }}>Resumo filtrado</h2>
-                        <p style={{ color: '#cbd5e1', margin: 0, fontSize: '0.86rem', fontWeight: 700 }}>{filteredSales.length} venda(s), {filteredNotes.length} promissoria(s), {filteredPurchasedItems.length} produto(s).</p>
-                      </header>
-                      <div className="promissory-mini-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                        <div style={{ background: '#0b1018', border: '1px dashed rgba(148,163,184,0.35)', borderRadius: '10px', padding: '18px', color: '#cbd5e1' }}>Compras filtradas: <strong style={{ color: '#f6d78b' }}>{formatCurrency(filteredCompletedSales.reduce((total, sale) => total + sale.totalAmount, 0))}</strong></div>
-                        <div style={{ background: '#0b1018', border: '1px dashed rgba(148,163,184,0.35)', borderRadius: '10px', padding: '18px', color: '#cbd5e1' }}>Saldo aberto filtrado: <strong style={{ color: '#fb7185' }}>{formatCurrency(filteredNotes.reduce((total, note) => total + (['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(note.status) ? note.remainingAmount : 0), 0))}</strong></div>
-                        <div style={{ background: '#0b1018', border: '1px dashed rgba(148,163,184,0.35)', borderRadius: '10px', padding: '18px', color: '#cbd5e1' }}>Itens comprados: <strong style={{ color: '#f8fafc' }}>{filteredPurchasedItems.reduce((total, item) => total + item.quantity, 0)} un.</strong></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+                      {/* Lado Esquerdo: Alertas, Cobrança e Análise */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {/* Bloco de Cobrança WhatsApp Consolidado */}
+                        <section style={{ background: '#101620', border: '1px solid rgba(45,212,191,0.12)', borderRadius: '14px', padding: '20px' }}>
+                          <h3 style={{ color: '#2dd4bf', margin: '0 0 12px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <CheckCircle2 size={16} />
+                            Resumo de Cobrança (Pronto)
+                          </h3>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.86rem', color: '#e5e7eb', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#94a3b8' }}>Total em Aberto:</span>
+                              <strong>{formatCurrency(openPromissoryAmount)}</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#94a3b8' }}>Parcelas Vencidas:</span>
+                              <strong style={{ color: '#fb7185' }}>{overduePromissoryCount} nota(s) ({formatCurrency(overduePromissoryAmount)})</strong>
+                            </div>
+                            {overdueProfileNotes.length > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#94a3b8' }}>Dias de Atraso (Máx):</span>
+                                <strong style={{ color: '#fb7185' }}>{Math.max(...overdueProfileNotes.map((n) => n.daysOverdue || 0))} dia(s)</strong>
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#94a3b8' }}>Última Compra:</span>
+                              <strong>{profileSales.length > 0 ? formatNullableDateTime(profileSales[0].soldAt).slice(0, 10) : 'Sem registro'}</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#94a3b8' }}>Último Pagamento:</span>
+                              <strong>
+                                {profilePromissoryNotes.flatMap((n) => n.payments ?? []).length > 0 
+                                  ? formatNullableDateTime(profilePromissoryNotes.flatMap((n) => n.payments ?? [])[0].paidAt).slice(0, 10) 
+                                  : 'Sem registro'}
+                              </strong>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              type="button"
+                              className="customer-premium-primary-button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(decodeURIComponent(consolidatedWhatsappMessage))
+                                notify({ type: 'success', title: 'Mensagem copiada', message: 'Mensagem de cobrança copiada para a área de transferência.' })
+                              }}
+                              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
+                            >
+                              <Copy size={14} />
+                              Copiar Mensagem
+                            </button>
+                            {customerProfile.customer.phone ? (
+                              <a
+                                href={`https://wa.me/55${customerProfile.customer.phone.replace(/\D/g, '')}?text=${consolidatedWhatsappMessage}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="customer-premium-secondary-button"
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#25D366', color: '#fff', borderColor: '#25D366' }}
+                              >
+                                Chamar no Whats
+                              </a>
+                            ) : null}
+                          </div>
+                        </section>
+
+                        {/* Alertas Inteligentes */}
+                        <section style={{ background: '#101620', border: '1px solid rgba(226,232,240,0.1)', borderRadius: '14px', padding: '20px' }}>
+                          <h3 style={{ color: '#f8fafc', margin: '0 0 12px', fontSize: '1rem' }}>Alertas e Insights</h3>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {overdueProfileNotes.some((n) => (n.daysOverdue || 0) > 30) ? (
+                              <div style={{ background: 'rgba(239,68,68,0.12)', borderLeft: '4px solid #ef4444', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#f87171' }}>
+                                <strong>Parcela muito atrasada:</strong> Cliente com dívidas vencidas há mais de 30 dias. Recomenda-se suspensão de crédito a prazo.
+                              </div>
+                            ) : null}
+                            
+                            {openPromissoryAmount > 0 && profileSales.length > 0 && (new Date().getTime() - new Date(profileSales[0].soldAt).getTime()) / (1000 * 60 * 60 * 24) < 10 ? (
+                              <div style={{ background: 'rgba(245,158,11,0.12)', borderLeft: '4px solid #f59e0b', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#fbbf24' }}>
+                                <strong>Alerta de Débito Ativo:</strong> Cliente comprou recentemente (últimos 10 dias) e ainda possui saldo devedor pendente.
+                              </div>
+                            ) : null}
+
+                            {profileSales.length > 0 && (new Date().getTime() - new Date(profileSales[0].soldAt).getTime()) / (1000 * 60 * 60 * 24) > 60 ? (
+                              <div style={{ background: 'rgba(148,163,184,0.12)', borderLeft: '4px solid #94a3b8', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                                <strong>Inatividade Comercial:</strong> Cliente sem compras registradas há mais de 60 dias. Vale um contato de reativação!
+                              </div>
+                            ) : null}
+
+                            {customerProfile.customer.birthDate && new Date(customerProfile.customer.birthDate).getMonth() === new Date().getMonth() && (
+                              <div style={{ background: 'rgba(244,63,94,0.12)', borderLeft: '4px solid #f43f5e', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#fb7185' }}>
+                                <strong>Aniversariante do Mês:</strong> Ofereça um desconto especial de aniversário para fortalecer a relação!
+                              </div>
+                            )}
+
+                            {!overdueProfileNotes.length && !openPromissoryAmount && completedSaleCount > 0 ? (
+                              <div style={{ background: 'rgba(45,212,191,0.12)', borderLeft: '4px solid #2dd4bf', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#2dd4bf' }}>
+                                <strong>Cliente Excelente:</strong> Nenhuma pendência em aberto. Ótimo perfil de pagador!
+                              </div>
+                            ) : null}
+                          </div>
+                        </section>
                       </div>
+
+                      {/* Lado Direito: Análise Financeira, Observações e Ações */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {/* Análise Financeira Detalhada */}
+                        <section style={{ background: '#101620', border: '1px solid rgba(226,232,240,0.1)', borderRadius: '14px', padding: '20px' }}>
+                          <h3 style={{ color: '#f8fafc', margin: '0 0 12px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <TrendingUp size={16} style={{ color: '#d7ad55' }} />
+                            Análise Financeira
+                          </h3>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.82rem' }}>
+                            <div style={{ background: '#0b0d13', padding: '10px', borderRadius: '8px' }}>
+                              <span style={{ color: '#707b8c', display: 'block' }}>Maior Venda</span>
+                              <strong style={{ color: '#fff', fontSize: '1rem' }}>
+                                {formatCurrency(profileSales.length > 0 ? Math.max(...profileSales.filter(s => s.status === 'COMPLETED').map(s => s.totalAmount)) : 0)}
+                              </strong>
+                            </div>
+                            <div style={{ background: '#0b0d13', padding: '10px', borderRadius: '8px' }}>
+                              <span style={{ color: '#707b8c', display: 'block' }}>Economia (Descontos)</span>
+                              <strong style={{ color: '#2dd4bf', fontSize: '1rem' }}>{formatCurrency(customerProfile.totalDiscountAmount)}</strong>
+                            </div>
+                            <div style={{ background: '#0b0d13', padding: '10px', borderRadius: '8px' }}>
+                              <span style={{ color: '#707b8c', display: 'block' }}>Taxa de Quitação</span>
+                              <strong style={{ color: '#f6d78b', fontSize: '1rem' }}>
+                                {totalPurchasedAmount > 0 
+                                  ? `${Math.round((paidPromissoryAmount / totalPurchasedAmount) * 100)}%` 
+                                  : '0%'}
+                              </strong>
+                            </div>
+                            <div style={{ background: '#0b0d13', padding: '10px', borderRadius: '8px' }}>
+                              <span style={{ color: '#707b8c', display: 'block' }}>Média de Compras</span>
+                              <strong style={{ color: '#fff', fontSize: '1rem' }}>
+                                {completedSaleCount > 0 
+                                  ? `${Math.round(totalPurchasedAmount / completedSaleCount)} un` 
+                                  : '0 un'}
+                              </strong>
+                            </div>
+                          </div>
+                        </section>
+
+                        {/* Observações Internas Administrativas */}
+                        <section style={{ background: '#101620', border: '1px solid rgba(226,232,240,0.1)', borderRadius: '14px', padding: '20px' }}>
+                          <h3 style={{ color: '#f8fafc', margin: '0 0 12px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FileText size={16} style={{ color: '#d7ad55' }} />
+                            Anotações Administrativas
+                          </h3>
+                          <textarea
+                            style={{ width: '100%', background: '#0b0d13', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '8px', padding: '10px', fontSize: '0.85rem', resize: 'vertical' }}
+                            rows={4}
+                            placeholder="Adicione acordos de parcelamento, restrições internas, preferências do cliente..."
+                            defaultValue={customerProfile.customer.observations || ''}
+                            onBlur={(e) => void handleSaveObservations(e.target.value)}
+                            disabled={isSavingObs}
+                          />
+                          <small style={{ color: '#707b8c', display: 'block', marginTop: '4px' }}>
+                            As anotações são salvas automaticamente quando você clica fora da caixa de texto.
+                          </small>
+                        </section>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Aba Linha do Tempo */}
+                  {profileTab === 'timeline' ? (
+                    <section style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                      <header style={{ marginBottom: '20px' }}>
+                        <h3 style={{ color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Clock size={18} style={{ color: '#d7ad55' }} />
+                          Linha do Tempo do Cliente
+                        </h3>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#707b8c' }}>Ordem cronológica reversa de compras, pagamentos e eventos financeiros.</p>
+                      </header>
+                      
+                      {timelinePagination.pageItems.length === 0 ? (
+                        <div className="product-empty">Nenhum evento registrado no histórico.</div>
+                      ) : (
+                        <div style={{ position: 'relative', borderLeft: '2px dashed rgba(226,232,240,0.1)', marginLeft: '12px', paddingLeft: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                          {timelinePagination.pageItems.map((event) => {
+                            const EventIcon = event.icon
+                            return (
+                              <article key={event.id} style={{ position: 'relative' }}>
+                                <span style={{ position: 'absolute', left: '-33px', top: '2px', background: '#080b12', border: `2px solid ${event.color}`, borderRadius: '50%', padding: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: event.color }}>
+                                  <EventIcon size={12} />
+                                </span>
+                                <div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+                                    <strong style={{ color: '#fff', fontSize: '0.92rem' }}>{event.title}</strong>
+                                    <small style={{ color: '#707b8c', fontSize: '0.75rem' }}>{formatNullableDateTime(event.date)}</small>
+                                  </div>
+                                  <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#aeb8c8' }}>{event.description}</p>
+                                  {event.value !== undefined && (
+                                    <strong style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.85rem', color: event.color }}>
+                                      {formatCurrency(event.value)}
+                                    </strong>
+                                  )}
+                                  
+                                  {/* Atalho ver comprovante de venda da timeline */}
+                                  {event.type === 'sale' && !event.title.includes('Cancelada') && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const saleId = Number(event.id.replace('sale-', ''))
+                                        setReceiptUrl(getSaleReceiptUrl(saleId))
+                                        setReceiptTitle(`Recibo da venda #${saleId}`)
+                                      }}
+                                      style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: '#d7ad55', fontSize: '0.75rem', cursor: 'pointer', padding: '4px 0', marginTop: '4px' }}
+                                    >
+                                      <Eye size={12} /> Ver Comprovante
+                                    </button>
+                                  )}
+                                  
+                                  {/* Atalho ver recibo de pagamento na timeline */}
+                                  {event.type === 'payment' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const paymentId = Number(event.id.replace('payment-', ''))
+                                        setReceiptUrl(getPromissoryPaymentReceiptUrl(paymentId))
+                                        setReceiptTitle(`Comprovante de pagamento #${paymentId}`)
+                                      }}
+                                      style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: '#2dd4bf', fontSize: '0.75rem', cursor: 'pointer', padding: '4px 0', marginTop: '4px' }}
+                                    >
+                                      <Eye size={12} /> Ver Recibo
+                                    </button>
+                                  )}
+                                </div>
+                              </article>
+                            )
+                          })}
+                        </div>
+                      )}
                     </section>
                   ) : null}
 
+                  {/* Aba Compras */}
                   {profileTab === 'sales' ? (
                     <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
-                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Compras</h2></header>
+                      <header className="section-header" style={{ marginBottom: '16px' }}><h3 style={{ color: '#fff', margin: 0 }}>Compras</h3></header>
                       {filteredCompletedSales.length === 0 ? <div className="product-empty">Nenhuma compra encontrada.</div> : completedSalesPagination.pageItems.map((sale) => (
                         <details className="promissory-history-item" key={sale.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
-                          <summary style={{ cursor: 'pointer', color: '#fff' }}>Venda #{sale.id} - {formatNullableDateTime(sale.soldAt)} - {paymentMethodLabels[sale.paymentMethod]} - {formatCurrency(sale.totalAmount)}</summary>
+                          <summary style={{ cursor: 'pointer', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>Venda #{sale.id} - {formatNullableDateTime(sale.soldAt)} - {paymentMethodLabels[sale.paymentMethod]} - {formatCurrency(sale.totalAmount)}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setReceiptUrl(getSaleReceiptUrl(sale.id))
+                                setReceiptTitle(`Recibo da venda #${sale.id}`)
+                              }}
+                              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(215,173,85,0.1)', border: '1px solid rgba(215,173,85,0.2)', color: '#d7ad55', fontSize: '0.75rem', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
+                            >
+                              <Eye size={12} /> Comprovante
+                            </button>
+                          </summary>
                           <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
                             {sale.items.map((item) => <div key={item.id} style={{ color: '#aeb8c8' }}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
                             <small style={{ color: '#707b8c' }}>Desconto: {formatCurrency(sale.discountAmount)} | Operador: {sale.operator?.displayName ?? '-'}</small>
@@ -770,41 +1659,293 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                     </section>
                   ) : null}
 
+                  {/* Aba Produtos Favoritos */}
                   {profileTab === 'products' ? (
                     <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
-                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Produtos comprados</h2></header>
-                      {filteredPurchasedItems.length === 0 ? <div className="product-empty">Nenhum produto encontrado.</div> : purchasedItemsPagination.pageItems.map((item) => (
-                        <div className="promissory-history-item" key={item.productId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                          <div><strong style={{ color: '#fff' }}><ShoppingBag size={15} style={{ marginRight: '6px', verticalAlign: 'middle', color: '#d7ad55' }} />{item.productName}</strong><small style={{ display: 'block', color: '#707b8c' }}>Codigo: {item.productCode} | Ultima compra: {formatNullableDateTime(item.lastPurchaseAt)}</small></div>
-                          <strong style={{ color: '#f6d78b' }}>{item.quantity} un. | {formatCurrency(item.totalAmount)}</strong>
+                      <header className="section-header" style={{ marginBottom: '20px' }}>
+                        <h3 style={{ color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Heart size={16} style={{ color: '#fb7185' }} />
+                          Favoritos do Cliente
+                        </h3>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#707b8c' }}>Ranqueamento dos itens mais comprados pelo cliente.</p>
+                      </header>
+                      
+                      {filteredPurchasedItems.length > 0 && (
+                        <div style={{ background: '#0d1016', padding: '18px', borderRadius: '12px', border: '1px solid rgba(226,232,240,0.06)', marginBottom: '20px' }}>
+                          <h4 style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#aeb8c8' }}>Top 5 Produtos mais Comprados:</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            {filteredPurchasedItems
+                              .slice(0, 5)
+                              .map((item, index) => {
+                                const maxQty = Math.max(...filteredPurchasedItems.map(i => i.quantity))
+                                const percentage = maxQty > 0 ? (item.quantity / maxQty) * 100 : 0
+                                return (
+                                  <div key={item.productId}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
+                                      <span><strong>#{index + 1}</strong> - {item.productName} ({item.productCode})</span>
+                                      <strong>{item.quantity} un. ({formatCurrency(item.totalAmount)})</strong>
+                                    </div>
+                                    <div style={{ width: '100%', height: '6px', background: '#111827', borderRadius: '4px', overflow: 'hidden' }}>
+                                      <div style={{ height: '100%', width: `${percentage}%`, background: 'linear-gradient(90deg, #d7ad55, #f59e0b)', borderRadius: '4px' }} />
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                          </div>
                         </div>
-                      ))}
+                      )}
+
+                      {filteredPurchasedItems.length === 0 ? <div className="product-empty">Nenhum produto encontrado.</div> : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', marginBottom: '18px' }}>
+                          {purchasedItemsPagination.pageItems.map((item) => (
+                            <div 
+                              className="product-premium-card" 
+                              key={item.productId} 
+                              style={{ 
+                                background: '#0d1016', 
+                                border: '1px solid rgba(215, 173, 85, 0.12)', 
+                                borderRadius: '16px', 
+                                padding: '16px', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                justifyContent: 'space-between',
+                                gap: '12px',
+                                position: 'relative',
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.18)',
+                                transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                  <span style={{ background: 'rgba(215, 173, 85, 0.1)', padding: '8px', borderRadius: '12px', color: '#d7ad55', display: 'inline-flex' }}>
+                                    <ShoppingBag size={18} />
+                                  </span>
+                                  <div>
+                                    <strong style={{ color: '#fff', fontSize: '0.88rem', display: 'block' }}>{item.productName}</strong>
+                                    <span style={{ fontSize: '0.72rem', color: '#707b8c', display: 'block', marginTop: '2px' }}>Cód: {item.productCode}</span>
+                                  </div>
+                                </div>
+                                <span style={{ background: 'rgba(215, 173, 85, 0.15)', color: '#e5ba6b', fontSize: '0.72rem', fontWeight: 'bold', padding: '4px 10px', borderRadius: '50px' }}>
+                                  {item.quantity} un.
+                                </span>
+                              </div>
+                              
+                              <div style={{ borderTop: '1px solid rgba(226,232,240,0.05)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
+                                <div>
+                                  <span style={{ color: '#707b8c', display: 'block', fontSize: '0.65rem' }}>ÚLTIMA COMPRA</span>
+                                  <strong style={{ color: '#cbd5e1' }}>{formatNullableDateTime(item.lastPurchaseAt).slice(0, 10)}</strong>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                  <span style={{ color: '#707b8c', display: 'block', fontSize: '0.65rem' }}>VALOR TOTAL</span>
+                                  <strong style={{ color: '#2dd4bf', fontSize: '0.85rem' }}>{formatCurrency(item.totalAmount)}</strong>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <PaginationControls itemLabel="produtos" page={purchasedItemsPagination.page} pageSize={purchasedItemsPagination.pageSize} totalItems={purchasedItemsPagination.totalItems} totalPages={purchasedItemsPagination.totalPages} onPageChange={purchasedItemsPagination.setPage} />
                     </section>
                   ) : null}
 
+                  {/* Aba Promissórias */}
                   {profileTab === 'notes' ? (
                     <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
-                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Promissorias</h2></header>
-                      {filteredNotes.length === 0 ? <div className="product-empty">Nenhuma promissoria encontrada.</div> : notesPagination.pageItems.map((note) => (
-                        <details className="promissory-history-item" key={note.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
-                          <summary style={{ cursor: 'pointer', color: note.status === 'OVERDUE' ? '#fb7185' : '#fff' }}>Nota #{note.id} - {noteStatusLabels[note.status]} - venc. {formatDate(note.dueDate)} - saldo {formatCurrency(note.remainingAmount)}</summary>
-                          <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: '#aeb8c8' }}>
-                            <div>Venda: {note.saleId ?? 'Avulsa'} | Parcela {note.installmentNumber}/{note.totalInstallments} | Atualizado: {formatCurrency(note.updatedAmount)}</div>
-                            {(note.saleItems ?? []).map((item) => <div key={item.id}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
-                            {(note.payments ?? []).length === 0 ? <small style={{ color: '#707b8c' }}>Sem pagamentos registrados.</small> : (note.payments ?? []).map((payment) => (
-                              <small key={payment.id} style={{ color: '#2dd4bf' }}>Pagamento {formatNullableDateTime(payment.paidAt)} - {paymentMethodLabels[payment.paymentMethod]} - {formatCurrency(payment.totalReceived)} por {payment.paidBy?.displayName ?? '-'}</small>
-                            ))}
-                          </div>
-                        </details>
-                      ))}
-                      <PaginationControls itemLabel="promissorias" page={notesPagination.page} pageSize={notesPagination.pageSize} totalItems={notesPagination.totalItems} totalPages={notesPagination.totalPages} onPageChange={notesPagination.setPage} />
+                      <header className="section-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '16px', flexWrap: 'wrap' }}>
+                        <h3 style={{ color: '#fff', margin: 0 }}>Promissórias</h3>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                          <input type="checkbox" checked={groupBySale} onChange={(e) => setGroupBySale(e.target.checked)} />
+                          Agrupar parcelas por venda original
+                        </label>
+                      </header>
+
+                      {filteredNotes.length === 0 ? (
+                        <div className="product-empty">Nenhuma promissória encontrada.</div>
+                      ) : groupBySale ? (
+                        // Renderização agrupada por venda original
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          {promissoryNotesGroupedBySale.map((group) => {
+                            const totalPago = group.notes.reduce((sum, n) => sum + n.paidAmount, 0)
+                            const totalAberto = group.notes.reduce((sum, n) => sum + (['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(n.status) ? n.remainingAmount : 0), 0)
+                            const vencidas = group.notes.filter((n) => n.status === 'OVERDUE').length
+                            
+                            return (
+                              <article key={group.saleId || 'avulsas'} style={{ background: '#0c0f16', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px' }}>
+                                <header style={{ borderBottom: '1px solid rgba(226,232,240,0.05)', paddingBottom: '10px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <div>
+                                    <strong style={{ color: '#fff', fontSize: '0.9rem' }}>
+                                      {group.saleId ? `Venda #${group.saleId}` : 'Promissórias Avulsas'}
+                                    </strong>
+                                    <span style={{ fontSize: '0.75rem', color: '#707b8c', marginLeft: '10px' }}>
+                                      Realizada em: {group.saleDate ? formatDate(group.saleDate.slice(0, 10)) : '-'}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '12px', fontSize: '0.8rem' }}>
+                                    <span>Total: <strong style={{ color: '#f6d78b' }}>{formatCurrency(group.saleTotal)}</strong></span>
+                                    <span>Pago: <strong style={{ color: '#2dd4bf' }}>{formatCurrency(totalPago)}</strong></span>
+                                    <span>Aberto: <strong style={{ color: totalAberto > 0 ? '#fb7185' : '#2dd4bf' }}>{formatCurrency(totalAberto)}</strong></span>
+                                    {vencidas > 0 && <span style={{ color: '#fb7185', fontWeight: 'bold' }}>({vencidas} vencida!)</span>}
+                                  </div>
+                                </header>
+                                <div style={{ display: 'grid', gap: '10px' }}>
+                                  {group.notes.map((note) => (
+                                    <details className="promissory-history-item" key={note.id} style={{ background: '#0e121a', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '10px', padding: '12px' }}>
+                                      <summary style={{ cursor: 'pointer', color: note.status === 'OVERDUE' ? '#fb7185' : '#fff', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                                        <span>Parcela {note.installmentNumber}/{note.totalInstallments} - {noteStatusLabels[note.status as PromissoryNoteStatus]} - Venc. {formatDate(note.dueDate)}</span>
+                                        <strong>Saldo {formatCurrency(note.remainingAmount)}</strong>
+                                      </summary>
+                                      <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: '#aeb8c8', fontSize: '0.8rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                                          <span>Código Promissória: #{note.id} | Valor original: {formatCurrency(note.amount)}</span>
+                                          <div style={{ display: 'flex', gap: '6px' }}>
+                                            <a
+                                              href={getPromissoryNotePrintUrl(note.id)}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="customer-premium-secondary-button"
+                                              style={{ padding: '2px 8px', fontSize: '0.72rem', minHeight: 'auto' }}
+                                            >
+                                              Imprimir Nota
+                                            </a>
+                                          </div>
+                                        </div>
+                                        {(note.saleItems ?? []).map((item: any) => <div key={item.id}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
+                                        
+                                        {/* Tabela de baixas/pagamentos parciais ricos */}
+                                        <div style={{ background: '#080a0e', borderRadius: '8px', padding: '10px', marginTop: '8px' }}>
+                                          <strong style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', color: '#f8fafc' }}>Histórico de Baixas e Amortizações:</strong>
+                                          {(note.payments ?? []).length === 0 ? (
+                                            <small style={{ color: '#707b8c' }}>Nenhum pagamento parcial registrado.</small>
+                                          ) : (
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', color: '#cbd5e1' }}>
+                                              <thead>
+                                                <tr style={{ borderBottom: '1px solid rgba(226,232,240,0.1)' }}>
+                                                  <th style={{ padding: '4px', textAlign: 'left' }}>Data</th>
+                                                  <th style={{ padding: '4px', textAlign: 'left' }}>Forma</th>
+                                                  <th style={{ padding: '4px', textAlign: 'right' }}>Principal</th>
+                                                  <th style={{ padding: '4px', textAlign: 'right' }}>Juros/Multa</th>
+                                                  <th style={{ padding: '4px', textAlign: 'right' }}>Total</th>
+                                                  <th style={{ padding: '4px', textAlign: 'left' }}>Operador</th>
+                                                  <th style={{ padding: '4px', textAlign: 'center' }}>Ação</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody>
+                                                {note.payments.map((p: any) => (
+                                                  <tr key={p.id} style={{ borderBottom: '1px solid rgba(226,232,240,0.05)' }}>
+                                                    <td style={{ padding: '4px' }}>{formatNullableDateTime(p.paidAt)}</td>
+                                                    <td style={{ padding: '4px' }}>{paymentMethodLabels[p.paymentMethod] || p.paymentMethod}</td>
+                                                    <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency(p.amount)}</td>
+                                                    <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency((p.interestAmount || 0) + (p.penaltyAmount || 0))}</td>
+                                                    <td style={{ padding: '4px', textAlign: 'right', color: '#2dd4bf', fontWeight: 'bold' }}>{formatCurrency(p.totalReceived)}</td>
+                                                    <td style={{ padding: '4px' }}>{p.paidBy?.displayName || '-'}</td>
+                                                    <td style={{ padding: '4px', textAlign: 'center' }}>
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                          setReceiptUrl(getPromissoryPaymentReceiptUrl(p.id))
+                                                          setReceiptTitle(`Comprovante de pagamento #${p.id}`)
+                                                        }}
+                                                        style={{ background: 'none', border: 'none', color: '#2dd4bf', cursor: 'pointer', padding: 0 }}
+                                                      >
+                                                        <Eye size={12} />
+                                                      </button>
+                                                    </td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </details>
+                                  ))}
+                                </div>
+                              </article>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        // Renderização corrida das promissórias (original mas com melhorias)
+                        notesPagination.pageItems.map((note) => (
+                          <details className="promissory-history-item" key={note.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                            <summary style={{ cursor: 'pointer', color: note.status === 'OVERDUE' ? '#fb7185' : '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span>Nota #{note.id} - {noteStatusLabels[note.status as PromissoryNoteStatus]} - Venc. {formatDate(note.dueDate)}</span>
+                              <strong>Saldo {formatCurrency(note.remainingAmount)}</strong>
+                            </summary>
+                            <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: '#aeb8c8', fontSize: '0.8rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                                <span>Venda: {note.saleId ? `#${note.saleId}` : 'Avulsa'} | Parcela {note.installmentNumber}/{note.totalInstallments} | Valor: {formatCurrency(note.amount)}</span>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <a
+                                    href={getPromissoryNotePrintUrl(note.id)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="customer-premium-secondary-button"
+                                    style={{ padding: '2px 8px', fontSize: '0.72rem', minHeight: 'auto' }}
+                                  >
+                                    Imprimir Nota
+                                  </a>
+                                </div>
+                              </div>
+                              {(note.saleItems ?? []).map((item: any) => <div key={item.id}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
+                              
+                              {/* Tabela de baixas/pagamentos parciais ricos */}
+                              <div style={{ background: '#080a0e', borderRadius: '8px', padding: '10px', marginTop: '8px' }}>
+                                <strong style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', color: '#f8fafc' }}>Histórico de Baixas e Amortizações:</strong>
+                                {(note.payments ?? []).length === 0 ? (
+                                  <small style={{ color: '#707b8c' }}>Nenhum pagamento parcial registrado.</small>
+                                ) : (
+                                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', color: '#cbd5e1' }}>
+                                    <thead>
+                                      <tr style={{ borderBottom: '1px solid rgba(226,232,240,0.1)' }}>
+                                        <th style={{ padding: '4px', textAlign: 'left' }}>Data</th>
+                                        <th style={{ padding: '4px', textAlign: 'left' }}>Forma</th>
+                                        <th style={{ padding: '4px', textAlign: 'right' }}>Principal</th>
+                                        <th style={{ padding: '4px', textAlign: 'right' }}>Juros/Multa</th>
+                                        <th style={{ padding: '4px', textAlign: 'right' }}>Total</th>
+                                        <th style={{ padding: '4px', textAlign: 'left' }}>Operador</th>
+                                        <th style={{ padding: '4px', textAlign: 'center' }}>Ação</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {note.payments.map((p: any) => (
+                                        <tr key={p.id} style={{ borderBottom: '1px solid rgba(226,232,240,0.05)' }}>
+                                          <td style={{ padding: '4px' }}>{formatNullableDateTime(p.paidAt)}</td>
+                                          <td style={{ padding: '4px' }}>{paymentMethodLabels[p.paymentMethod] || p.paymentMethod}</td>
+                                          <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency(p.amount)}</td>
+                                          <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency((p.interestAmount || 0) + (p.penaltyAmount || 0))}</td>
+                                          <td style={{ padding: '4px', textAlign: 'right', color: '#2dd4bf', fontWeight: 'bold' }}>{formatCurrency(p.totalReceived)}</td>
+                                          <td style={{ padding: '4px' }}>{p.paidBy?.displayName || '-'}</td>
+                                          <td style={{ padding: '4px', textAlign: 'center' }}>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setReceiptUrl(getPromissoryPaymentReceiptUrl(p.id))
+                                                setReceiptTitle(`Comprovante de pagamento #${p.id}`)
+                                              }}
+                                              style={{ background: 'none', border: 'none', color: '#2dd4bf', cursor: 'pointer', padding: 0 }}
+                                            >
+                                              <Eye size={12} />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </div>
+                            </div>
+                          </details>
+                        ))
+                      )}
+                      {!groupBySale && <PaginationControls itemLabel="promissórias" page={notesPagination.page} pageSize={notesPagination.pageSize} totalItems={notesPagination.totalItems} totalPages={notesPagination.totalPages} onPageChange={notesPagination.setPage} />}
                     </section>
                   ) : null}
 
+                  {/* Aba Cancelados */}
                   {profileTab === 'cancelled' ? (
                     <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
-                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Cancelados</h2></header>
+                      <header className="section-header" style={{ marginBottom: '16px' }}><h3 style={{ color: '#fff', margin: 0 }}>Cancelados</h3></header>
                       {filteredCancelledSales.length === 0 && filteredCancelledNotes.length === 0 ? <div className="product-empty">Nenhum cancelamento encontrado.</div> : null}
                       {cancelledSalesPagination.pageItems.map((sale) => (
                         <div key={sale.id} className="promissory-history-item" style={{ background: '#0d1016', border: '1px solid rgba(251,113,133,0.18)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
@@ -819,7 +1960,7 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                           <small style={{ display: 'block', color: '#fb7185' }}>Venda: {note.saleId ?? 'Avulsa'} | Valor: {formatCurrency(note.amount)}</small>
                         </div>
                       ))}
-                      <PaginationControls itemLabel="promissorias canceladas" page={cancelledNotesPagination.page} pageSize={cancelledNotesPagination.pageSize} totalItems={cancelledNotesPagination.totalItems} totalPages={cancelledNotesPagination.totalPages} onPageChange={cancelledNotesPagination.setPage} />
+                      <PaginationControls itemLabel="promissórias canceladas" page={cancelledNotesPagination.page} pageSize={cancelledNotesPagination.pageSize} totalItems={cancelledNotesPagination.totalItems} totalPages={cancelledNotesPagination.totalPages} onPageChange={cancelledNotesPagination.setPage} />
                     </section>
                   ) : null}
                 </div>
@@ -1028,6 +2169,36 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
           */}
         </div>
       </div>
+      
+      {receiptUrl ? (
+        <div className="customer-premium-modal-backdrop" role="presentation" onClick={() => setReceiptUrl(null)}>
+          <section className="customer-premium-edit-modal" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title" style={{ maxWidth: '640px', width: '90%', background: '#0a0d14', border: '1px solid rgba(226,232,240,0.1)', borderRadius: '16px', padding: '20px' }} onClick={(e) => e.stopPropagation()}>
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
+              <div>
+                <h2 id="receipt-modal-title" style={{ fontSize: '1.2rem', color: '#fff', margin: 0 }}>{receiptTitle}</h2>
+              </div>
+              <button type="button" onClick={() => setReceiptUrl(null)} aria-label="Fechar comprovante" style={{ border: '1px solid rgba(226,232,240,0.1)', background: 'rgba(226,232,240,0.04)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#fff' }}>
+                <X size={16} />
+              </button>
+            </header>
+            <iframe
+              className="receipt-preview-frame"
+              ref={receiptFrameRef}
+              src={receiptUrl}
+              title={receiptTitle}
+              style={{ width: '100%', height: '480px', border: 'none', background: '#fff', borderRadius: '8px' }}
+            />
+            <footer style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button className="customer-premium-primary-button" type="button" onClick={() => receiptFrameRef.current?.contentWindow?.print()} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Printer size={14} /> Imprimir
+              </button>
+              <button className="customer-premium-secondary-button" type="button" onClick={() => setReceiptUrl(null)}>
+                Fechar
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
 
       {showList && editingCustomerId !== null ? (
         <div className="customer-premium-modal-backdrop" role="presentation">
@@ -1112,6 +2283,29 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                     value={form.address ?? ''}
                     onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
                     placeholder="Rua, número, bairro"
+                  />
+                </div>
+                <div className="field-group">
+                  <label htmlFor="customerEditCreditLimit">Limite de Crédito (R$)</label>
+                  <input
+                    id="customerEditCreditLimit"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.creditLimit ?? ''}
+                    onChange={(event) => setForm((current) => ({ ...current, creditLimit: event.target.value ? Number(event.target.value) : undefined }))}
+                    placeholder="Sem limite"
+                  />
+                </div>
+                <div className="field-group field-group--full">
+                  <label htmlFor="customerEditObservations">Observações Internas</label>
+                  <textarea
+                    id="customerEditObservations"
+                    value={form.observations ?? ''}
+                    onChange={(event) => setForm((current) => ({ ...current, observations: event.target.value }))}
+                    placeholder="Preferências, acordos de negociação..."
+                    rows={3}
+                    style={{ background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '12px', padding: '12px', width: '100%', resize: 'vertical' }}
                   />
                 </div>
               </div>

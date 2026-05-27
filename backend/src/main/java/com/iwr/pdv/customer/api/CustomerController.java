@@ -72,7 +72,7 @@ public class CustomerController {
         return customerService.profile(customerId);
     }
 
-    @GetMapping(value = "/{customerId}/profile/export.csv", produces = "text/csv")
+    @GetMapping(value = "/{customerId}/profile/export", produces = "text/csv")
     @Operation(summary = "Export a complete customer profile as an Excel-compatible report")
     public ResponseEntity<String> exportProfileCsv(
             @PathVariable Long customerId,

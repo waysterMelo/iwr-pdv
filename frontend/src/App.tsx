@@ -325,7 +325,6 @@ function App() {
 
       <section className="workspace">
         <header className="workspace-header">
-          <div className="workspace-search">Buscar produto, venda ou usuario...</div>
           <div className="workspace-current">
             <span>{currentItem.eyebrow}</span>
             <strong>{currentItem.label}</strong>
@@ -378,10 +377,10 @@ function App() {
               }}
             />
           ) : null}
-          {visibleView === 'loyalty' ? <LoyaltyPage /> : null}
-          {visibleView === 'customers-create' ? <CustomerManagementPage mode="create" /> : null}
-          {visibleView === 'customers-list' ? <CustomerManagementPage mode="list" /> : null}
-          {visibleView === 'customer-profile' ? <CustomerManagementPage mode="profile" /> : null}
+          {visibleView === 'loyalty' ? <LoyaltyPage onViewChange={setCurrentView} /> : null}
+          {visibleView === 'customers-create' ? <CustomerManagementPage mode="create" onViewChange={setCurrentView} /> : null}
+          {visibleView === 'customers-list' ? <CustomerManagementPage mode="list" onViewChange={setCurrentView} /> : null}
+          {visibleView === 'customer-profile' ? <CustomerManagementPage mode="profile" onViewChange={setCurrentView} /> : null}
           {visibleView === 'history' ? <SalesHistoryPage /> : null}
           {visibleView === 'audit' ? <AuditLogPage /> : null}
           {visibleView === 'products-create' ? (

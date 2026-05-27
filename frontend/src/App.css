@@ -3,24 +3,27 @@
 :root {
   --color-bg: #0A0A0B;
   --color-bg-deep: #070708;
-  --color-panel: rgba(16, 16, 18, 0.78);
-  --color-panel-soft: rgba(255, 255, 255, 0.045);
+  --color-panel: #18140a;
+  --color-card: #201b0f;
+  --color-panel-soft: #201b0f;
   --color-ink: #FFFFFF;
   --color-muted: rgba(255, 255, 255, 0.45);
   --color-faint: rgba(255, 255, 255, 0.35);
-  --color-border: rgba(255, 255, 255, 0.10);
-  --color-border-strong: rgba(255, 255, 255, 0.18);
+  --color-border: rgba(215, 173, 85, 0.18);
+  --color-border-strong: rgba(215, 173, 85, 0.35);
+  --border-soft: rgba(215, 173, 85, 0.18);
+  --border-strong: rgba(215, 173, 85, 0.35);
   --color-dark: #000000;
   --color-dark-soft: #111113;
-  --color-blue: #C6A15B;
+  --color-blue: #d7ad55;
   --color-green: #34D399;
   --color-red: #F87171;
-  --color-gold: #C6A15B;
-  --color-gold-soft: #F3DFA8;
-  --color-gold-hover: #E0C077;
+  --color-gold: #d7ad55;
+  --color-gold-soft: #f6d78b;
+  --color-gold-hover: #c6943c;
   --shadow-premium: 0 30px 110px rgba(0, 0, 0, 0.43);
-  --shadow-gold: 0 18px 60px rgba(198, 161, 91, 0.28);
-  --shadow-gold-hover: 0 22px 75px rgba(198, 161, 91, 0.35);
+  --shadow-gold: 0 18px 60px rgba(215, 173, 85, 0.28);
+  --shadow-gold-hover: 0 22px 75px rgba(215, 173, 85, 0.35);
   --shadow-bar: 0 26px 100px rgba(0, 0, 0, 0.62);
   --font-sans: 'Inter', 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
@@ -503,15 +506,35 @@ h3 {
 .scanner-panel,
 .cart-panel,
 .checkout-footer-panel,
+.customer-premium-list-panel,
+.customer-premium-form-panel,
+.customer-premium-edit-modal {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(91, 58, 10, 0.22) !important;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.46), transparent 32%),
+    linear-gradient(135deg, #f8dc91 0%, #d8ad53 50%, #b97e24 100%) !important;
+  color: #211609 !important;
+  box-shadow:
+    0 26px 64px rgba(91, 58, 10, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+  backdrop-filter: blur(20px);
+}
+
 .stat-card,
 .product-card,
-.cart-item {
+.cart-item,
+.customer-premium-card,
+.customer-premium-metrics article {
   position: relative;
-  background: rgba(16, 16, 18, 0.78);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-card);
   overflow: hidden;
-  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(91, 58, 10, 0.16) !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  color: #211609 !important;
+  box-shadow:
+    0 12px 28px rgba(91, 58, 10, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
   backdrop-filter: blur(20px);
 }
 
@@ -693,10 +716,10 @@ h3 {
   width: 100%;
   height: 52px;
   padding: 0 16px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-input);
-  background: rgba(0, 0, 0, 0.30);
-  color: rgba(255, 255, 255, 0.80);
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: rgba(255, 255, 255, 0.90);
   font-family: inherit;
   font-size: 0.875rem;
   outline: none;
@@ -717,7 +740,7 @@ h3 {
 .search-input:focus,
 .scanner-row input:focus,
 .cart-quantity input:focus {
-  border-color: rgba(198, 161, 91, 0.7);
+  border-color: #d7ad55 !important;
 }
 
 .feedback-message {
@@ -8261,5 +8284,37 @@ button:disabled,
   .customer-premium-contact-box strong {
     text-align: left;
   }
+}
+
+/* Unificacao de contraste do Design System Gold */
+.hero-panel h1, .hero-panel h2, .hero-panel h3, .hero-panel p, .hero-panel span:not(.side-nav-icon):not(.brand-logo-letter), .hero-panel strong, .hero-panel label,
+.product-list-panel h1, .product-list-panel h2, .product-list-panel h3, .product-list-panel p, .product-list-panel span:not(.side-nav-icon), .product-list-panel strong, .product-list-panel label,
+.customer-premium-list-panel h1, .customer-premium-list-panel h2, .customer-premium-list-panel h3, .customer-premium-list-panel p, .customer-premium-list-panel span:not(.side-nav-icon), .customer-premium-list-panel strong, .customer-premium-list-panel label,
+.checkout-hero-panel h1, .checkout-hero-panel h2, .checkout-hero-panel h3, .checkout-hero-panel p, .checkout-hero-panel span:not(.side-nav-icon), .checkout-hero-panel strong, .checkout-hero-panel label,
+.scanner-panel h1, .scanner-panel h2, .scanner-panel h3, .scanner-panel p, .scanner-panel span:not(.side-nav-icon), .scanner-panel strong, .scanner-panel label,
+.cart-panel h1, .cart-panel h2, .cart-panel h3, .cart-panel p, .cart-panel span:not(.side-nav-icon), .cart-panel strong, .cart-panel label,
+.checkout-footer-panel h1, .checkout-footer-panel h2, .checkout-footer-panel h3, .checkout-footer-panel p, .checkout-footer-panel span:not(.side-nav-icon), .checkout-footer-panel strong, .checkout-footer-panel label,
+.stat-card h1, .stat-card h2, .stat-card h3, .stat-card p, .stat-card span:not(.side-nav-icon), .stat-card strong, .stat-card label,
+.product-card h1, .product-card h2, .product-card h3, .product-card p, .product-card span:not(.side-nav-icon), .product-card strong, .product-card label,
+.cart-item h1, .cart-item h2, .cart-item h3, .cart-item p, .cart-item span:not(.side-nav-icon), .cart-item strong, .cart-item label,
+.customer-premium-card h1, .customer-premium-card h2, .customer-premium-card h3, .customer-premium-card p, .customer-premium-card span:not(.side-nav-icon), .customer-premium-card strong, .customer-premium-card label,
+.customer-premium-form-panel h1, .customer-premium-form-panel h2, .customer-premium-form-panel h3, .customer-premium-form-panel p, .customer-premium-form-panel span:not(.side-nav-icon), .customer-premium-form-panel strong, .customer-premium-form-panel label,
+.customer-premium-edit-modal h1, .customer-premium-edit-modal h2, .customer-premium-edit-modal h3, .customer-premium-edit-modal p, .customer-premium-edit-modal span:not(.side-nav-icon), .customer-premium-edit-modal strong, .customer-premium-edit-modal label,
+.customer-premium-metrics article h1, .customer-premium-metrics article h2, .customer-premium-metrics article h3, .customer-premium-metrics article p, .customer-premium-metrics article span:not(.side-nav-icon), .customer-premium-metrics article strong, .customer-premium-metrics article label {
+  color: #211609 !important;
+}
+
+.customer-premium-contact-box span {
+  color: rgba(33, 22, 9, 0.65) !important;
+}
+.customer-premium-contact-box strong {
+  color: #211609 !important;
+}
+
+.customer-premium-metrics strong {
+  color: #211609 !important;
+}
+.customer-premium-metrics span {
+  color: rgba(33, 22, 9, 0.65) !important;
 }
 

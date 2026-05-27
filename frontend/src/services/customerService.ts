@@ -51,7 +51,7 @@ function toProfileExportQuery(filters: CustomerProfileExportFilters = {}) {
 }
 
 export async function downloadCustomerProfileExcelReport(customerId: number, filters: CustomerProfileExportFilters = {}) {
-  const response = await fetch(`${apiBaseUrl}/api/customers/${customerId}/profile/export.csv${toProfileExportQuery(filters)}`, {
+  const response = await fetch(`${apiBaseUrl}/api/customers/${customerId}/profile/export${toProfileExportQuery(filters)}`, {
     headers: {
       Accept: 'text/csv',
       ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),

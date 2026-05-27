@@ -312,6 +312,7 @@ public class CustomerServiceImpl implements CustomerService {
         return customerMapper.toResponse(customerRepository.save(customer));
     }
 
+
     @Override
     @Transactional
     public CustomerResponse update(Long customerId, CustomerRequest request) {
@@ -333,6 +334,8 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setAddress(normalize(request.address()));
         customer.setBirthDate(request.birthDate());
         customer.setActive(request.active() == null || request.active());
+        customer.setObservations(request.observations() != null ? request.observations().trim() : null);
+        customer.setCreditLimit(request.creditLimit());
     }
 
     private void validateUniqueFields(CustomerRequest request, Long currentCustomerId) {

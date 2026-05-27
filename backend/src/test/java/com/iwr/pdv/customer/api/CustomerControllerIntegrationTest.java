@@ -168,7 +168,7 @@ class CustomerControllerIntegrationTest {
         createCashSale(product.getId(), customer.getId(), 1);
         createPromissorySale(product.getId(), customer.getId());
 
-        mockMvc.perform(get("/api/customers/{customerId}/profile/export.csv", customer.getId())
+        mockMvc.perform(get("/api/customers/{customerId}/profile/export", customer.getId())
                         .header("Authorization", adminAuthHeader)
                         .param("saleStatus", "COMPLETED")
                         .param("noteStatus", "PENDING"))

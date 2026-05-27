@@ -3,6 +3,7 @@ package com.iwr.pdv.customer.api.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record CustomerRequest(
@@ -19,6 +20,9 @@ public record CustomerRequest(
         @Size(max = 240, message = "The customer address must have at most 240 characters.")
         String address,
         LocalDate birthDate,
-        Boolean active
+        Boolean active,
+        @Size(max = 1000, message = "The customer observations must have at most 1000 characters.")
+        String observations,
+        BigDecimal creditLimit
 ) {
 }

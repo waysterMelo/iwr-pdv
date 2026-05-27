@@ -22,7 +22,9 @@ public class CustomerMapper {
                 customer.getBirthDate(),
                 customer.getActive(),
                 customer.getCreatedAt(),
-                customer.getUpdatedAt()
+                customer.getUpdatedAt(),
+                customer.getObservations(),
+                customer.getCreditLimit()
         );
     }
 }
