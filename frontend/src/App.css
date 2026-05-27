@@ -1,29 +1,52 @@
 /* Fonts loaded via index.html <link> for Playfair Display + Inter */
 
 :root {
-  --color-bg: #0A0A0B;
-  --color-bg-deep: #070708;
-  --color-panel: #18140a;
-  --color-card: #201b0f;
-  --color-panel-soft: #201b0f;
-  --color-ink: #FFFFFF;
-  --color-muted: rgba(255, 255, 255, 0.45);
-  --color-faint: rgba(255, 255, 255, 0.35);
-  --color-border: rgba(215, 173, 85, 0.18);
-  --color-border-strong: rgba(215, 173, 85, 0.35);
-  --border-soft: rgba(215, 173, 85, 0.18);
-  --border-strong: rgba(215, 173, 85, 0.35);
+  /* Novas Variaveis de Cores (Alto Contraste) */
+  --bg-main: #070A12;
+  --surface-dark: #0B0F19;
+  --surface-elevated: #111827;
+  --surface-gold: linear-gradient(135deg, #F4D77A, #D4A32F);
+  --gold-strong: #D6A028;
+  --gold-light: #F5D77B;
+  
+  --text-main: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  
+  --text-on-gold: #16120A;
+  --text-on-gold-secondary: #3F3216;
+  
+  --border-dark: rgba(255,255,255,0.10);
+  --border-gold: rgba(214,160,40,0.45);
+  
+  --status-error: #EF4444;
+  --status-success: #22C55E;
+  --status-warning: #F59E0B;
+
+  /* Mapeamento das Variaveis Antigas */
+  --color-bg: var(--bg-main);
+  --color-bg-deep: #05070D;
+  --color-panel: var(--surface-dark);
+  --color-card: var(--surface-elevated);
+  --color-panel-soft: var(--surface-elevated);
+  --color-ink: var(--text-main);
+  --color-muted: var(--text-secondary);
+  --color-faint: var(--text-muted);
+  --color-border: var(--border-dark);
+  --color-border-strong: var(--border-gold);
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --border-strong: var(--border-gold);
   --color-dark: #000000;
-  --color-dark-soft: #111113;
-  --color-blue: #d7ad55;
-  --color-green: #34D399;
-  --color-red: #F87171;
-  --color-gold: #d7ad55;
-  --color-gold-soft: #f6d78b;
-  --color-gold-hover: #c6943c;
+  --color-dark-soft: #16120A;
+  --color-blue: var(--gold-light);
+  --color-green: var(--status-success);
+  --color-red: var(--status-error);
+  --color-gold: var(--gold-strong);
+  --color-gold-soft: var(--gold-light);
+  --color-gold-hover: #D4A32F;
   --shadow-premium: 0 30px 110px rgba(0, 0, 0, 0.43);
-  --shadow-gold: 0 18px 60px rgba(215, 173, 85, 0.28);
-  --shadow-gold-hover: 0 22px 75px rgba(215, 173, 85, 0.35);
+  --shadow-gold: 0 18px 60px rgba(214, 160, 40, 0.28);
+  --shadow-gold-hover: 0 22px 75px rgba(214, 160, 40, 0.35);
   --shadow-bar: 0 26px 100px rgba(0, 0, 0, 0.62);
   --font-sans: 'Inter', 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
@@ -1764,7 +1787,7 @@ input[type="date"] {
   border: 1px solid var(--color-border);
   border-radius: 0;
   background: #fff;
-  color: var(--color-ink);
+  color: #111113; /* FIX: Contrast adjustment */
   outline: none;
 }
 
@@ -8061,14 +8084,15 @@ button:disabled,
 .customer-premium-primary-button {
   border: 1px solid rgba(215, 173, 85, 0.65);
   background: linear-gradient(135deg, #f2cf7a, #c69030);
-  color: #101117;
+  color: #000000;
+  font-weight: 900;
 }
 
 .customer-premium-secondary-button,
 .customer-premium-card-actions button {
-  border: 1px solid rgba(33, 22, 9, 0.22) !important;
-  background: rgba(33, 22, 9, 0.05) !important;
-  color: #211609 !important;
+  border: 1px solid rgba(215, 173, 85, 0.22) !important;
+  background: rgba(215, 173, 85, 0.05) !important;
+  color: #f6d78b !important;
 }
 
 .customer-premium-primary-button:hover {
@@ -8077,8 +8101,8 @@ button:disabled,
 
 .customer-premium-secondary-button:hover,
 .customer-premium-card-actions button:hover {
-  background: rgba(33, 22, 9, 0.12) !important;
-  border-color: #211609 !important;
+  background: rgba(215, 173, 85, 0.12) !important;
+  border-color: #f6d78b !important;
   transform: translateY(-1px);
 }
 
@@ -8538,7 +8562,7 @@ button:disabled,
 /* /* Unificacao de contraste do Design System Gold - Aplicado estritamente para cards e métricas com fundo claro brilhante */
 .stat-card h1, .stat-card h2, .stat-card h3, .stat-card p, .stat-card span:not(.side-nav-icon), .stat-card strong, .stat-card label,
 .customer-premium-metrics article h1, .customer-premium-metrics article h2, .customer-premium-metrics article h3, .customer-premium-metrics article p, .customer-premium-metrics article span:not(.side-nav-icon), .customer-premium-metrics article strong, .customer-premium-metrics article label {
-  color: #211609 !important;
+  color: var(--text-dark-primary) !important;
 }
 
 .customer-premium-contact-box span {

@@ -586,7 +586,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
         description: `Parcela ${note.installmentNumber}/${note.totalInstallments} referente à Venda ${note.saleId ? `#${note.saleId}` : 'Avulsa'}`,
         value: note.amount,
         icon: FileText,
-        color: '#aeb8c8'
+        color: 'var(--text-secondary)'
       })
 
       if (note.status !== 'CANCELLED') {
@@ -827,29 +827,29 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
       <style>{`
         .customer-premium-card {
           background: rgba(255, 250, 235, 0.72) !important;
-          border: 1px solid rgba(91, 58, 10, 0.16) !important;
+          border: 1px solid rgba(215, 173, 85, 0.16) !important;
           border-radius: 16px !important;
           padding: 18px !important;
-          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+          box-shadow: 0 12px 28px rgba(215, 173, 85, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
           transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
           color: #211609 !important;
         }
         .customer-premium-card:hover {
           transform: translateY(-3px) scale(1.01);
-          border-color: rgba(33, 22, 9, 0.34) !important;
-          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+          border-color: rgba(215, 173, 85, 0.34) !important;
+          box-shadow: 0 12px 28px rgba(215, 173, 85, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
         }
         .customer-premium-list-panel {
           background: radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.46), transparent 32%), linear-gradient(135deg, #f8dc91 0%, #d8ad53 50%, #b97e24 100%) !important;
           color: #211609 !important;
-          border: 1px solid rgba(91, 58, 10, 0.22) !important;
+          border: 1px solid rgba(215, 173, 85, 0.22) !important;
           border-radius: 18px !important;
           padding: 22px !important;
-          box-shadow: 0 26px 64px rgba(91, 58, 10, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+          box-shadow: 0 26px 64px rgba(215, 173, 85, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
         }
         .customer-premium-edit-btn:hover, .customer-premium-felicitar-btn:hover {
           transform: scale(1.02);
-          box-shadow: 0 4px 12px rgba(33, 22, 9, 0.3) !important;
+          box-shadow: 0 4px 12px rgba(215, 173, 85, 0.3) !important;
         }
         .product-premium-card:hover {
           transform: translateY(-3px);
@@ -1011,7 +1011,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       onChange={(event) => setForm((current) => ({ ...current, observations: event.target.value }))}
                       placeholder="Preferências, histórico de negociação, restrições..."
                       rows={3}
-                      style={{ background: 'rgba(0, 0, 0, 0.65)', color: '#fff', border: '1px solid rgba(91, 58, 10, 0.35)', borderRadius: '12px', padding: '12px', width: '100%', resize: 'vertical' }}
+                      style={{ background: 'rgba(0, 0, 0, 0.65)', color: '#fff', border: '1px solid rgba(215, 173, 85, 0.35)', borderRadius: '12px', padding: '12px', width: '100%', resize: 'vertical' }}
                     />
                   </div>
                 </div>
@@ -1036,19 +1036,19 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
             <section className="customer-premium-list-panel customer-directory-panel">
               <header className="section-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <span aria-hidden="true" style={{ background: 'rgba(91, 58, 10, 0.12)', padding: '10px', borderRadius: '12px', color: '#5b3a0a', display: 'inline-flex' }}>
+                  <span aria-hidden="true" style={{ background: 'rgba(215, 173, 85, 0.12)', padding: '10px', borderRadius: '12px', color: 'var(--gold-strong)', display: 'inline-flex' }}>
                     <Users size={22} strokeWidth={2.4} />
                   </span>
                   <div>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#211609' }}>Listar / editar clientes</h2>
-                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'rgba(33, 22, 9, 0.75)' }}>Busca rápida por nome ou CPF para visualizar e gerenciar perfis no sistema.</p>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Listar / editar clientes</h2>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Busca rápida por nome ou CPF para visualizar e gerenciar perfis no sistema.</p>
                   </div>
                 </div>
               </header>
 
-              <form className="customer-premium-search" onSubmit={handleSearchSubmit} style={{ gap: '16px', background: '#211609', padding: '18px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', margin: '20px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'end' }}>
+              <form className="customer-premium-search" onSubmit={handleSearchSubmit} style={{ gap: '16px', background: 'rgba(255, 255, 255, 0.03)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(215, 173, 85, 0.25)', margin: '20px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'end' }}>
                 <div className="field-group" style={{ flex: 1, minWidth: '200px' }}>
-                  <label htmlFor="customerListSearch" style={{ color: '#f9e7b5', fontWeight: 'bold', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente</label>
+                  <label htmlFor="customerListSearch" style={{ color: 'var(--gold-strong)', fontWeight: 'bold', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente</label>
                   <div className="customer-premium-search-input" style={{ position: 'relative' }}>
                     <Search size={16} aria-hidden="true" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#d7ad55' }} />
                     <input
@@ -1056,7 +1056,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       placeholder="Nome do cliente ou CPF..."
-                      style={{ paddingLeft: '44px', width: '100%', height: '52px', background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(91, 58, 10, 0.35)', borderRadius: '12px', color: '#f9e7b5' }}
+                      style={{ paddingLeft: '44px', width: '100%', height: '52px', background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(215, 173, 85, 0.35)', borderRadius: '12px', color: '#fff' }}
                     />
                     {search ? (
                       <button
@@ -1067,7 +1067,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                           setCustomerPage(0)
                         }}
                         aria-label="Limpar busca"
-                        style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#f9e7b5', cursor: 'pointer' }}
+                        style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
@@ -1092,8 +1092,8 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                         <div>
                           <div className="customer-premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                             <div>
-                              <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#211609', fontWeight: 600 }}>{customer.name}</h3>
-                              <span style={{ fontSize: '0.72rem', color: 'rgba(33, 22, 9, 0.65)', fontFamily: 'monospace' }}>
+                              <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#fff', fontWeight: 600 }}>{customer.name}</h3>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
                                 {customer.cpf ? maskCpf(customer.cpf) : 'Sem CPF'}
                               </span>
                             </div>
@@ -1211,7 +1211,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
           ) : null}
 
           {showProfile ? (
-            <section className="product-list-panel customer-list-panel relationship-client-panel" style={{ background: '#18140a', border: '1px solid rgba(215, 173, 85, 0.18)', borderRadius: '18px', padding: '22px', color: '#e5e7eb', boxShadow: '0 24px 70px rgba(0,0,0,0.26)' }}>
+            <section className="product-list-panel customer-list-panel relationship-client-panel" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(215, 173, 85, 0.18)', borderRadius: '18px', padding: '22px', color: '#e5e7eb', boxShadow: '0 24px 70px rgba(0,0,0,0.26)' }}>
               <header className="section-header relationship-client-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <div className="relationship-client-title" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <span className="relationship-client-icon" aria-hidden="true" style={{ background: 'rgba(215, 173, 85, 0.15)', padding: '10px', borderRadius: '12px', color: '#d7ad55' }}>
@@ -1219,7 +1219,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                   </span>
                   <div>
                     <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Consulta completa do cliente</h2>
-                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#aeb8c8' }}>Visão administrativa com compras, linha do tempo, produtos, promissórias e análise de risco.</p>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Visão administrativa com compras, linha do tempo, produtos, promissórias e análise de risco.</p>
                   </div>
                 </div>
 
@@ -1287,7 +1287,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                 )}
               </header>
 
-              <div className="history-filter-form customer-profile-search" style={{ gap: '16px', background: '#211609', padding: '18px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', margin: '20px 0', display: 'flex', flexWrap: 'wrap' }}>
+              <div className="history-filter-form customer-profile-search" style={{ gap: '16px', background: 'rgba(255, 255, 255, 0.03)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(215, 173, 85, 0.35)', margin: '20px 0', display: 'flex', flexWrap: 'wrap' }}>
                 <div className="field-group" style={{ flex: 1, minWidth: '200px' }}>
                   <label htmlFor="customerProfileSearch">Filtrar lista de clientes</label>
                   <input
@@ -1319,7 +1319,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
               </div>
 
               {customerProfile ? (
-                <div className="history-filter-form customer-profile-filter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: '#211609', padding: '16px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', marginBottom: '20px' }}>
+                <div className="history-filter-form customer-profile-filter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(215, 173, 85, 0.35)', marginBottom: '20px' }}>
                   <div className="field-group">
                     <label htmlFor="profileStartDate">Início Venc./Compra</label>
                     <input id="profileStartDate" type="date" value={profileFilters.startDate} onChange={(event) => setProfileFilters((current) => ({ ...current, startDate: event.target.value }))} style={{ colorScheme: 'dark' }} />
@@ -1380,14 +1380,14 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
               {isProfileLoading ? (
                 <div className="product-empty">Carregando perfil do cliente...</div>
               ) : !customerProfile ? (
-                <div className="product-empty" style={{ background: '#211609', borderRadius: '16px', padding: '40px', border: '1px solid rgba(91, 58, 10, 0.35)', color: '#f9e7b5' }}>Selecione um cliente para visualizar o perfil completo.</div>
+                <div className="product-empty" style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '40px', border: '1px solid rgba(215, 173, 85, 0.35)', color: 'var(--gold-strong)' }}>Selecione um cliente para visualizar o perfil completo.</div>
               ) : (
                 <div style={{ display: 'grid', gap: '20px' }}>
                   {/* Perfil e Scores */}
                   <article className="cart-item" style={{ background: '#121722', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '14px', padding: '22px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                        <span style={{ display: 'inline-block', background: '#151922', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace' }}>
+                        <span style={{ display: 'inline-block', background: 'var(--surface-elevated)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace' }}>
                           {customerProfile.customer.cpf ? maskCpf(customerProfile.customer.cpf) : 'Sem CPF'}
                         </span>
                         
@@ -1397,7 +1397,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                           if (score === 'Atenção') style = { background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
                           if (score === 'Inadimplente') style = { background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }
                           if (score === 'Cliente recorrente') style = { background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }
-                          if (score === 'Alto valor') style = { background: 'rgba(215,173,85,0.15)', color: '#f6d78b', border: '1px solid rgba(215,173,85,0.35)' }
+                          if (score === 'Alto valor') style = { background: 'rgba(215,173,85,0.15)', color: 'var(--gold-strong)', border: '1px solid rgba(215,173,85,0.35)' }
                           if (score === 'Aniversariante') style = { background: 'rgba(244,63,94,0.15)', color: '#fb7185', border: '1px solid rgba(244,63,94,0.25)' }
 
                           return (
@@ -1408,7 +1408,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                         })}
                       </div>
                       <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: '1.4rem' }}>{customerProfile.customer.name}</h3>
-                      <small style={{ color: '#aeb8c8', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                      <small style={{ color: 'var(--text-secondary)', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                         <span><Phone size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.phone ? maskPhone(customerProfile.customer.phone) : 'Sem telefone'}</span>
                         {customerProfile.customer.email ? <span><Mail size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.email}</span> : null}
                         {customerProfile.customer.birthDate ? <span><Gift size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{formatDate(customerProfile.customer.birthDate)}</span> : null}
@@ -1417,7 +1417,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(120px, 1fr))', gap: '12px', minWidth: '300px' }}>
-                      <strong style={{ color: '#f6d78b', fontSize: '1.2rem' }}>{formatCurrency(totalPurchasedAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Total comprado</span></strong>
+                      <strong style={{ color: 'var(--gold-strong)', fontSize: '1.2rem' }}>{formatCurrency(totalPurchasedAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Total comprado</span></strong>
                       <strong style={{ color: '#fb7185', fontSize: '1.2rem' }}>{formatCurrency(openPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Saldo aberto</span></strong>
                       <strong style={{ color: '#fb7185', fontSize: '1.2rem' }}>{formatCurrency(overduePromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Vencido</span></strong>
                       <strong style={{ color: '#2dd4bf', fontSize: '1.2rem' }}>{formatCurrency(paidPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 'normal' }}>Pago</span></strong>
@@ -1469,7 +1469,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       return (
                         <div className="promissory-mini-card" key={String(label)} style={{ background: '#111827', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '10px', padding: '16px' }}>
                           <MetricIcon size={16} style={{ color: '#d7ad55', marginBottom: '8px' }} />
-                          <span style={{ display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', color: '#aeb8c8', fontWeight: 900 }}>{String(label)}</span>
+                          <span style={{ display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 900 }}>{String(label)}</span>
                           <strong style={{ display: 'block', fontSize: '1.35rem', color: '#fff' }}>{String(value)}</strong>
                           <small style={{ color: '#707b8c', fontSize: '0.72rem' }}>{String(caption)}</small>
                         </div>
@@ -1478,7 +1478,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                   </div>
 
                   {/* Seleção de Abas */}
-                  <div className="customer-profile-tabs" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', background: '#211609', padding: '6px', borderRadius: '12px', border: '1px solid rgba(91, 58, 10, 0.35)' }}>
+                  <div className="customer-profile-tabs" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', background: 'rgba(255, 255, 255, 0.03)', padding: '6px', borderRadius: '12px', border: '1px solid rgba(215, 173, 85, 0.35)' }}>
                     {[
                       ['summary', 'Painel de Controle'],
                       ['timeline', `Linha do Tempo (${timelineEvents.length})`],
@@ -1607,7 +1607,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                             </div>
                             <div style={{ background: '#0b0d13', padding: '10px', borderRadius: '8px' }}>
                               <span style={{ color: '#707b8c', display: 'block' }}>Taxa de Quitação</span>
-                              <strong style={{ color: '#f6d78b', fontSize: '1rem' }}>
+                              <strong style={{ color: 'var(--gold-strong)', fontSize: '1rem' }}>
                                 {totalPurchasedAmount > 0 
                                   ? `${Math.round((paidPromissoryAmount / totalPurchasedAmount) * 100)}%` 
                                   : '0%'}
@@ -1648,7 +1648,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
 
                   {/* Aba Linha do Tempo */}
                   {profileTab === 'timeline' ? (
-                    <section style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                    <section style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
                       <header style={{ marginBottom: '20px' }}>
                         <h3 style={{ color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <Clock size={18} style={{ color: '#d7ad55' }} />
@@ -1673,7 +1673,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                                     <strong style={{ color: '#fff', fontSize: '0.92rem' }}>{event.title}</strong>
                                     <small style={{ color: '#707b8c', fontSize: '0.75rem' }}>{formatNullableDateTime(event.date)}</small>
                                   </div>
-                                  <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#aeb8c8' }}>{event.description}</p>
+                                  <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{event.description}</p>
                                   {event.value !== undefined && (
                                     <strong style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.85rem', color: event.color }}>
                                       {formatCurrency(event.value)}
@@ -1720,10 +1720,10 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
 
                   {/* Aba Compras */}
                   {profileTab === 'sales' ? (
-                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                    <section className="promissory-detail-section" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
                       <header className="section-header" style={{ marginBottom: '16px' }}><h3 style={{ color: '#fff', margin: 0 }}>Compras</h3></header>
                       {filteredCompletedSales.length === 0 ? <div className="product-empty">Nenhuma compra encontrada.</div> : completedSalesPagination.pageItems.map((sale) => (
-                        <details className="promissory-history-item" key={sale.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                        <details className="promissory-history-item" key={sale.id} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
                           <summary style={{ cursor: 'pointer', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>Venda #{sale.id} - {formatNullableDateTime(sale.soldAt)} - {formatPaymentMethod(sale.paymentMethod)} - {formatCurrency(sale.totalAmount)}</span>
                             <button
@@ -1739,7 +1739,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                             </button>
                           </summary>
                           <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
-                            {sale.items.map((item) => <div key={item.id} style={{ color: '#aeb8c8' }}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
+                            {sale.items.map((item) => <div key={item.id} style={{ color: 'var(--text-secondary)' }}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
                             <small style={{ color: '#707b8c' }}>Desconto: {formatCurrency(sale.discountAmount)} | Operador: {sale.operator?.displayName ?? '-'}</small>
                           </div>
                         </details>
@@ -1750,7 +1750,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
 
                   {/* Aba Produtos Favoritos */}
                   {profileTab === 'products' ? (
-                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                    <section className="promissory-detail-section" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
                       <header className="section-header" style={{ marginBottom: '20px' }}>
                         <h3 style={{ color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <Heart size={16} style={{ color: '#fb7185' }} />
@@ -1760,8 +1760,8 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       </header>
                       
                       {filteredPurchasedItems.length > 0 && (
-                        <div style={{ background: '#0d1016', padding: '18px', borderRadius: '12px', border: '1px solid rgba(226,232,240,0.06)', marginBottom: '20px' }}>
-                          <h4 style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#aeb8c8' }}>Top 5 Produtos mais Comprados:</h4>
+                        <div style={{ background: 'var(--surface-dark)', padding: '18px', borderRadius: '12px', border: '1px solid rgba(226,232,240,0.06)', marginBottom: '20px' }}>
+                          <h4 style={{ margin: '0 0 12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Top 5 Produtos mais Comprados:</h4>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             {filteredPurchasedItems
                               .slice(0, 5)
@@ -1791,7 +1791,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                               className="product-premium-card" 
                               key={item.productId} 
                               style={{ 
-                                background: '#0d1016', 
+                                background: 'var(--surface-dark)', 
                                 border: '1px solid rgba(215, 173, 85, 0.12)', 
                                 borderRadius: '16px', 
                                 padding: '16px', 
@@ -1839,7 +1839,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
 
                   {/* Aba Promissórias */}
                   {profileTab === 'notes' ? (
-                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                    <section className="promissory-detail-section" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
                       <header className="section-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '16px', flexWrap: 'wrap' }}>
                         <h3 style={{ color: '#fff', margin: 0 }}>Promissórias</h3>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', color: '#cbd5e1' }}>
@@ -1870,7 +1870,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                                     </span>
                                   </div>
                                   <div style={{ display: 'flex', gap: '12px', fontSize: '0.8rem' }}>
-                                    <span>Total: <strong style={{ color: '#f6d78b' }}>{formatCurrency(group.saleTotal)}</strong></span>
+                                    <span>Total: <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(group.saleTotal)}</strong></span>
                                     <span>Pago: <strong style={{ color: '#2dd4bf' }}>{formatCurrency(totalPago)}</strong></span>
                                     <span>Aberto: <strong style={{ color: totalAberto > 0 ? '#fb7185' : '#2dd4bf' }}>{formatCurrency(totalAberto)}</strong></span>
                                     {vencidas > 0 && <span style={{ color: '#fb7185', fontWeight: 'bold' }}>({vencidas} vencida!)</span>}
@@ -1883,7 +1883,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                                         <span>Parcela {note.installmentNumber}/{note.totalInstallments} - {noteStatusLabels[note.status as PromissoryNoteStatus]} - Venc. {formatDate(note.dueDate)}</span>
                                         <strong>Saldo {formatCurrency(note.remainingAmount)}</strong>
                                       </summary>
-                                      <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: '#aeb8c8', fontSize: '0.8rem' }}>
+                                      <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                                           <span>Código Promissória: #{note.id} | Valor original: {formatCurrency(note.amount)}</span>
                                           <div style={{ display: 'flex', gap: '6px' }}>
@@ -1956,12 +1956,12 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       ) : (
                         // Renderização corrida das promissórias (original mas com melhorias)
                         notesPagination.pageItems.map((note) => (
-                          <details className="promissory-history-item" key={note.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                          <details className="promissory-history-item" key={note.id} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
                             <summary style={{ cursor: 'pointer', color: note.status === 'OVERDUE' ? '#fb7185' : '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span>Nota #{note.id} - {noteStatusLabels[note.status as PromissoryNoteStatus]} - Venc. {formatDate(note.dueDate)}</span>
                               <strong>Saldo {formatCurrency(note.remainingAmount)}</strong>
                             </summary>
-                            <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: '#aeb8c8', fontSize: '0.8rem' }}>
+                            <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                                 <span>Venda: {note.saleId ? `#${note.saleId}` : 'Avulsa'} | Parcela {note.installmentNumber}/{note.totalInstallments} | Valor: {formatCurrency(note.amount)}</span>
                                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -2033,18 +2033,18 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
 
                   {/* Aba Cancelados */}
                   {profileTab === 'cancelled' ? (
-                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                    <section className="promissory-detail-section" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
                       <header className="section-header" style={{ marginBottom: '16px' }}><h3 style={{ color: '#fff', margin: 0 }}>Cancelados</h3></header>
                       {filteredCancelledSales.length === 0 && filteredCancelledNotes.length === 0 ? <div className="product-empty">Nenhum cancelamento encontrado.</div> : null}
                       {cancelledSalesPagination.pageItems.map((sale) => (
-                        <div key={sale.id} className="promissory-history-item" style={{ background: '#0d1016', border: '1px solid rgba(251,113,133,0.18)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                        <div key={sale.id} className="promissory-history-item" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(251,113,133,0.18)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
                           <strong style={{ color: '#fff' }}>Venda #{sale.id} - {formatCurrency(sale.totalAmount)}</strong>
                           <small style={{ display: 'block', color: '#fb7185' }}>{formatNullableDateTime(sale.cancelledAt)} - {sale.cancellationReason ?? 'Sem motivo registrado'}</small>
                         </div>
                       ))}
                       <PaginationControls itemLabel="vendas canceladas" page={cancelledSalesPagination.page} pageSize={cancelledSalesPagination.pageSize} totalItems={cancelledSalesPagination.totalItems} totalPages={cancelledSalesPagination.totalPages} onPageChange={cancelledSalesPagination.setPage} />
                       {cancelledNotesPagination.pageItems.map((note) => (
-                        <div key={note.id} className="promissory-history-item" style={{ background: '#0d1016', border: '1px solid rgba(251,113,133,0.18)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                        <div key={note.id} className="promissory-history-item" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(251,113,133,0.18)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
                           <strong style={{ color: '#fff' }}>Nota #{note.id} cancelada</strong>
                           <small style={{ display: 'block', color: '#fb7185' }}>Venda: {note.saleId ?? 'Avulsa'} | Valor: {formatCurrency(note.amount)}</small>
                         </div>
@@ -2071,19 +2071,19 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                 </div>
               </header>
 
-              <div className="history-filter-form customer-profile-search" style={{ gap: '16px', background: '#0d1016', padding: '18px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.08)', margin: '20px 0' }}>
+              <div className="history-filter-form customer-profile-search" style={{ gap: '16px', background: 'var(--surface-dark)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.08)', margin: '20px 0' }}>
                 <div className="field-group" style={{ flex: 1 }}>
-                  <label htmlFor="customerProfileSearch" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Filtrar Lista</label>
+                  <label htmlFor="customerProfileSearch" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Filtrar Lista</label>
                   <input
                     id="customerProfileSearch"
                     value={profileSearch}
                     onChange={(event) => setProfileSearch(event.target.value)}
                     placeholder="Filtrar por nome do cliente..."
-                    style={{ background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '12px', minHeight: '48px', padding: '0 16px' }}
+                    style={{ background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '12px', minHeight: '48px', padding: '0 16px' }}
                   />
                 </div>
                 <div className="field-group" style={{ flex: 1 }}>
-                  <label htmlFor="customerProfileSelect" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Selecione o Cliente</label>
+                  <label htmlFor="customerProfileSelect" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Selecione o Cliente</label>
                   <select
                     id="customerProfileSelect"
                     value={selectedProfileCustomerId}
@@ -2093,7 +2093,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                         setCustomerProfile(null)
                       }
                     }}
-                    style={{ background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '12px', minHeight: '48px', padding: '0 16px', width: '100%' }}
+                    style={{ background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '12px', minHeight: '48px', padding: '0 16px', width: '100%' }}
                   >
                     <option value="">Selecione um cliente para consulta...</option>
                     {profileOptions.map((customer) => (
@@ -2106,16 +2106,16 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
               {isProfileLoading ? (
                 <div className="product-empty">Carregando perfil do cliente...</div>
               ) : !customerProfile ? (
-                <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Selecione um cliente para visualizar o perfil completo.</div>
+                <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Selecione um cliente para visualizar o perfil completo.</div>
               ) : (
                 <div className="cart-list" style={{ display: 'grid', gap: '22px' }}>
-                  <article className="cart-item" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <article className="cart-item" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div className="cart-item-main">
-                      <span style={{ display: 'inline-block', background: '#151922', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace', marginBottom: '8px' }}>
+                      <span style={{ display: 'inline-block', background: 'var(--surface-elevated)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace', marginBottom: '8px' }}>
                         {customerProfile.customer.cpf ? maskCpf(customerProfile.customer.cpf) : 'Sem CPF'}
                       </span>
                       <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', color: '#fff', fontWeight: 500 }}>{customerProfile.customer.name}</h3>
-                      <small style={{ color: '#aeb8c8', display: 'block', fontSize: '0.85rem' }}>
+                      <small style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.85rem' }}>
                         <Phone size={12} style={{ marginRight: '6px', verticalAlign: 'middle', color: '#d7ad55' }} />
                         {customerProfile.customer.phone ? maskPhone(customerProfile.customer.phone) : 'Sem telefone cadastrado'}
                         {customerProfile.customer.email && (
@@ -2145,23 +2145,23 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       </div>
                       <div className="cart-price" style={{ textAlign: 'center' }}>
                         <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#707b8c', fontWeight: 900 }}>Total Comprado</span>
-                        <strong style={{ display: 'block', fontSize: '1.5rem', color: '#f6d78b', marginTop: '4px' }}>{formatCurrency(customerProfile.totalPurchasedAmount)}</strong>
+                        <strong style={{ display: 'block', fontSize: '1.5rem', color: 'var(--gold-strong)', marginTop: '4px' }}>{formatCurrency(customerProfile.totalPurchasedAmount)}</strong>
                       </div>
                     </div>
                   </article>
 
                   <div className="promissory-mini-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                    <div className="promissory-mini-card" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#aeb8c8', fontWeight: 900 }}>Valor em Aberto</span>
+                    <div className="promissory-mini-card" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 900 }}>Valor em Aberto</span>
                       <strong style={{ fontSize: '1.5rem', color: '#f2cf7a' }}>{formatCurrency(customerProfile.openPromissoryAmount)}</strong>
                       <small style={{ fontSize: '0.75rem', color: '#707b8c' }}>{customerProfile.openPromissoryCount} nota(s) em aberto</small>
                     </div>
-                    <div className="promissory-mini-card" style={{ background: '#101117', border: '1px solid rgba(251,113,133,0.2)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div className="promissory-mini-card" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(251,113,133,0.2)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#fecdd3', fontWeight: 900 }}>Valor Vencido</span>
                       <strong style={{ fontSize: '1.5rem', color: '#fb7185' }}>{formatCurrency(customerProfile.overduePromissoryAmount)}</strong>
                       <small style={{ fontSize: '0.75rem', color: '#fb7185' }}>{customerProfile.overduePromissoryCount} nota(s) atrasada(s)</small>
                     </div>
-                    <div className="promissory-mini-card" style={{ background: '#101117', border: '1px solid rgba(45,212,191,0.2)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div className="promissory-mini-card" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(45,212,191,0.2)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#8ff2e7', fontWeight: 900 }}>Total Pago</span>
                       <strong style={{ fontSize: '1.5rem', color: '#2dd4bf' }}>{formatCurrency(customerProfile.paidPromissoryAmount)}</strong>
                       <small style={{ fontSize: '0.75rem', color: '#707b8c' }}>Liquidado com sucesso</small>
@@ -2169,7 +2169,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '22px' }}>
-                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px' }}>
+                    <section className="promissory-detail-section" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px' }}>
                       <header className="section-header" style={{ marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <CreditCard size={18} style={{ color: '#d7ad55' }} />
@@ -2182,14 +2182,14 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       ) : (
                         <div className="promissory-history-list" style={{ display: 'grid', gap: '12px' }}>
                           {customerProfile.purchasedItems.map((item) => (
-                            <div className="promissory-history-item" key={item.productId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="promissory-history-item" key={item.productId} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{item.productName}</strong>
                                 <small style={{ color: '#707b8c', fontSize: '0.75rem' }}>Código: {item.productCode} — {item.quantity} un.</small>
                               </div>
                               <div style={{ textAlign: 'right' }}>
                                 <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#707b8c', display: 'block' }}>Total</span>
-                                <strong style={{ color: '#f6d78b', fontSize: '0.95rem' }}>{formatCurrency(item.totalAmount)}</strong>
+                                <strong style={{ color: 'var(--gold-strong)', fontSize: '0.95rem' }}>{formatCurrency(item.totalAmount)}</strong>
                               </div>
                             </div>
                           ))}
@@ -2197,7 +2197,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       )}
                     </section>
 
-                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px' }}>
+                    <section className="promissory-detail-section" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px' }}>
                       <header className="section-header" style={{ marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <Receipt size={18} style={{ color: '#d7ad55' }} />
@@ -2210,19 +2210,19 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       ) : (
                         <div className="promissory-history-list" style={{ display: 'grid', gap: '12px' }}>
                           {customerProfile.latestSales.map((sale) => (
-                            <div className="promissory-history-item" key={sale.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="promissory-history-item" key={sale.id} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>Venda #{sale.id}</strong>
                                 <small style={{ color: '#707b8c', fontSize: '0.75rem' }}>Realizada em: {formatNullableDateTime(sale.soldAt)} — Método: {formatPaymentMethod(sale.paymentMethod)}</small>
                               </div>
-                              <strong style={{ color: '#f6d78b', fontSize: '0.95rem' }}>{formatCurrency(sale.totalAmount)}</strong>
+                              <strong style={{ color: 'var(--gold-strong)', fontSize: '0.95rem' }}>{formatCurrency(sale.totalAmount)}</strong>
                             </div>
                           ))}
                         </div>
                       )}
                     </section>
 
-                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px' }}>
+                    <section className="promissory-detail-section" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '24px' }}>
                       <header className="section-header" style={{ marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <DollarSign size={18} style={{ color: '#d7ad55' }} />
@@ -2235,7 +2235,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       ) : (
                         <div className="promissory-history-list" style={{ display: 'grid', gap: '12px' }}>
                           {customerProfile.promissoryNotes.map((note) => (
-                            <div className="promissory-history-item" key={note.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="promissory-history-item" key={note.id} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>Nota #{note.id}</strong>
                                 <small style={{ color: note.status === 'OVERDUE' ? '#fb7185' : '#707b8c', fontSize: '0.75rem', fontWeight: note.status === 'OVERDUE' ? 'bold' : 'normal' }}>
@@ -2394,7 +2394,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                     onChange={(event) => setForm((current) => ({ ...current, observations: event.target.value }))}
                     placeholder="Preferências, acordos de negociação..."
                     rows={3}
-                    style={{ background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '12px', padding: '12px', width: '100%', resize: 'vertical' }}
+                    style={{ background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', borderRadius: '12px', padding: '12px', width: '100%', resize: 'vertical' }}
                   />
                 </div>
               </div>
@@ -2417,3 +2417,6 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
     </main>
   )
 }
+
+
+

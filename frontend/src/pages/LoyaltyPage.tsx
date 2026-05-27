@@ -286,8 +286,8 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
                 <Gift size={22} strokeWidth={2.4} />
               </span>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#211609' }}>Calendário de Relacionamento</h2>
-                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'rgba(33, 22, 9, 0.75)' }}>Clientes ordenados pelo próximo aniversário de acordo com a seleção.</p>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#16120A' }}>Calendário de Relacionamento</h2>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#4B3A16' }}>Clientes ordenados pelo próximo aniversário de acordo com a seleção.</p>
               </div>
             </div>
           </header>
@@ -295,7 +295,7 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
           {isLoading ? (
             <div className="product-empty">Carregando aniversariantes...</div>
           ) : filteredCustomers.length === 0 ? (
-            <div className="product-empty" style={{ background: '#211609', color: '#f9e7b5', borderRadius: '16px', padding: '40px', border: '1px solid rgba(91, 58, 10, 0.22)' }}>Nenhum aniversariante cadastrado neste período.</div>
+            <div className="product-empty" style={{ background: 'var(--surface-elevated)', color: 'var(--text-secondary)', borderRadius: '16px', padding: '40px', border: '1px solid var(--border-gold)' }}>Nenhum aniversariante cadastrado neste período.</div>
           ) : (
             <div className="customer-premium-card-grid" style={{ marginTop: '20px' }}>
               {birthdayPagination.pageItems.map((customer) => {
@@ -315,7 +315,7 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
                     <div>
                       <div className="customer-premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                         <div>
-                          <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#211609', fontWeight: 600 }}>{customer.name}</h3>
+                          <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#16120A', fontWeight: 600 }}>{customer.name}</h3>
                           <span className="product-card-code" style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#5b3a0a', fontFamily: 'monospace' }}>
                             <Cake size={12} />
                             {formatBirthDate(customer.birthDate as string)}
@@ -330,14 +330,14 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Phone size={13} style={{ color: '#5b3a0a' }} />
-                            <span style={{ color: 'rgba(33, 22, 9, 0.65)', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>Tel</span>
+                            <span style={{ color: '#4B3A16', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>Tel</span>
                           </div>
                           <strong>{customer.phone ? maskPhone(customer.phone) : 'Não informado'}</strong>
                         </div>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Mail size={13} style={{ color: '#5b3a0a' }} />
-                            <span style={{ color: 'rgba(33, 22, 9, 0.65)', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>E-mail</span>
+                            <span style={{ color: '#4B3A16', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>E-mail</span>
                           </div>
                           <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{customer.email || 'Não informado'}</strong>
                         </div>
@@ -474,8 +474,8 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
                     width: '100%',
                     minHeight: '120px',
                     background: 'rgba(0, 0, 0, 0.55)',
-                    color: '#f9e7b5',
-                    border: '1px solid rgba(91, 58, 10, 0.35)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-gold)',
                     borderRadius: '12px',
                     padding: '16px',
                     fontSize: '0.85rem',
@@ -522,3 +522,6 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
     </main>
   )
 }
+
+
+

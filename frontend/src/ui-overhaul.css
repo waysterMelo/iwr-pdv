@@ -1,0 +1,231 @@
+/* ==========================================================================
+   UI/UX OVERHAUL - PADRÕES DE ALTO CONTRASTE E HIERARQUIA PREMIUM
+   ========================================================================== */
+
+/* 1. Reset Global de Fundo */
+body {
+  background: var(--bg-main) !important;
+}
+
+/* 2. Labels em fundos escuros e dourados */
+label, .label, .field-group label {
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.04em !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+/* Quando label estiver dentro de um card com fundo dourado (como alguns cart-items e cards) */
+.cart-item label, 
+.cart-item .label,
+.sale-history-item label,
+.sale-history-item .label,
+[style*="linear-gradient"] label,
+[style*="var(--surface-gold)"] label,
+[style*="f6d78b"] label,
+.customer-premium-primary-button label {
+  color: #2B210D !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* 3. Textos Secundários em fundos gold */
+.cart-item small,
+.cart-item p:not(.title),
+.cart-item span:not(.badge),
+.sale-history-item p,
+.sale-history-item span {
+  color: #4B3A16 !important;
+  opacity: 1 !important;
+  font-weight: 600 !important;
+}
+
+/* Títulos em fundos gold */
+.cart-item h1, .cart-item h2, .cart-item h3, .cart-item strong,
+.sale-history-item h1, .sale-history-item h2, .sale-history-item h3, .sale-history-item strong {
+  color: #16120A !important;
+  font-weight: 800 !important;
+}
+
+/* 4. Inputs, Selects e Textareas - Padrão Global Escuro */
+input:not([type="checkbox"]):not([type="radio"]), 
+select, 
+textarea,
+.customer-premium-search-input input,
+.field-group input, .field-group select, .field-group textarea {
+  background: var(--surface-dark) !important;
+  border: 1px solid var(--border-gold) !important;
+  color: var(--text-main) !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 0.95rem !important;
+  transition: all 0.2s ease !important;
+}
+
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold-light) !important;
+  box-shadow: 0 0 0 3px rgba(245, 215, 123, 0.18) !important;
+  outline: none !important;
+}
+
+/* 5. Ícones em Cards Gold vs Cards Escuros */
+/* Fundo do Ícone no Card Escuro */
+.stat-card .icon-wrapper,
+.admin-card .icon-wrapper,
+.customer-premium-card .icon-wrapper,
+.product-card .icon-wrapper {
+  background: rgba(245,215,123,0.12) !important;
+  border-radius: 12px !important;
+  padding: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.stat-card .icon-wrapper svg,
+.admin-card .icon-wrapper svg,
+.customer-premium-card .icon-wrapper svg,
+.product-card .icon-wrapper svg {
+  color: var(--gold-strong) !important;
+}
+
+/* Fundo do Ícone no Card Gold */
+.cart-item .icon-wrapper,
+.sale-history-item .icon-wrapper {
+  background: rgba(0,0,0,0.10) !important;
+  border-radius: 12px !important;
+  padding: 10px !important;
+  display: inline-flex !important;
+}
+
+.cart-item .icon-wrapper svg,
+.sale-history-item .icon-wrapper svg,
+.cart-item > svg {
+  color: #16120A !important;
+}
+
+/* 6. Botões Gerais e Secundários */
+.secondary-button, .customer-premium-secondary-button {
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--border-gold) !important;
+  color: var(--text-main) !important;
+  font-weight: 600 !important;
+}
+
+.secondary-button:hover, .customer-premium-secondary-button:hover {
+  background: var(--surface-dark) !important;
+  border-color: var(--gold-light) !important;
+  color: var(--gold-light) !important;
+}
+
+.danger-button {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  color: var(--status-error) !important;
+}
+
+.danger-button:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: var(--status-error) !important;
+}
+
+/* 7. Tabelas Premium */
+table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+th {
+  background: rgba(255,255,255,0.02) !important;
+  color: var(--text-secondary) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.05em !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--border-dark) !important;
+}
+
+td {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+  color: var(--text-main) !important;
+}
+
+tbody tr:hover {
+  background: rgba(255,255,255,0.015) !important;
+}
+
+/* 8. Componentes Estruturais */
+.product-empty, .empty-state {
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+  background: var(--surface-elevated) !important;
+  border: 1px dashed var(--border-dark) !important;
+}
+
+/* Forçar cores do cabeçalho */
+.section-header h2 {
+  color: var(--text-main) !important;
+}
+
+.section-header p {
+  color: var(--text-secondary) !important;
+}
+
+/* Fix para textos apagados que foram encontrados em auditoria prévia */
+[style*="color: #211609"],
+[style*="color: #101117"],
+[style*="color: #4a361c"],
+[style*="color: #3e2723"],
+[style*="color: #5b3a0a"],
+[style*="color: rgba(33, 22, 9"],
+[style*="color: rgba(91, 58, 10"] {
+  color: var(--text-main) !important;
+}
+
+/* MAS reverte a regra acima se estiver dentro de um elemento GOLD */
+[style*="linear-gradient"] [style*="color:"],
+[style*="var(--surface-gold)"] [style*="color:"] {
+  color: #16120A !important;
+}
+
+[style*="linear-gradient"] p, [style*="linear-gradient"] small, [style*="linear-gradient"] span:not(.badge),
+[style*="var(--surface-gold)"] p, [style*="var(--surface-gold)"] small, [style*="var(--surface-gold)"] span:not(.badge) {
+  color: #4B3A16 !important;
+}
+
+/* Ajuste nos Selects nativos escuros */
+select option {
+  background: var(--surface-elevated) !important;
+  color: var(--text-main) !important;
+}
+
+/* 9. Fix para ícones que têm background inline (transformando eles no padrão novo) */
+[style*="background: rgba(215, 173, 85, 0.1)"] {
+  background: rgba(245,215,123,0.12) !important;
+  color: var(--gold-strong) !important;
+  border-radius: 10px !important;
+  padding: 8px !important;
+}
+
+[style*="background: rgba(251, 113, 133, 0.1)"] {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: var(--status-error) !important;
+  border-radius: 10px !important;
+  padding: 8px !important;
+}
+
+[style*="background: rgba(45, 212, 191, 0.1)"] {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: var(--status-success) !important;
+  border-radius: 10px !important;
+  padding: 8px !important;
+}
