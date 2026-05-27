@@ -697,7 +697,7 @@ h3 {
 
 .field-group label,
 .scanner-form label {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.70);
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.24em;
@@ -711,6 +711,7 @@ h3 {
 
 .field-group input,
 .field-group select,
+.field-group textarea,
 .search-input,
 .scanner-row input,
 .cart-quantity input {
@@ -728,6 +729,35 @@ h3 {
   transition: border-color 160ms ease;
 }
 
+.field-group textarea {
+  height: auto;
+  min-height: 100px;
+  padding: 12px 16px;
+  resize: vertical;
+}
+
+input[type="date"] {
+  color-scheme: dark !important;
+}
+
+.field-group input::placeholder,
+.field-group select::placeholder,
+.field-group textarea::placeholder,
+.search-input::placeholder,
+.scanner-row input::placeholder {
+  color: rgba(255, 255, 255, 0.48) !important;
+  opacity: 1 !important;
+}
+
+.field-group input:disabled,
+.field-group select:disabled,
+.field-group textarea:disabled {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(255, 255, 255, 0.50) !important;
+  cursor: not-allowed;
+  border-color: rgba(215, 173, 85, 0.08) !important;
+}
+
 .field-group select {
   appearance: none;
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255, 255, 255, 0.35)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
@@ -736,12 +766,19 @@ h3 {
   background-size: 16px;
 }
 
+.field-group select option {
+  background-color: #111113 !important;
+  color: #ffffff !important;
+}
+
 .field-group input:focus,
 .field-group select:focus,
+.field-group textarea:focus,
 .search-input:focus,
 .scanner-row input:focus,
 .cart-quantity input:focus {
   border-color: #d7ad55 !important;
+  box-shadow: 0 0 0 3px rgba(215, 173, 85, 0.18), inset 0 2px 10px rgba(0, 0, 0, 0.40) !important;
 }
 
 .feedback-message {
@@ -753,17 +790,20 @@ h3 {
 
 .feedback-message--error {
   border-color: var(--color-red);
-  color: #991b1b;
+  background: rgba(248, 113, 113, 0.08) !important;
+  color: #fca5a5 !important;
 }
 
 .feedback-message--success {
   border-color: var(--color-green);
-  color: #166534;
+  background: rgba(52, 211, 153, 0.08) !important;
+  color: #86efac !important;
 }
 
 .feedback-message--warning {
   border-color: var(--color-gold);
-  color: #92400e;
+  background: rgba(215, 173, 85, 0.08) !important;
+  color: #fde68a !important;
 }
 
 .form-actions,
@@ -7963,11 +8003,24 @@ button:disabled,
 
 .customer-premium-form .field-group input,
 .customer-premium-form .field-group select,
+.customer-premium-form .field-group textarea,
 .customer-premium-search-input input {
   min-height: 48px;
   border: 1px solid rgba(226, 232, 240, 0.12) !important;
   border-radius: 12px !important;
   background: #0d1016 !important;
+  color: #f8fafc !important;
+}
+
+.customer-premium-form .field-group textarea {
+  height: auto;
+  min-height: 100px !important;
+  padding: 12px 16px !important;
+  resize: vertical;
+}
+
+.customer-premium-form .field-group select option {
+  background-color: #0d1016 !important;
   color: #f8fafc !important;
 }
 
@@ -8285,42 +8338,224 @@ button:disabled,
     display: grid;
   }
 
+.customer-premium-card {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.08);
+  border-radius: 16px;
+  background: #0d1016;
+  box-shadow: var(--shadow-card-soft);
+}
+
+.customer-premium-card:hover {
+  border-color: rgba(215, 173, 85, 0.28);
+}
+
+.customer-premium-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.customer-premium-card h3 {
+  margin: 0 0 8px;
+  color: #e7edf6;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.customer-premium-card-header span {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 8px;
+  background: rgba(33, 22, 9, 0.08) !important;
+  color: #211609 !important;
+  border: 1px solid rgba(33, 22, 9, 0.15) !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.68rem;
+}
+
+.customer-premium-status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(251, 113, 133, 0.28);
+  border-radius: 999px;
+  background: rgba(251, 113, 133, 0.1);
+  color: #fecdd3;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.customer-premium-status--active {
+  border-color: rgba(45, 212, 191, 0.28);
+  background: rgba(45, 212, 191, 0.1);
+  color: #8ff2e7;
+}
+
+.customer-premium-contact-box {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.customer-premium-contact-box div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.customer-premium-contact-box span {
+  color: #707b8c;
+  font-size: 0.64rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.customer-premium-contact-box strong {
+  min-width: 0;
+  color: #dbe3ee;
+  font-size: 0.8rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-premium-card-actions {
+  display: flex;
+}
+
+.customer-premium-card-actions button {
+  width: 100%;
+}
+
+.customer-premium-list-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid rgba(226, 232, 240, 0.08);
+  border-radius: 12px;
+  background: #0d1016;
+}
+
+.customer-premium-list-footer strong {
+  color: #8ff2e7;
+}
+
+.customer-premium-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.76);
+  backdrop-filter: blur(12px);
+}
+
+.customer-premium-edit-modal {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  border-color: rgba(215, 173, 85, 0.28);
+}
+
+.customer-premium-edit-modal > header {
+  justify-content: space-between;
+}
+
+.customer-premium-edit-modal > header button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(226, 232, 240, 0.1);
+  border-radius: 10px;
+  background: rgba(226, 232, 240, 0.06);
+}
+
+@media (max-width: 980px) {
+  .customer-premium-hero,
+  .customer-premium-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .customer-premium-banner,
+  .customer-premium-target-card,
+  .customer-premium-form,
+  .customer-premium-form-panel > header,
+  .customer-premium-list-panel,
+  .customer-premium-list-panel > header,
+  .customer-premium-edit-modal > header {
+    padding: 16px;
+  }
+
+  .customer-premium-list-panel > header {
+    margin: 0 -16px;
+  }
+
+  .customer-premium-form-grid,
+  .customer-premium-search,
+  .customer-premium-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-premium-actions,
+  .customer-premium-primary-button,
+  .customer-premium-secondary-button {
+    width: 100%;
+  }
+
+  .customer-premium-contact-box div,
+  .customer-premium-list-footer {
+    display: grid;
+  }
+
   .customer-premium-contact-box strong {
     text-align: left;
   }
 }
 
-/* Unificacao de contraste do Design System Gold */
-.hero-panel h1, .hero-panel h2, .hero-panel h3, .hero-panel p, .hero-panel span:not(.side-nav-icon):not(.brand-logo-letter), .hero-panel strong, .hero-panel label,
-.product-list-panel h1, .product-list-panel h2, .product-list-panel h3, .product-list-panel p, .product-list-panel span:not(.side-nav-icon), .product-list-panel strong, .product-list-panel label,
-.customer-premium-list-panel h1, .customer-premium-list-panel h2, .customer-premium-list-panel h3, .customer-premium-list-panel p, .customer-premium-list-panel span:not(.side-nav-icon), .customer-premium-list-panel strong, .customer-premium-list-panel label,
-.checkout-hero-panel h1, .checkout-hero-panel h2, .checkout-hero-panel h3, .checkout-hero-panel p, .checkout-hero-panel span:not(.side-nav-icon), .checkout-hero-panel strong, .checkout-hero-panel label,
-.scanner-panel h1, .scanner-panel h2, .scanner-panel h3, .scanner-panel p, .scanner-panel span:not(.side-nav-icon), .scanner-panel strong, .scanner-panel label,
-.cart-panel h1, .cart-panel h2, .cart-panel h3, .cart-panel p, .cart-panel span:not(.side-nav-icon), .cart-panel strong, .cart-panel label,
-.checkout-footer-panel h1, .checkout-footer-panel h2, .checkout-footer-panel h3, .checkout-footer-panel p, .checkout-footer-panel span:not(.side-nav-icon), .checkout-footer-panel strong, .checkout-footer-panel label,
+/* /* Unificacao de contraste do Design System Gold - Aplicado estritamente para cards e métricas com fundo claro brilhante */
 .stat-card h1, .stat-card h2, .stat-card h3, .stat-card p, .stat-card span:not(.side-nav-icon), .stat-card strong, .stat-card label,
-.product-card h1, .product-card h2, .product-card h3, .product-card p, .product-card span:not(.side-nav-icon), .product-card strong, .product-card label,
-.cart-item h1, .cart-item h2, .cart-item h3, .cart-item p, .cart-item span:not(.side-nav-icon), .cart-item strong, .cart-item label,
-.customer-premium-card h1, .customer-premium-card h2, .customer-premium-card h3, .customer-premium-card p, .customer-premium-card span:not(.side-nav-icon), .customer-premium-card strong, .customer-premium-card label,
-.customer-premium-form-panel h1, .customer-premium-form-panel h2, .customer-premium-form-panel h3, .customer-premium-form-panel p, .customer-premium-form-panel span:not(.side-nav-icon), .customer-premium-form-panel strong, .customer-premium-form-panel label,
-.customer-premium-edit-modal h1, .customer-premium-edit-modal h2, .customer-premium-edit-modal h3, .customer-premium-edit-modal p, .customer-premium-edit-modal span:not(.side-nav-icon), .customer-premium-edit-modal strong, .customer-premium-edit-modal label,
-.customer-premium-metrics article h1, .customer-premium-metrics article h2, .customer-premium-metrics article h3, .customer-premium-metrics article p, .customer-premium-metrics article span:not(.side-nav-icon), .customer-premium-metrics article strong, .customer-premium-metrics article label,
-.sale-history-item h1, .sale-history-item h2, .sale-history-item h3, .sale-history-item p, .sale-history-item span:not(.side-nav-icon), .sale-history-item strong, .sale-history-item label, .sale-history-item small {
+.customer-premium-metrics article h1, .customer-premium-metrics article h2, .customer-premium-metrics article h3, .customer-premium-metrics article p, .customer-premium-metrics article span:not(.side-nav-icon), .customer-premium-metrics article strong, .customer-premium-metrics article label {
   color: #211609 !important;
 }
 
 .customer-premium-contact-box span {
-  color: rgba(33, 22, 9, 0.65) !important;
+  color: var(--text-dark-secondary) !important;
 }
 .customer-premium-contact-box strong {
-  color: #211609 !important;
+  color: var(--text-dark-primary) !important;
 }
 
 .customer-premium-metrics strong {
-  color: #211609 !important;
+  color: var(--text-dark-primary) !important;
 }
 .customer-premium-metrics span {
-  color: rgba(33, 22, 9, 0.65) !important;
+  color: var(--text-dark-secondary) !important;
 }
 
 /* Correcoes de contraste e acabamento visual */
