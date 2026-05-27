@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Banknote, BarChart3, CalendarDays, FileDown, ReceiptText, TrendingUp, WalletCards, ChevronLeft, ChevronRight, X, CalendarClock, DollarSign, Sparkles } from 'lucide-react'
-import { Metric } from '../components/Metric'
-import { PageHeader } from '../components/PageHeader'
+import { Banknote, BarChart3, CalendarDays, FileDown, ReceiptText, TrendingUp, WalletCards, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   downloadAdminDashboardReport,
   getAdminDashboardPaymentMethods,
@@ -18,6 +16,8 @@ import type { PaymentMethod } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
+import { PaginationControls } from '../components/PaginationControls'
+import { usePagination } from '../hooks/usePagination'
 
 const paymentLabels: Record<PaymentMethod, string> = {
   CASH: 'Dinheiro',
@@ -194,6 +194,8 @@ export function AdminDashboardPage() {
     () => Math.max(...paymentMethods.map((payment) => payment.receivedAmount), 1),
     [paymentMethods],
   )
+  const topCustomersPagination = usePagination(receivables.topCustomers, 6)
+  const receivableItemsPagination = usePagination(receivables.items, 10)
 
   function applyPreset(preset: 'today' | 'yesterday' | 'week' | 'month') {
     const nextFilters = presetFilters(preset)
@@ -668,7 +670,7 @@ export function AdminDashboardPage() {
               {receivables.topCustomers.length === 0 ? (
                 <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Nenhum saldo pendente a receber de clientes.</div>
               ) : (
-                receivables.topCustomers.map((customer) => (
+                topCustomersPagination.pageItems.map((customer) => (
                   <div key={customer.customerId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{customer.customerName}</strong>
@@ -680,6 +682,7 @@ export function AdminDashboardPage() {
                   </div>
                 ))
               )}
+              <PaginationControls itemLabel="clientes" page={topCustomersPagination.page} pageSize={topCustomersPagination.pageSize} totalItems={topCustomersPagination.totalItems} totalPages={topCustomersPagination.totalPages} onPageChange={topCustomersPagination.setPage} />
             </div>
           </section>
         </div>
@@ -706,8 +709,8 @@ export function AdminDashboardPage() {
                 <span style={{ textAlign: 'right' }}>Valor</span>
               </div>
               
-              <div style={{ display: 'grid', gap: '8px', maxHeight: '340px', overflowY: 'auto' }}>
-                {receivables.items.map((item) => (
+              <div style={{ display: 'grid', gap: '8px' }}>
+                {receivableItemsPagination.pageItems.map((item) => (
                   <article key={item.noteId} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '12px 18px', background: '#0d1016', border: '1px solid rgba(226,232,240,0.04)', borderRadius: '10px', fontSize: '0.82rem', alignItems: 'center' }}>
                     <span style={{ color: '#fff', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.customerName}</span>
                     <span style={{ color: '#aeb8c8' }}>#{item.saleId}</span>
@@ -720,6 +723,7 @@ export function AdminDashboardPage() {
                   </article>
                 ))}
               </div>
+              <PaginationControls itemLabel="parcelas" page={receivableItemsPagination.page} pageSize={receivableItemsPagination.pageSize} totalItems={receivableItemsPagination.totalItems} totalPages={receivableItemsPagination.totalPages} onPageChange={receivableItemsPagination.setPage} />
             </div>
           )}
         </section>

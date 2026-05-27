@@ -5,13 +5,8 @@ import {
   BadgeDollarSign,
   Boxes,
   CircleSlash,
-  Clock3,
-  Copy,
-  Download,
   Edit3,
   Package,
-  PackageCheck,
-  Barcode,
   Printer,
   Shirt,
   ShoppingBag,
@@ -32,11 +27,9 @@ import {
 } from '../services/productService'
 import type { Product, ProductCategory, ProductPage, ProductPageFilters, ProductPayload } from '../types/product'
 import { getErrorMessage } from '../utils/errors'
-import { formatCurrency, formatDateTime } from '../utils/formatters'
+import { formatCurrency } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { CurrencyInput } from '../components/CurrencyInput'
-import { Metric } from '../components/Metric'
-import { PageHeader } from '../components/PageHeader'
 
 type ProductFormState = {
   name: string

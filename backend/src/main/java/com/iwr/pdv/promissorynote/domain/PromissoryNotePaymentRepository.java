@@ -8,4 +8,7 @@ public interface PromissoryNotePaymentRepository extends JpaRepository<Promissor
 
     @EntityGraph(attributePaths = {"paidBy", "cashRegister"})
     List<PromissoryNotePayment> findByNoteIdOrderByPaidAtDesc(Long noteId);
+
+    @EntityGraph(attributePaths = {"note", "paidBy", "cashRegister"})
+    List<PromissoryNotePayment> findByNoteCustomerIdOrderByPaidAtDesc(Long customerId);
 }

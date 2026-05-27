@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Cake, CalendarDays, Gift, HeartHandshake, Phone, Sparkles, X, MessageSquare, Copy, Send, UserCheck } from 'lucide-react'
+import { Cake, CalendarDays, Gift, Sparkles, X, MessageSquare, Copy, UserCheck, Phone, Mail, Search } from 'lucide-react'
 import { PaginationControls } from '../components/PaginationControls'
 import { getCustomerBirthdays } from '../services/customerService'
 import type { Customer } from '../types/customer'
@@ -54,7 +54,11 @@ function birthdayStatus(days: number) {
   return `${days} dia(s)`
 }
 
-export function LoyaltyPage() {
+type LoyaltyPageProps = {
+  onViewChange?: (view: any) => void
+}
+
+export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
   const { notify } = useAppMessage()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -166,6 +170,39 @@ export function LoyaltyPage() {
 
   return (
     <main className="app-shell customer-premium-shell">
+      <style>{`
+        .customer-premium-card {
+          background: rgba(255, 250, 235, 0.72) !important;
+          border: 1px solid rgba(91, 58, 10, 0.16) !important;
+          border-radius: 16px !important;
+          padding: 18px !important;
+          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
+          color: #211609 !important;
+        }
+        .customer-premium-card:hover {
+          transform: translateY(-3px) scale(1.01);
+          border-color: rgba(33, 22, 9, 0.34) !important;
+          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+        }
+        .customer-premium-card--today {
+          background: linear-gradient(135deg, #f9e7b5 0%, #e2c074 100%) !important;
+          border: 2px solid #5b3a0a !important;
+          box-shadow: 0 16px 36px rgba(91, 58, 10, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+        }
+        .customer-premium-list-panel {
+          background: radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.46), transparent 32%), linear-gradient(135deg, #f8dc91 0%, #d8ad53 50%, #b97e24 100%) !important;
+          color: #211609 !important;
+          border: 1px solid rgba(91, 58, 10, 0.22) !important;
+          border-radius: 18px !important;
+          padding: 22px !important;
+          box-shadow: 0 26px 64px rgba(91, 58, 10, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+        }
+        .customer-premium-felicitar-btn:hover {
+          transform: scale(1.02);
+          box-shadow: 0 4px 12px rgba(215, 173, 85, 0.3) !important;
+        }
+      `}</style>
       <div className="app-container customer-premium-container">
         
         {/* Banner do Topo */}
@@ -243,12 +280,14 @@ export function LoyaltyPage() {
 
         {/* Painel da Listagem */}
         <section className="customer-premium-list-panel">
-          <header>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <HeartHandshake size={22} style={{ color: '#d7ad55' }} />
+          <header className="section-header" style={{ borderBottom: '1px solid rgba(33, 22, 9, 0.12)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <span aria-hidden="true" style={{ background: 'rgba(91, 58, 10, 0.12)', padding: '10px', borderRadius: '12px', color: '#5b3a0a', display: 'inline-flex' }}>
+                <Gift size={22} strokeWidth={2.4} />
+              </span>
               <div>
-                <h2>Calendário de Relacionamento</h2>
-                <p>Clientes ordenados pelo próximo aniversário de acordo com a seleção.</p>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#211609' }}>Calendário de Relacionamento</h2>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'rgba(33, 22, 9, 0.75)' }}>Clientes ordenados pelo próximo aniversário de acordo com a seleção.</p>
               </div>
             </div>
           </header>
@@ -256,58 +295,106 @@ export function LoyaltyPage() {
           {isLoading ? (
             <div className="product-empty">Carregando aniversariantes...</div>
           ) : filteredCustomers.length === 0 ? (
-            <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Nenhum aniversariante cadastrado neste período.</div>
+            <div className="product-empty" style={{ background: '#211609', color: '#f9e7b5', borderRadius: '16px', padding: '40px', border: '1px solid rgba(91, 58, 10, 0.22)' }}>Nenhum aniversariante cadastrado neste período.</div>
           ) : (
             <div className="customer-premium-card-grid" style={{ marginTop: '20px' }}>
-              {birthdayPagination.pageItems.map((customer) => (
-                <article 
-                  className="customer-premium-card" 
-                  key={customer.id}
-                  style={{
-                    borderColor: customer.daysUntilBirthday === 0 ? 'rgba(215, 173, 85, 0.65)' : undefined,
-                    background: customer.daysUntilBirthday === 0 ? 'linear-gradient(180deg, rgba(215, 173, 85, 0.05), rgba(0, 0, 0, 0))' : undefined
-                  }}
-                >
-                  <div className="customer-premium-card-header">
+              {birthdayPagination.pageItems.map((customer) => {
+                const isToday = customer.daysUntilBirthday === 0;
+                const isNextWeek = customer.daysUntilBirthday > 0 && customer.daysUntilBirthday <= 7;
+                return (
+                  <article 
+                    className={isToday ? "customer-premium-card customer-premium-card--today" : "customer-premium-card"}
+                    key={customer.id}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '260px'
+                    }}
+                  >
                     <div>
-                      <h3>{customer.name}</h3>
-                      <span className="product-card-code" style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <Cake size={12} style={{ color: '#d7ad55' }} />
-                        {formatBirthDate(customer.birthDate as string)}
-                      </span>
+                      <div className="customer-premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+                        <div>
+                          <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#211609', fontWeight: 600 }}>{customer.name}</h3>
+                          <span className="product-card-code" style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#5b3a0a', fontFamily: 'monospace' }}>
+                            <Cake size={12} />
+                            {formatBirthDate(customer.birthDate as string)}
+                          </span>
+                        </div>
+                        <strong className={isToday || isNextWeek ? 'customer-premium-status customer-premium-status--active' : 'customer-premium-status'} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                          {birthdayStatus(customer.daysUntilBirthday)}
+                        </strong>
+                      </div>
+                      
+                      <div className="customer-premium-contact-box" style={{ background: 'rgba(33, 22, 9, 0.05)', padding: '12px', borderRadius: '10px', display: 'grid', gap: '8px', marginBottom: '14px', border: '1px solid rgba(33, 22, 9, 0.08)' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Phone size={13} style={{ color: '#5b3a0a' }} />
+                            <span style={{ color: 'rgba(33, 22, 9, 0.65)', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>Tel</span>
+                          </div>
+                          <strong>{customer.phone ? maskPhone(customer.phone) : 'Não informado'}</strong>
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Mail size={13} style={{ color: '#5b3a0a' }} />
+                            <span style={{ color: 'rgba(33, 22, 9, 0.65)', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>E-mail</span>
+                          </div>
+                          <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{customer.email || 'Não informado'}</strong>
+                        </div>
+                      </div>
                     </div>
-                    <strong className={customer.daysUntilBirthday <= 7 ? 'customer-premium-status customer-premium-status--active' : 'customer-premium-status'}>
-                      {birthdayStatus(customer.daysUntilBirthday)}
-                    </strong>
-                  </div>
-                  
-                  <div className="customer-premium-contact-box">
-                    <div>
-                      <span>Telefone</span>
-                      <strong>{customer.phone ? maskPhone(customer.phone) : 'Não informado'}</strong>
-                    </div>
-                    <div>
-                      <span>Email</span>
-                      <strong>{customer.email || 'Não informado'}</strong>
-                    </div>
-                  </div>
 
-                  <div className="customer-premium-card-actions">
-                    <button 
-                      type="button" 
-                      className="customer-premium-primary-button" 
-                      onClick={() => {
-                        setCongratulateClient(customer)
-                        setSelectedTemplate('classico')
-                      }}
-                      style={{ width: '100%' }}
-                    >
-                      <Sparkles size={14} aria-hidden="true" />
-                      Felicitar
-                    </button>
-                  </div>
-                </article>
-              ))}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                      <button
+                        type="button"
+                        className="customer-premium-secondary-button"
+                        onClick={() => {
+                          setCongratulateClient(customer)
+                          setSelectedTemplate('classico')
+                        }}
+                        style={{
+                          flex: 1.2,
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 12px',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          borderRadius: '10px'
+                        }}
+                      >
+                        <Sparkles size={13} />
+                        Felicitar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          localStorage.setItem('selected_profile_customer_id', String(customer.id));
+                          if (onViewChange) {
+                            onViewChange('customer-profile');
+                          }
+                        }}
+                        className="customer-premium-primary-button"
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 12px',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          borderRadius: '10px'
+                        }}
+                      >
+                        <Search size={13} />
+                        Ficha
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
 
@@ -347,7 +434,7 @@ export function LoyaltyPage() {
 
             <div style={{ padding: '24px', display: 'grid', gap: '20px' }}>
               <div className="field-group">
-                <label style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
+                <label style={{ color: '#5b3a0a', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
                   Escolha o Modelo de Mensagem
                 </label>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -365,9 +452,9 @@ export function LoyaltyPage() {
                         textTransform: 'uppercase',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
-                        border: selectedTemplate === t ? '1px solid #d7ad55' : '1px solid rgba(226, 232, 240, 0.1)',
-                        background: selectedTemplate === t ? 'rgba(215, 173, 85, 0.15)' : 'rgba(226, 232, 240, 0.04)',
-                        color: selectedTemplate === t ? '#f6d78b' : '#aeb8c8'
+                        border: selectedTemplate === t ? '1px solid #211609' : '1px solid rgba(33, 22, 9, 0.12)',
+                        background: selectedTemplate === t ? 'rgba(33, 22, 9, 0.15)' : 'rgba(33, 22, 9, 0.05)',
+                        color: selectedTemplate === t ? '#211609' : 'rgba(33, 22, 9, 0.65)'
                       }}
                     >
                       {t === 'classico' ? 'Clássico' : t === 'promocional' ? 'Promocional' : 'Elegante'}
@@ -377,7 +464,7 @@ export function LoyaltyPage() {
               </div>
 
               <div className="field-group">
-                <label style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
+                <label style={{ color: '#5b3a0a', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
                   Visualização da Mensagem
                 </label>
                 <textarea
@@ -386,9 +473,9 @@ export function LoyaltyPage() {
                   style={{
                     width: '100%',
                     minHeight: '120px',
-                    background: '#0d1016',
-                    color: '#fff',
-                    border: '1px solid rgba(226, 232, 240, 0.12)',
+                    background: 'rgba(0, 0, 0, 0.55)',
+                    color: '#f9e7b5',
+                    border: '1px solid rgba(91, 58, 10, 0.35)',
                     borderRadius: '12px',
                     padding: '16px',
                     fontSize: '0.85rem',

@@ -1,5 +1,6 @@
 package com.iwr.pdv.customer.api.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
@@ -13,6 +14,8 @@ public record CustomerResponse(
         LocalDate birthDate,
         Boolean active,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        String observations,
+        BigDecimal creditLimit
 ) {
 }
