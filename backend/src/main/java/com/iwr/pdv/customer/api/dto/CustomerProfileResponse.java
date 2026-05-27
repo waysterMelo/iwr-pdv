@@ -23,6 +23,7 @@ public record CustomerProfileResponse(
         List<SaleResponse> latestSales,
         List<SaleResponse> sales,
         List<SaleResponse> cancelledSales,
-        List<CustomerPromissoryNoteResponse> promissoryNotes
+        List<CustomerPromissoryNoteResponse> promissoryNotes,
+        List<CustomerProfileInsightResponse> insights
 ) {
 }

@@ -97,7 +97,6 @@ function App() {
       items: [
         { id: 'products-create', label: 'Cadastrar', eyebrow: 'Estoque' },
         { id: 'products-list', label: 'Listar/estoque', eyebrow: 'Estoque' },
-        { id: 'products-labels', label: 'Etiquetas', eyebrow: 'Estoque' },
       ],
     },
     {

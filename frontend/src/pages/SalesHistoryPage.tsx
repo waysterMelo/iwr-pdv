@@ -6,6 +6,7 @@ import { PaginationControls } from '../components/PaginationControls'
 import type { Sale } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
+import { formatPaymentMethod } from '../utils/paymentMethods'
 import { usePagination } from '../hooks/usePagination'
 
 function getSellerName(sale: Sale) {
@@ -139,7 +140,7 @@ export function SalesHistoryPage() {
         </div>
 
         {/* Filtros de Vendas Premium */}
-        <section className="customer-premium-list-panel" style={{ padding: '20px', marginBottom: '24px', background: '#211609', border: '1px solid rgba(91, 58, 10, 0.35)', boxShadow: '0 26px 64px rgba(91, 58, 10, 0.26)' }}>
+        <section className="customer-premium-list-panel sales-history-filter-panel" style={{ padding: '20px', marginBottom: '24px', background: '#211609', border: '1px solid rgba(91, 58, 10, 0.35)', boxShadow: '0 26px 64px rgba(91, 58, 10, 0.26)' }}>
           <form className="customer-premium-search" onSubmit={handleFilterSubmit} style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', background: 'transparent', border: 'none', padding: 0 }}>
             <div className="field-group" style={{ flex: 1, minWidth: '150px' }}>
               <label htmlFor="startDate" style={{ color: '#f9e7b5', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Data Início</label>
@@ -238,7 +239,7 @@ export function SalesHistoryPage() {
                           }}>
                             {sale.status === 'CANCELLED' ? 'Cancelada' : 'Concluída'}
                           </span>
-                          <span style={{ fontSize: '0.75rem', color: 'rgba(33, 22, 9, 0.65)' }}>{sale.paymentMethod}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'rgba(33, 22, 9, 0.65)' }}>{formatPaymentMethod(sale.paymentMethod)}</span>
                         </div>
                         <small style={{ fontSize: '0.72rem', display: 'block', color: 'rgba(33, 22, 9, 0.65)' }}>
                           {formatNullableDateTime(sale.soldAt)}
@@ -309,12 +310,12 @@ export function SalesHistoryPage() {
               <div className="product-empty" style={{ background: '#211609', color: '#f9e7b5', borderRadius: '16px', padding: '40px', border: '1px solid rgba(91, 58, 10, 0.35)' }}>Selecione uma venda para visualizar os itens.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <article style={{ background: '#211609', border: '1px solid rgba(91, 58, 10, 0.35)', borderRadius: '16px', padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)' }}>
+                <article className="sale-detail-summary-card" style={{ background: '#211609', border: '1px solid rgba(91, 58, 10, 0.35)', borderRadius: '16px', padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#f9e7b5', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <CreditCard size={12} style={{ color: '#d7ad55' }} /> Pagamento
                     </span>
-                    <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{selectedSale.paymentMethod}</strong>
+                    <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{formatPaymentMethod(selectedSale.paymentMethod)}</strong>
                     <small style={{ color: 'rgba(249, 231, 181, 0.75)', fontSize: '0.75rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <UserRound size={12} style={{ color: '#d7ad55' }} /> {getSellerName(selectedSale)}
                     </small>

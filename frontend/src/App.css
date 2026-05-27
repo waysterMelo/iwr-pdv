@@ -8323,3 +8323,799 @@ button:disabled,
   color: rgba(33, 22, 9, 0.65) !important;
 }
 
+/* Correcoes de contraste e acabamento visual */
+:root {
+  --motion-fast: 160ms ease;
+  --motion-card: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --surface-dark-card: #0d1016;
+  --surface-dark-card-raised: #111722;
+  --text-dark-primary: #f8fafc;
+  --text-dark-secondary: #aeb8c8;
+  --text-dark-muted: #7b8493;
+  --text-gold-primary: #211609;
+  --text-gold-secondary: rgba(33, 22, 9, 0.68);
+}
+
+@keyframes surface-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes metric-soft-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 12px 28px rgba(91, 58, 10, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+
+  50% {
+    box-shadow:
+      0 18px 42px rgba(91, 58, 10, 0.18),
+      0 0 0 1px rgba(215, 173, 85, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  }
+}
+
+.workspace > .app-container,
+.checkout-page .app-container,
+.customer-premium-container {
+  animation: surface-enter 260ms ease both;
+}
+
+.product-card,
+.customer-premium-card,
+.sale-history-item,
+.cart-item,
+.admin-mini-chart,
+.admin-payment-list article,
+.admin-top-customers > div,
+.promissory-card,
+.user-card,
+.audit-log-row {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--motion-card),
+    border-color var(--motion-fast),
+    box-shadow var(--motion-card),
+    background var(--motion-fast);
+}
+
+.product-card:hover,
+.customer-premium-card:hover,
+.sale-history-item:hover,
+.cart-item:hover,
+.admin-mini-chart:hover,
+.admin-payment-list article:hover,
+.admin-top-customers > div:hover,
+.promissory-card:hover,
+.user-card:hover,
+.audit-log-row:hover {
+  transform: translateY(-2px);
+  border-color: rgba(215, 173, 85, 0.36) !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(215, 173, 85, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.stat-card,
+.customer-premium-metrics article {
+  background:
+    radial-gradient(circle at 86% 18%, rgba(255, 255, 255, 0.5), transparent 30%),
+    linear-gradient(145deg, rgba(255, 250, 235, 0.86), rgba(222, 184, 102, 0.5)) !important;
+  border-color: rgba(91, 58, 10, 0.2) !important;
+  animation: surface-enter 260ms ease both;
+}
+
+.stat-card:hover,
+.customer-premium-metrics article:hover {
+  transform: translateY(-2px);
+  border-color: rgba(91, 58, 10, 0.36) !important;
+  animation: metric-soft-pulse 1.8s ease infinite;
+}
+
+.side-navigation {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(215, 173, 85, 0.55) rgba(226, 232, 240, 0.06);
+}
+
+.side-navigation::-webkit-scrollbar {
+  width: 8px;
+}
+
+.side-navigation::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.05);
+  border-radius: 999px;
+}
+
+.side-navigation::-webkit-scrollbar-thumb {
+  background: rgba(215, 173, 85, 0.55);
+  border-radius: 999px;
+}
+
+.side-navigation-submenu {
+  overflow: visible;
+}
+
+.customer-premium-form-panel :is(
+  .sales-summary-totals,
+  .admin-mini-chart,
+  .cart-list,
+  .cart-item,
+  .product-empty,
+  .installment-row,
+  .admin-payment-list article,
+  .admin-top-customers > div,
+  .admin-receivable-table,
+  .customer-premium-search,
+  .customer-premium-search-input
+),
+.customer-premium-list-panel :is(
+  .customer-premium-search,
+  .customer-premium-search-input,
+  .product-empty
+) {
+  color: var(--text-dark-primary) !important;
+}
+
+.customer-premium-form-panel :is(
+  .sales-summary-totals,
+  .admin-mini-chart,
+  .cart-list,
+  .cart-item,
+  .product-empty,
+  .installment-row,
+  .admin-payment-list article,
+  .admin-top-customers > div,
+  .admin-receivable-table,
+  .customer-premium-search,
+  .customer-premium-search-input
+) :is(h1, h2, h3, strong, input, select, button),
+.customer-premium-list-panel :is(
+  .customer-premium-search,
+  .customer-premium-search-input,
+  .product-empty
+) :is(h1, h2, h3, strong, input, select, button) {
+  color: var(--text-dark-primary) !important;
+}
+
+.customer-premium-form-panel :is(
+  .sales-summary-totals,
+  .admin-mini-chart,
+  .cart-list,
+  .cart-item,
+  .product-empty,
+  .installment-row,
+  .admin-payment-list article,
+  .admin-top-customers > div,
+  .admin-receivable-table,
+  .customer-premium-search,
+  .customer-premium-search-input
+) :is(p, span, small, label),
+.customer-premium-list-panel :is(
+  .customer-premium-search,
+  .customer-premium-search-input,
+  .product-empty
+) :is(p, span, small, label) {
+  color: var(--text-dark-secondary) !important;
+}
+
+.customer-premium-form-panel .sales-summary-totals > div,
+.customer-premium-form-panel .admin-mini-chart,
+.customer-premium-form-panel .cart-item,
+.customer-premium-form-panel .installment-row,
+.customer-premium-form-panel .admin-payment-list article,
+.customer-premium-form-panel .admin-top-customers > div {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+    var(--surface-dark-card) !important;
+  border-color: rgba(226, 232, 240, 0.12) !important;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.customer-premium-form-panel .sales-summary-totals > div {
+  min-height: 78px;
+  position: relative;
+  overflow: hidden;
+}
+
+.customer-premium-form-panel .sales-summary-totals > div::after,
+.admin-mini-chart::after,
+.cart-item::after,
+.sale-history-item::after,
+.product-card::after,
+.customer-premium-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.08) 42%, transparent 66%);
+  opacity: 0;
+  transform: translateX(-30%);
+  transition: opacity var(--motion-fast), transform 420ms ease;
+}
+
+.customer-premium-form-panel .sales-summary-totals > div:hover::after,
+.admin-mini-chart:hover::after,
+.cart-item:hover::after,
+.sale-history-item:hover::after,
+.product-card:hover::after,
+.customer-premium-card:hover::after {
+  opacity: 1;
+  transform: translateX(30%);
+}
+
+.customer-premium-form-panel .sales-summary-totals span,
+.customer-premium-form-panel .admin-mini-chart > span,
+.customer-premium-form-panel .cart-item .cart-item-main small,
+.customer-premium-form-panel .cart-price span,
+.customer-premium-form-panel .product-empty {
+  color: var(--text-dark-secondary) !important;
+}
+
+.customer-premium-form-panel .sales-summary-totals strong,
+.customer-premium-form-panel .admin-mini-chart strong,
+.customer-premium-form-panel .cart-item strong {
+  color: var(--text-dark-primary) !important;
+}
+
+.customer-premium-form-panel .sales-summary-totals > div:last-child strong,
+.customer-premium-form-panel .cart-price strong,
+.customer-premium-form-panel .admin-mini-chart [style*="#f6d78b"],
+.customer-premium-form-panel .admin-mini-chart [style*="rgb(246, 215, 139)"] {
+  color: var(--color-gold-soft) !important;
+}
+
+.customer-premium-form-panel .admin-mini-chart [style*="#2dd4bf"],
+.customer-premium-form-panel .admin-payment-list [style*="#2dd4bf"] {
+  color: var(--color-green) !important;
+}
+
+.customer-premium-form-panel .admin-mini-chart [style*="#fb7185"],
+.customer-premium-form-panel .admin-top-customers [style*="#fb7185"] {
+  color: var(--color-red) !important;
+}
+
+.quick-actions .customer-premium-secondary-button {
+  border-color: rgba(226, 232, 240, 0.16) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(13, 16, 22, 0.78) !important;
+  color: var(--text-dark-primary) !important;
+}
+
+.quick-actions .customer-premium-secondary-button:hover:not(:disabled) {
+  border-color: rgba(215, 173, 85, 0.42) !important;
+  background:
+    linear-gradient(145deg, rgba(215, 173, 85, 0.16), rgba(255, 255, 255, 0.04)),
+    rgba(13, 16, 22, 0.92) !important;
+  color: var(--color-gold-soft) !important;
+}
+
+.quick-actions .customer-premium-secondary-button:disabled {
+  color: rgba(248, 250, 252, 0.44) !important;
+  opacity: 1;
+}
+
+.customer-premium-form-panel > header,
+.customer-premium-list-panel > header,
+.product-form-panel .section-header,
+.product-list-panel .section-header,
+.cart-panel .section-header,
+.scanner-panel .section-header {
+  position: relative;
+}
+
+.customer-premium-form-panel > header::after,
+.customer-premium-list-panel > header::after,
+.product-form-panel .section-header::after,
+.product-list-panel .section-header::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(33, 22, 9, 0.22), transparent);
+}
+
+.customer-premium-form-panel > header h2,
+.customer-premium-form-panel > header p,
+.customer-premium-list-panel > header h2,
+.customer-premium-list-panel > header p {
+  text-shadow: none !important;
+}
+
+.sale-history-item {
+  min-height: 88px;
+  background:
+    radial-gradient(circle at 96% 0%, rgba(215, 173, 85, 0.16), transparent 34%),
+    rgba(255, 250, 235, 0.72) !important;
+}
+
+.product-card,
+.customer-premium-card {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(255, 255, 255, 0.5), transparent 28%),
+    rgba(255, 250, 235, 0.72) !important;
+}
+
+/* Correcoes finais de contraste por tela */
+.customer-entry-panel > header svg,
+.product-entry-panel > header svg,
+.customer-directory-panel > header svg,
+.product-inventory-panel > header svg,
+.checkout-hero-panel .section-header svg,
+.scanner-panel .section-header svg,
+.cart-panel .section-header svg {
+  color: #5b3a0a !important;
+  background: rgba(91, 58, 10, 0.1) !important;
+  border: 1px solid rgba(91, 58, 10, 0.16) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.customer-entry-panel .customer-premium-actions .customer-premium-secondary-button,
+.product-entry-panel .customer-premium-actions .customer-premium-secondary-button,
+.customer-directory-panel .customer-premium-search .customer-premium-primary-button,
+.customer-directory-panel .customer-premium-search .customer-premium-secondary-button,
+.product-inventory-panel .customer-premium-search .customer-premium-secondary-button,
+.product-inventory-panel .product-selection-actions .customer-premium-secondary-button,
+.product-inventory-panel .product-qr-actions .customer-premium-secondary-button,
+.customer-premium-card .customer-premium-card-actions button {
+  background:
+    linear-gradient(145deg, rgba(249, 231, 181, 0.12), rgba(215, 173, 85, 0.06)),
+    #101117 !important;
+  border: 1px solid rgba(215, 173, 85, 0.38) !important;
+  color: #f9e7b5 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22) !important;
+}
+
+.customer-entry-panel .customer-premium-actions button svg,
+.product-entry-panel .customer-premium-actions button svg,
+.customer-directory-panel button svg,
+.product-inventory-panel button svg,
+.product-inventory-panel a svg {
+  color: currentColor !important;
+  opacity: 1 !important;
+}
+
+.customer-directory-panel .customer-premium-search,
+.product-inventory-panel .customer-premium-search,
+.relationship-client-panel .history-filter-form.customer-profile-search,
+.relationship-client-panel .customer-premium-search {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    #211609 !important;
+  border: 1px solid rgba(215, 173, 85, 0.28) !important;
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.customer-directory-panel .customer-premium-search label,
+.product-inventory-panel .customer-premium-search label,
+.relationship-client-panel .history-filter-form.customer-profile-search label,
+.relationship-client-panel .customer-premium-search label {
+  color: #f9e7b5 !important;
+}
+
+.customer-directory-panel .customer-premium-search-input,
+.product-inventory-panel .customer-premium-search-input,
+.relationship-client-panel .customer-premium-search-input,
+.relationship-client-panel .history-filter-form.customer-profile-search input,
+.relationship-client-panel .history-filter-form.customer-profile-search select,
+.product-inventory-panel .customer-premium-search input,
+.product-inventory-panel .customer-premium-search select {
+  background: #0d1016 !important;
+  border: 1px solid rgba(226, 232, 240, 0.16) !important;
+  color: #f8fafc !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.customer-directory-panel .customer-premium-search-input:focus-within,
+.product-inventory-panel .customer-premium-search-input:focus-within,
+.relationship-client-panel .customer-premium-search-input:focus-within,
+.relationship-client-panel .history-filter-form.customer-profile-search input:focus,
+.relationship-client-panel .history-filter-form.customer-profile-search select:focus {
+  border-color: rgba(59, 130, 246, 0.7) !important;
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.customer-directory-panel .customer-premium-search-input svg,
+.product-inventory-panel .customer-premium-search-input svg,
+.relationship-client-panel .customer-premium-search-input svg {
+  color: #d7ad55 !important;
+  opacity: 1 !important;
+}
+
+.customer-directory-panel .customer-premium-search input::placeholder,
+.product-inventory-panel .customer-premium-search input::placeholder,
+.relationship-client-panel .customer-premium-search input::placeholder,
+.relationship-client-panel .history-filter-form.customer-profile-search input::placeholder {
+  color: #8b95a7 !important;
+}
+
+.customer-profile-tabs {
+  align-items: stretch;
+}
+
+.customer-profile-tabs .customer-premium-primary-button,
+.customer-profile-tabs .customer-premium-secondary-button {
+  min-height: 42px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(215, 173, 85, 0.28) !important;
+  opacity: 1 !important;
+}
+
+.customer-profile-tabs .customer-premium-primary-button {
+  background: linear-gradient(135deg, #f6d78b, #d7ad55) !important;
+  color: #211609 !important;
+}
+
+.customer-profile-tabs .customer-premium-secondary-button {
+  background: rgba(13, 16, 22, 0.92) !important;
+  color: #f8fafc !important;
+}
+
+.relationship-client-panel .promissory-detail-section,
+.relationship-client-panel .promissory-history-item,
+.relationship-client-panel .promissory-mini-card,
+.relationship-client-panel [style*="#101620"],
+.relationship-client-panel [style*="#101117"],
+.relationship-client-panel [style*="#0d1016"],
+.relationship-client-panel [style*="#111827"] {
+  color: #f8fafc !important;
+}
+
+.relationship-client-panel .promissory-detail-section :is(h2, h3, h4, strong, summary),
+.relationship-client-panel .promissory-history-item :is(h2, h3, h4, strong, summary),
+.relationship-client-panel .promissory-mini-card :is(strong, span),
+.relationship-client-panel [style*="#101620"] :is(h2, h3, h4, strong, label),
+.relationship-client-panel [style*="#101117"] :is(h2, h3, h4, strong, label),
+.relationship-client-panel [style*="#0d1016"] :is(h2, h3, h4, strong, label),
+.relationship-client-panel [style*="#111827"] :is(h2, h3, h4, strong, label) {
+  color: #f8fafc !important;
+}
+
+.relationship-client-panel .promissory-detail-section :is(p, span, small, td, th),
+.relationship-client-panel .promissory-history-item :is(p, span, small, td, th),
+.relationship-client-panel [style*="#101620"] :is(p, span, small, td, th),
+.relationship-client-panel [style*="#101117"] :is(p, span, small, td, th),
+.relationship-client-panel [style*="#0d1016"] :is(p, span, small, td, th),
+.relationship-client-panel [style*="#111827"] :is(p, span, small, td, th) {
+  color: #cbd5e1 !important;
+}
+
+.sale-detail-summary-card {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+    #211609 !important;
+  border-color: rgba(215, 173, 85, 0.28) !important;
+}
+
+.sale-detail-summary-card :is(span, small) {
+  color: #f9e7b5 !important;
+}
+
+.sale-detail-summary-card strong {
+  color: #f8fafc !important;
+}
+
+.sale-detail-summary-card [style*="#f6d78b"] {
+  color: #f6d78b !important;
+}
+
+.sale-detail-summary-card [style*="#fca5a5"] {
+  color: #fca5a5 !important;
+}
+
+.product-inventory-panel .inventory-result-bar,
+.product-inventory-panel .product-selection-bar {
+  background: #101117 !important;
+  border-color: rgba(215, 173, 85, 0.22) !important;
+}
+
+.product-inventory-panel .inventory-result-bar :is(span, strong),
+.product-inventory-panel .product-selection-bar :is(span, strong) {
+  color: #f8fafc !important;
+}
+
+.product-inventory-panel .customer-premium-card {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(215, 173, 85, 0.1), transparent 28%),
+    #0d1016 !important;
+  border-color: rgba(215, 173, 85, 0.18) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.26) !important;
+}
+
+.product-inventory-panel .customer-premium-card h3,
+.product-inventory-panel .customer-premium-card strong {
+  color: #f8fafc !important;
+}
+
+.product-inventory-panel .customer-premium-card :is(p, span, small, label) {
+  color: #aeb8c8 !important;
+}
+
+.product-inventory-panel .customer-premium-card .product-card-code,
+.product-inventory-panel .customer-premium-card .product-category-chip {
+  color: #d7ad55 !important;
+}
+
+.product-inventory-panel .customer-premium-contact-box {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(226, 232, 240, 0.08) !important;
+}
+
+.customer-directory-panel .customer-premium-card,
+.relationship-calendar-panel .customer-premium-card,
+.customer-premium-list-panel:not(.product-inventory-panel) .customer-premium-card {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(255, 255, 255, 0.5), transparent 28%),
+    rgba(255, 250, 235, 0.78) !important;
+}
+
+.customer-directory-panel .customer-premium-card :is(h3, strong),
+.relationship-calendar-panel .customer-premium-card :is(h3, strong),
+.customer-premium-list-panel:not(.product-inventory-panel) .customer-premium-card :is(h3, strong) {
+  color: #211609 !important;
+}
+
+.customer-directory-panel .customer-premium-card :is(p, span, small),
+.relationship-calendar-panel .customer-premium-card :is(p, span, small),
+.customer-premium-list-panel:not(.product-inventory-panel) .customer-premium-card :is(p, span, small) {
+  color: rgba(33, 22, 9, 0.68) !important;
+}
+
+.customer-directory-panel .customer-premium-card .customer-premium-secondary-button,
+.relationship-calendar-panel .customer-premium-card .customer-premium-secondary-button {
+  background: rgba(33, 22, 9, 0.08) !important;
+  border-color: rgba(33, 22, 9, 0.18) !important;
+  color: #211609 !important;
+  box-shadow: none !important;
+}
+
+/* Refinamento de leitura: filtros, métricas e controles pequenos */
+.field-group input[type='checkbox'],
+.history-filter-form input[type='checkbox'],
+.customer-premium-search input[type='checkbox'],
+.customer-premium-form input[type='checkbox'] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 5px !important;
+  border: 1px solid rgba(215, 173, 85, 0.62) !important;
+  background: #0d1016 !important;
+  accent-color: #d7ad55 !important;
+  box-shadow: 0 0 0 3px rgba(215, 173, 85, 0.08) !important;
+}
+
+.field-group input[type='checkbox']:focus-visible,
+.history-filter-form input[type='checkbox']:focus-visible,
+.customer-premium-search input[type='checkbox']:focus-visible,
+.customer-premium-form input[type='checkbox']:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.8) !important;
+  outline-offset: 3px !important;
+}
+
+.customer-premium-metrics article,
+.customer-premium-metrics article:hover,
+.customer-premium-metrics article:focus-within,
+.customer-premium-metrics article:active {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.42), transparent 32%),
+    linear-gradient(145deg, #f6e5b5 0%, #d9cda9 48%, #c7ad67 100%) !important;
+  border: 1px solid rgba(91, 58, 10, 0.28) !important;
+  color: #1a1208 !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+  opacity: 1 !important;
+}
+
+.customer-premium-metrics article:hover {
+  transform: translateY(-2px);
+}
+
+.customer-premium-metrics article :is(span, p, label, small),
+.customer-premium-metrics article:hover :is(span, p, label, small),
+.customer-premium-metrics article:focus-within :is(span, p, label, small) {
+  color: #1f170c !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.customer-premium-metrics article strong,
+.customer-premium-metrics article:hover strong,
+.customer-premium-metrics article:focus-within strong {
+  color: #171006 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.customer-premium-metrics article svg,
+.customer-premium-metrics article:hover svg,
+.customer-premium-metrics article:focus-within svg {
+  color: #b77f18 !important;
+  background: rgba(183, 127, 24, 0.14) !important;
+  border: 1px solid rgba(183, 127, 24, 0.18) !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.sales-history-filter-panel {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(255, 255, 255, 0.42), transparent 28%),
+    linear-gradient(135deg, #f8dc91 0%, #d8ad53 58%, #b97e24 100%) !important;
+  border: 1px solid rgba(91, 58, 10, 0.24) !important;
+  color: #211609 !important;
+}
+
+.sales-history-filter-panel .customer-premium-search {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.sales-history-filter-panel .field-group label,
+.sales-history-filter-panel .customer-premium-search label {
+  color: #4a3008 !important;
+  text-shadow: none !important;
+}
+
+.sales-history-filter-panel .field-group input,
+.sales-history-filter-panel .customer-premium-search input {
+  background: #0d1016 !important;
+  border-color: rgba(33, 22, 9, 0.48) !important;
+  color: #f8fafc !important;
+}
+
+.sales-history-filter-panel .field-group input::placeholder {
+  color: #d6deea !important;
+}
+
+.sales-history-filter-panel input[type='date']::-webkit-calendar-picker-indicator,
+.relationship-client-panel input[type='date']::-webkit-calendar-picker-indicator,
+.product-inventory-panel input[type='date']::-webkit-calendar-picker-indicator,
+.customer-entry-panel input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.7) sepia(0.35) saturate(1.2) !important;
+  opacity: 0.9 !important;
+}
+
+.sales-history-filter-panel .customer-premium-primary-button {
+  background: #211609 !important;
+  border-color: rgba(33, 22, 9, 0.78) !important;
+  color: #f9e7b5 !important;
+  box-shadow: 0 12px 26px rgba(33, 22, 9, 0.22) !important;
+}
+
+.sales-history-filter-panel .customer-premium-secondary-button {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(33, 22, 9, 0.3) !important;
+  color: #4a3008 !important;
+  box-shadow: none !important;
+}
+
+.sales-history-filter-panel .customer-premium-primary-button svg,
+.sales-history-filter-panel .customer-premium-secondary-button svg {
+  color: currentColor !important;
+  opacity: 1 !important;
+}
+
+.relationship-client-panel .customer-profile-filter-grid {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    #211609 !important;
+  border: 1px solid rgba(215, 173, 85, 0.3) !important;
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.relationship-client-panel .customer-profile-filter-grid .field-group label {
+  color: #f9e7b5 !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
+}
+
+.relationship-client-panel .customer-profile-filter-grid .field-group input:not([type='checkbox']),
+.relationship-client-panel .customer-profile-filter-grid .field-group select {
+  min-height: 48px !important;
+  background: #0d1016 !important;
+  border: 1px solid rgba(226, 232, 240, 0.18) !important;
+  color: #f8fafc !important;
+}
+
+.relationship-client-panel .customer-profile-filter-grid .field-group input::placeholder {
+  color: #cbd5e1 !important;
+}
+
+.relationship-client-panel .customer-profile-filter-grid .field-group input:not([type='checkbox']):focus,
+.relationship-client-panel .customer-profile-filter-grid .field-group select:focus {
+  border-color: rgba(96, 165, 250, 0.78) !important;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16) !important;
+}
+
+.relationship-client-panel .customer-profile-checkboxes {
+  align-self: stretch;
+}
+
+.relationship-client-panel .customer-profile-checkboxes label {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 10px;
+  background: rgba(13, 16, 22, 0.78);
+  color: #f8fafc !important;
+  line-height: 1.2;
+}
+
+.relationship-client-panel .customer-profile-filter-grid .customer-premium-secondary-button {
+  background: rgba(249, 231, 181, 0.12) !important;
+  border: 1px solid rgba(215, 173, 85, 0.34) !important;
+  color: #f9e7b5 !important;
+  min-height: 48px !important;
+}
+
+.relationship-client-panel .customer-profile-search,
+.relationship-client-panel .customer-profile-filter-grid,
+.sales-history-filter-panel {
+  overflow: visible !important;
+}
+
+.sales-history-filter-panel .customer-premium-search button.customer-premium-secondary-button,
+.sales-history-filter-panel button.customer-premium-secondary-button {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(33, 22, 9, 0.34) !important;
+  color: #211609 !important;
+  text-shadow: none !important;
+}
+
+.sales-history-filter-panel input[type='date'],
+.relationship-client-panel input[type='date'],
+.product-inventory-panel input[type='date'],
+.customer-entry-panel input[type='date'] {
+  color-scheme: dark !important;
+}
+
+.sales-history-filter-panel input[type='date']::-webkit-calendar-picker-indicator,
+.relationship-client-panel input[type='date']::-webkit-calendar-picker-indicator,
+.product-inventory-panel input[type='date']::-webkit-calendar-picker-indicator,
+.customer-entry-panel input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+  filter: invert(88%) sepia(26%) saturate(841%) hue-rotate(350deg) brightness(106%) contrast(95%) !important;
+  opacity: 1 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}
+

@@ -42,6 +42,7 @@ import type {
 import type { PaymentMethod } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
+import { formatPaymentMethod } from '../utils/paymentMethods'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { usePagination } from '../hooks/usePagination'
 import { maskPhone } from '../utils/masks'
@@ -52,13 +53,6 @@ const statusLabels: Record<PromissoryNoteStatus, string> = {
   PAID: 'Pago',
   OVERDUE: 'Vencido',
   CANCELLED: 'Cancelado',
-}
-
-const paymentLabels: Record<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'Pix',
-  DEBIT_CARD: 'Cartão débito',
-  CREDIT_CARD: 'Cartão crédito',
 }
 
 function getDaysInArrears(dueDateStr: string): number {
@@ -1298,7 +1292,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                         <div key={p.id} style={{ background: '#0d1016', borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <strong style={{ color: '#fff', fontSize: '0.75rem', display: 'block' }}>Recebimento #{p.id}</strong>
-                            <small style={{ color: '#7b8493', fontSize: '0.68rem' }}>Método: {paymentLabels[p.paymentMethod]} — {formatNullableDateTime(p.paidAt)}</small>
+                            <small style={{ color: '#7b8493', fontSize: '0.68rem' }}>Método: {formatPaymentMethod(p.paymentMethod)} — {formatNullableDateTime(p.paidAt)}</small>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <strong style={{ color: '#2dd4bf', fontSize: '0.78rem' }}>+{formatCurrency(p.amount)}</strong>

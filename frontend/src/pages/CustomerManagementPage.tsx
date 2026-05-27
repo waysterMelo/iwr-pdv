@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, Clock, Copy, CreditCard, DollarSign, Downl
 import { createCustomer, downloadCustomerProfileExcelReport, getCustomerPage, getCustomerProfile, getCustomers, updateCustomer } from '../services/customerService'
 import { getSaleReceiptUrl } from '../services/saleService'
 import { getPromissoryNotePrintUrl, getPromissoryPaymentReceiptUrl } from '../services/promissoryNoteService'
-import type { Customer, CustomerPayload, CustomerProfile, CustomerPromissoryNote } from '../types/customer'
+import type { Customer, CustomerPayload, CustomerProfile, CustomerProfileInsight, CustomerPromissoryNote } from '../types/customer'
 import type { PromissoryNoteStatus } from '../types/promissoryNote'
 import type { Sale, SaleStatus } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
@@ -12,6 +12,7 @@ import { PaginationControls } from '../components/PaginationControls'
 import { usePagination } from '../hooks/usePagination'
 import { maskCpf, maskPhone } from '../utils/masks'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
+import { formatPaymentMethod } from '../utils/paymentMethods'
 
 const initialForm: CustomerPayload = {
   name: '',
@@ -79,12 +80,11 @@ const noteStatusLabels: Record<PromissoryNoteStatus, string> = {
   CANCELLED: 'Cancelada',
 }
 
-const paymentMethodLabels: Record<string, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'Pix',
-  DEBIT_CARD: 'Debito',
-  CREDIT_CARD: 'Credito',
-  PROMISSORY_NOTE: 'Promissoria',
+const insightAppearance: Record<CustomerProfileInsight['severity'], { background: string; border: string; color: string; Icon: typeof AlertTriangle }> = {
+  INFO: { background: 'rgba(59,130,246,0.13)', border: '#3b82f6', color: '#bfdbfe', Icon: TrendingUp },
+  SUCCESS: { background: 'rgba(45,212,191,0.13)', border: '#2dd4bf', color: '#99f6e4', Icon: CheckCircle2 },
+  WARNING: { background: 'rgba(245,158,11,0.14)', border: '#f59e0b', color: '#fde68a', Icon: AlertTriangle },
+  DANGER: { background: 'rgba(239,68,68,0.14)', border: '#ef4444', color: '#fecaca', Icon: AlertTriangle },
 }
 
 function formatDate(value: string | null | undefined) {
@@ -262,6 +262,105 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
     
     return scores
   }, [customerProfile, overdueProfileNotes, completedSaleCount, averageTicketAmount, totalPurchasedAmount])
+  const fallbackProfileInsights = useMemo<CustomerProfileInsight[]>(() => {
+    if (!customerProfile) return []
+
+    const insights: CustomerProfileInsight[] = []
+    const latestSale = profileSales[0]
+    const daysSinceLatestSale = latestSale
+      ? Math.floor((Date.now() - new Date(latestSale.soldAt).getTime()) / (1000 * 60 * 60 * 24))
+      : null
+    const maxOverdueDays = overdueProfileNotes.length > 0
+      ? Math.max(...overdueProfileNotes.map((note) => note.daysOverdue || 0))
+      : 0
+
+    if (overdueProfileNotes.length > 0) {
+      insights.push({
+        code: 'OVERDUE_BALANCE_FALLBACK',
+        severity: 'WARNING',
+        title: 'Parcelas vencidas',
+        message: `${overdueProfileNotes.length} parcela(s) vencida(s), somando ${formatCurrency(overduePromissoryAmount)}. Maior atraso: ${maxOverdueDays} dia(s).`,
+        recommendedAction: 'Priorize cobranca antes de liberar nova venda a prazo.',
+      })
+    }
+
+    if (maxOverdueDays > 30) {
+      insights.push({
+        code: 'CREDIT_SUSPENSION_RECOMMENDED_FALLBACK',
+        severity: 'DANGER',
+        title: 'Risco alto de credito',
+        message: 'Existe atraso superior a 30 dias no historico financeiro do cliente.',
+        recommendedAction: 'Suspenda novas vendas a prazo ate negociar ou receber a pendencia.',
+      })
+    }
+
+    if (openPromissoryAmount > 0 && daysSinceLatestSale !== null && daysSinceLatestSale < 10) {
+      insights.push({
+        code: 'RECENT_OPEN_BALANCE_FALLBACK',
+        severity: 'WARNING',
+        title: 'Debito ativo recente',
+        message: `Cliente comprou ha ${daysSinceLatestSale} dia(s) e ainda possui ${formatCurrency(openPromissoryAmount)} em aberto.`,
+        recommendedAction: 'Confirme o combinado de pagamento antes de uma nova venda.',
+      })
+    }
+
+    if (daysSinceLatestSale !== null && daysSinceLatestSale > 60) {
+      insights.push({
+        code: 'COMMERCIAL_REACTIVATION_FALLBACK',
+        severity: 'INFO',
+        title: 'Cliente inativo',
+        message: `Sem compras registradas ha ${daysSinceLatestSale} dia(s).`,
+        recommendedAction: 'Enviar contato de reativacao com oferta ou novidade relevante.',
+      })
+    }
+
+    if (customerProfile.customer.birthDate) {
+      const birthDate = new Date(customerProfile.customer.birthDate)
+      const today = new Date()
+      if (birthDate.getMonth() === today.getMonth()) {
+        insights.push({
+          code: 'BIRTHDAY_MONTH_FALLBACK',
+          severity: 'INFO',
+          title: 'Aniversario no mes',
+          message: 'Cliente faz aniversario neste mes.',
+          recommendedAction: 'Ofereca uma condicao especial para fortalecer o relacionamento.',
+        })
+      }
+    }
+
+    if (customerProfile.customer.creditLimit && openPromissoryAmount > customerProfile.customer.creditLimit) {
+      insights.push({
+        code: 'CREDIT_LIMIT_EXCEEDED_FALLBACK',
+        severity: 'DANGER',
+        title: 'Limite de credito excedido',
+        message: `${formatCurrency(openPromissoryAmount)} em aberto para limite de ${formatCurrency(customerProfile.customer.creditLimit)}.`,
+        recommendedAction: 'Receba parte do saldo ou ajuste o limite antes de vender a prazo.',
+      })
+    }
+
+    if (overdueProfileNotes.length === 0 && openPromissoryAmount === 0 && completedSaleCount > 0) {
+      insights.push({
+        code: 'GOOD_PAYER_FALLBACK',
+        severity: 'SUCCESS',
+        title: 'Bom pagador',
+        message: 'Cliente sem pendencias em aberto e com compras concluidas.',
+        recommendedAction: 'Perfil apto para relacionamento comercial normal.',
+      })
+    }
+
+    if (insights.length === 0) {
+      insights.push({
+        code: 'NO_HISTORY_FALLBACK',
+        severity: 'INFO',
+        title: 'Historico insuficiente',
+        message: 'Ainda nao ha volume suficiente para gerar alertas financeiros.',
+        recommendedAction: 'Acompanhe as proximas compras para classificar o perfil.',
+      })
+    }
+
+    return insights
+  }, [customerProfile, completedSaleCount, openPromissoryAmount, overdueProfileNotes, overduePromissoryAmount, profileSales])
+  const profileInsights = customerProfile?.insights?.length ? customerProfile.insights : fallbackProfileInsights
 
   const consolidatedWhatsappMessage = useMemo(() => {
     if (!customerProfile) return ''
@@ -306,7 +405,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
       <tr>
         <td>#${sale.id}</td>
         <td>${formatNullableDateTime(sale.soldAt)}</td>
-        <td>${paymentMethodLabels[sale.paymentMethod] || sale.paymentMethod}</td>
+        <td>${formatPaymentMethod(sale.paymentMethod)}</td>
         <td>${formatCurrency(sale.totalAmount)}</td>
         <td>${sale.operator?.displayName || '-'}</td>
       </tr>
@@ -471,7 +570,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
         title: sale.status === 'CANCELLED' ? `Compra #${sale.id} Cancelada` : `Compra #${sale.id}`,
         description: sale.status === 'CANCELLED' 
           ? `Venda cancelada. Motivo: ${sale.cancellationReason || 'Não informado'}` 
-          : `Efetuada via ${paymentMethodLabels[sale.paymentMethod] || sale.paymentMethod}. Operador: ${sale.operator?.displayName || '-'}`,
+          : `Efetuada via ${formatPaymentMethod(sale.paymentMethod)}. Operador: ${sale.operator?.displayName || '-'}`,
         value: sale.totalAmount,
         icon: sale.status === 'CANCELLED' ? X : ShoppingBag,
         color: sale.status === 'CANCELLED' ? '#fb7185' : '#f6d78b'
@@ -510,7 +609,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
             type: 'payment',
             date: payment.paidAt,
             title: `Pagamento da Nota #${note.id}`,
-            description: `Baixa recebida via ${paymentMethodLabels[payment.paymentMethod] || payment.paymentMethod}. Recebido por: ${payment.paidBy?.displayName || '-'}`,
+            description: `Baixa recebida via ${formatPaymentMethod(payment.paymentMethod)}. Recebido por: ${payment.paidBy?.displayName || '-'}`,
             value: payment.totalReceived,
             icon: CheckCircle2,
             color: '#2dd4bf'
@@ -811,7 +910,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
 
         <div className={showProfile ? 'content-grid' : 'customer-premium-content'}>
           {showForm ? (
-            <section className="customer-premium-form-panel">
+            <section className="customer-premium-form-panel customer-entry-panel">
               <header>
                 <UserPlus size={26} aria-hidden="true" />
                 <div>
@@ -934,7 +1033,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
           ) : null}
 
           {showList ? (
-            <section className="customer-premium-list-panel">
+            <section className="customer-premium-list-panel customer-directory-panel">
               <header className="section-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <span aria-hidden="true" style={{ background: 'rgba(91, 58, 10, 0.12)', padding: '10px', borderRadius: '12px', color: '#5b3a0a', display: 'inline-flex' }}>
@@ -1220,7 +1319,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
               </div>
 
               {customerProfile ? (
-                <div className="history-filter-form" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: '#211609', padding: '16px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', marginBottom: '20px' }}>
+                <div className="history-filter-form customer-profile-filter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: '#211609', padding: '16px', borderRadius: '14px', border: '1px solid rgba(91, 58, 10, 0.35)', marginBottom: '20px' }}>
                   <div className="field-group">
                     <label htmlFor="profileStartDate">Início Venc./Compra</label>
                     <input id="profileStartDate" type="date" value={profileFilters.startDate} onChange={(event) => setProfileFilters((current) => ({ ...current, startDate: event.target.value }))} style={{ colorScheme: 'dark' }} />
@@ -1256,7 +1355,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                     <label htmlFor="profileMaxAmount">Valor Máximo (R$)</label>
                     <input id="profileMaxAmount" type="number" value={profileFilters.maxAmount} onChange={(event) => setProfileFilters((current) => ({ ...current, maxAmount: event.target.value }))} placeholder="Max" />
                   </div>
-                  <div className="field-group" style={{ gridColumn: 'span 2', display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
+                  <div className="field-group customer-profile-checkboxes" style={{ gridColumn: 'span 2', display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', color: '#cbd5e1' }}>
                       <input type="checkbox" checked={profileFilters.onlyOverdue} onChange={(e) => setProfileFilters(curr => ({ ...curr, onlyOverdue: e.target.checked }))} />
                       Apenas vencidas
@@ -1379,7 +1478,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                   </div>
 
                   {/* Seleção de Abas */}
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', background: '#211609', padding: '6px', borderRadius: '12px', border: '1px solid rgba(91, 58, 10, 0.35)' }}>
+                  <div className="customer-profile-tabs" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', background: '#211609', padding: '6px', borderRadius: '12px', border: '1px solid rgba(91, 58, 10, 0.35)' }}>
                     {[
                       ['summary', 'Painel de Controle'],
                       ['timeline', `Linha do Tempo (${timelineEvents.length})`],
@@ -1464,35 +1563,25 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                         <section style={{ background: '#101620', border: '1px solid rgba(226,232,240,0.1)', borderRadius: '14px', padding: '20px' }}>
                           <h3 style={{ color: '#f8fafc', margin: '0 0 12px', fontSize: '1rem' }}>Alertas e Insights</h3>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {overdueProfileNotes.some((n) => (n.daysOverdue || 0) > 30) ? (
-                              <div style={{ background: 'rgba(239,68,68,0.12)', borderLeft: '4px solid #ef4444', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#f87171' }}>
-                                <strong>Parcela muito atrasada:</strong> Cliente com dívidas vencidas há mais de 30 dias. Recomenda-se suspensão de crédito a prazo.
-                              </div>
-                            ) : null}
-                            
-                            {openPromissoryAmount > 0 && profileSales.length > 0 && (new Date().getTime() - new Date(profileSales[0].soldAt).getTime()) / (1000 * 60 * 60 * 24) < 10 ? (
-                              <div style={{ background: 'rgba(245,158,11,0.12)', borderLeft: '4px solid #f59e0b', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#fbbf24' }}>
-                                <strong>Alerta de Débito Ativo:</strong> Cliente comprou recentemente (últimos 10 dias) e ainda possui saldo devedor pendente.
-                              </div>
-                            ) : null}
+                            {profileInsights.map((insight) => {
+                              const appearance = insightAppearance[insight.severity] ?? insightAppearance.INFO
+                              const InsightIcon = appearance.Icon
 
-                            {profileSales.length > 0 && (new Date().getTime() - new Date(profileSales[0].soldAt).getTime()) / (1000 * 60 * 60 * 24) > 60 ? (
-                              <div style={{ background: 'rgba(148,163,184,0.12)', borderLeft: '4px solid #94a3b8', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                                <strong>Inatividade Comercial:</strong> Cliente sem compras registradas há mais de 60 dias. Vale um contato de reativação!
-                              </div>
-                            ) : null}
-
-                            {customerProfile.customer.birthDate && new Date(customerProfile.customer.birthDate).getMonth() === new Date().getMonth() && (
-                              <div style={{ background: 'rgba(244,63,94,0.12)', borderLeft: '4px solid #f43f5e', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#fb7185' }}>
-                                <strong>Aniversariante do Mês:</strong> Ofereça um desconto especial de aniversário para fortalecer a relação!
-                              </div>
-                            )}
-
-                            {!overdueProfileNotes.length && !openPromissoryAmount && completedSaleCount > 0 ? (
-                              <div style={{ background: 'rgba(45,212,191,0.12)', borderLeft: '4px solid #2dd4bf', padding: '10px', borderRadius: '6px', fontSize: '0.8rem', color: '#2dd4bf' }}>
-                                <strong>Cliente Excelente:</strong> Nenhuma pendência em aberto. Ótimo perfil de pagador!
-                              </div>
-                            ) : null}
+                              return (
+                                <div key={insight.code} style={{ background: appearance.background, borderLeft: `4px solid ${appearance.border}`, padding: '12px', borderRadius: '8px', fontSize: '0.82rem', color: appearance.color }}>
+                                  <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', color: appearance.color }}>
+                                    <InsightIcon size={15} />
+                                    {insight.title}
+                                  </strong>
+                                  <p style={{ margin: '6px 0 0', color: '#e5e7eb', lineHeight: 1.45 }}>{insight.message}</p>
+                                  {insight.recommendedAction ? (
+                                    <small style={{ display: 'block', marginTop: '8px', color: '#cbd5e1' }}>
+                                      Acao recomendada: {insight.recommendedAction}
+                                    </small>
+                                  ) : null}
+                                </div>
+                              )
+                            })}
                           </div>
                         </section>
                       </div>
@@ -1636,7 +1725,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                       {filteredCompletedSales.length === 0 ? <div className="product-empty">Nenhuma compra encontrada.</div> : completedSalesPagination.pageItems.map((sale) => (
                         <details className="promissory-history-item" key={sale.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
                           <summary style={{ cursor: 'pointer', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>Venda #{sale.id} - {formatNullableDateTime(sale.soldAt)} - {paymentMethodLabels[sale.paymentMethod]} - {formatCurrency(sale.totalAmount)}</span>
+                            <span>Venda #{sale.id} - {formatNullableDateTime(sale.soldAt)} - {formatPaymentMethod(sale.paymentMethod)} - {formatCurrency(sale.totalAmount)}</span>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -1833,7 +1922,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                                                 {note.payments.map((p: any) => (
                                                   <tr key={p.id} style={{ borderBottom: '1px solid rgba(226,232,240,0.05)' }}>
                                                     <td style={{ padding: '4px' }}>{formatNullableDateTime(p.paidAt)}</td>
-                                                    <td style={{ padding: '4px' }}>{paymentMethodLabels[p.paymentMethod] || p.paymentMethod}</td>
+                                                    <td style={{ padding: '4px' }}>{formatPaymentMethod(p.paymentMethod)}</td>
                                                     <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency(p.amount)}</td>
                                                     <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency((p.interestAmount || 0) + (p.penaltyAmount || 0))}</td>
                                                     <td style={{ padding: '4px', textAlign: 'right', color: '#2dd4bf', fontWeight: 'bold' }}>{formatCurrency(p.totalReceived)}</td>
@@ -1911,7 +2000,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                                       {note.payments.map((p: any) => (
                                         <tr key={p.id} style={{ borderBottom: '1px solid rgba(226,232,240,0.05)' }}>
                                           <td style={{ padding: '4px' }}>{formatNullableDateTime(p.paidAt)}</td>
-                                          <td style={{ padding: '4px' }}>{paymentMethodLabels[p.paymentMethod] || p.paymentMethod}</td>
+                                          <td style={{ padding: '4px' }}>{formatPaymentMethod(p.paymentMethod)}</td>
                                           <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency(p.amount)}</td>
                                           <td style={{ padding: '4px', textAlign: 'right' }}>{formatCurrency((p.interestAmount || 0) + (p.penaltyAmount || 0))}</td>
                                           <td style={{ padding: '4px', textAlign: 'right', color: '#2dd4bf', fontWeight: 'bold' }}>{formatCurrency(p.totalReceived)}</td>
@@ -2124,7 +2213,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                             <div className="promissory-history-item" key={sale.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>Venda #{sale.id}</strong>
-                                <small style={{ color: '#707b8c', fontSize: '0.75rem' }}>Realizada em: {formatNullableDateTime(sale.soldAt)} — Método: {sale.paymentMethod}</small>
+                                <small style={{ color: '#707b8c', fontSize: '0.75rem' }}>Realizada em: {formatNullableDateTime(sale.soldAt)} — Método: {formatPaymentMethod(sale.paymentMethod)}</small>
                               </div>
                               <strong style={{ color: '#f6d78b', fontSize: '0.95rem' }}>{formatCurrency(sale.totalAmount)}</strong>
                             </div>

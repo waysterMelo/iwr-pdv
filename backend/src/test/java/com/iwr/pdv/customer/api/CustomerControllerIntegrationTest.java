@@ -155,6 +155,8 @@ class CustomerControllerIntegrationTest {
                 .andExpect(jsonPath("$.purchasedItems[0].quantity").value(18))
                 .andExpect(jsonPath("$.openPromissoryCount").value(2))
                 .andExpect(jsonPath("$.overduePromissoryCount").value(1))
+                .andExpect(jsonPath("$.insights.length()").isNotEmpty())
+                .andExpect(jsonPath("$.insights[?(@.code == 'OVERDUE_BALANCE')].severity").isNotEmpty())
                 .andExpect(jsonPath("$.promissoryNotes[0].payments.length()").exists())
                 .andExpect(jsonPath("$.promissoryNotes[?(@.status == 'OVERDUE')].remainingAmount").isNotEmpty())
                 .andExpect(jsonPath("$.promissoryNotes[?(@.status == 'PARTIALLY_PAID')].payments[0].amount").isNotEmpty());

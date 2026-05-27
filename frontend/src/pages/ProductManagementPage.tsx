@@ -485,7 +485,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
           
           {/* Formulário Novo Produto */}
           {showForm ? (
-            <section className="customer-premium-form-panel">
+            <section className="customer-premium-form-panel product-entry-panel">
               <header>
                 <Package size={26} aria-hidden="true" />
                 <div>
@@ -615,7 +615,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
 
           {/* Listagem de Estoque */}
           {showList ? (
-            <section className="customer-premium-list-panel">
+            <section className="customer-premium-list-panel product-inventory-panel">
               <header>
                 <div>
                   <h2>Produtos cadastrados</h2>

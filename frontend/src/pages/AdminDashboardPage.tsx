@@ -12,20 +12,12 @@ import type {
   AdminDashboardReceivables,
   AdminDashboardSummary,
 } from '../types/adminDashboard'
-import type { PaymentMethod } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency } from '../utils/formatters'
+import { formatPaymentMethod } from '../utils/paymentMethods'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { PaginationControls } from '../components/PaginationControls'
 import { usePagination } from '../hooks/usePagination'
-
-const paymentLabels: Record<PaymentMethod, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'Pix',
-  DEBIT_CARD: 'Débito',
-  CREDIT_CARD: 'Crédito',
-  PROMISSORY_NOTE: 'Promissória',
-}
 
 const statusLabels = {
   PENDING: 'Pendente',
@@ -382,7 +374,7 @@ export function AdminDashboardPage() {
                 <div style={{ display: 'grid', gap: '10px' }}>
                   {paymentMethods.map((payment) => (
                     <div className="admin-chart-row" key={payment.paymentMethod} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <small style={{ width: '80px', color: '#aeb8c8', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{paymentLabels[payment.paymentMethod]}</small>
+                      <small style={{ width: '80px', color: '#aeb8c8', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{formatPaymentMethod(payment.paymentMethod)}</small>
                       <div style={{ flex: 1, height: '8px', background: '#11141a', borderRadius: '4px', overflow: 'hidden' }}>
                         <i style={{ 
                           display: 'block', 
@@ -528,7 +520,7 @@ export function AdminDashboardPage() {
                 paymentMethods.map((payment) => (
                   <article key={payment.paymentMethod} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{paymentLabels[payment.paymentMethod]}</strong>
+                      <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{formatPaymentMethod(payment.paymentMethod)}</strong>
                       <small style={{ color: '#7b8493', fontSize: '0.72rem' }}>{payment.saleCount} venda(s) — {payment.receiptCount} baixa(s)</small>
                     </div>
                     <div style={{ textAlign: 'right' }}>
