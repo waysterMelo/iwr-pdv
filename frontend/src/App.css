@@ -505,7 +505,6 @@ h3 {
 .checkout-hero-panel,
 .scanner-panel,
 .cart-panel,
-.checkout-footer-panel,
 .customer-premium-list-panel,
 .customer-premium-form-panel,
 .customer-premium-edit-modal {
@@ -8532,6 +8531,7 @@ button:disabled,
   .customer-premium-list-footer {
     display: grid;
   }
+}
 
   .customer-premium-contact-box strong {
     text-align: left;
@@ -9352,5 +9352,93 @@ button:disabled,
     scroll-behavior: auto !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* ==========================================================================
+   REGRAS CROMÁTICAS DE ALTO CONTRASTE E EVOLUÇÃO VISUAL DE ÁREAS GOLD
+   ========================================================================== */
+
+/* 1. Correção de Contraste na Ficha de Cliente e Contêineres Claros (.cart-item) */
+.cart-item h3 {
+  color: #211609 !important;
+  font-family: var(--font-serif);
+  font-weight: 600 !important;
+}
+
+.cart-item small {
+  color: rgba(33, 22, 9, 0.85) !important;
+}
+
+.cart-item p {
+  color: rgba(33, 22, 9, 0.90) !important;
+}
+
+/* 2. Realce de Ícones em Contêineres de Fundo Gold (Ícones Pretos) */
+.cart-item svg,
+.sale-history-item svg {
+  color: #000000 !important;
+}
+
+/* 3. Ajuste de Contrastes de Métricas Financeiras sobre Fundo Gold */
+.cart-item .cart-price span {
+  color: rgba(33, 22, 9, 0.70) !important;
+}
+
+.cart-item .cart-price strong {
+  color: #211609 !important;
+}
+
+.cart-item strong span {
+  color: rgba(33, 22, 9, 0.70) !important;
+}
+
+.cart-item strong[style*="#f6d78b"] {
+  color: #5b3a0a !important; /* Total Comprado: Marrom escuro de joalheria */
+}
+
+.cart-item strong[style*="#fb7185"] {
+  color: #b91c1c !important; /* Saldo Aberto/Vencido: Vermelho escuro elegante */
+}
+
+.cart-item strong[style*="#2dd4bf"] {
+  color: #0f766e !important; /* Pago: Verde escuro sutil */
+}
+
+/* 4. Refatoração de Botões Secundários em Superfícies Gold (Contraste Invertido) */
+.customer-premium-list-panel .customer-premium-secondary-button,
+.customer-premium-form-panel .customer-premium-secondary-button,
+.cart-panel .customer-premium-secondary-button,
+.checkout-footer-panel .customer-premium-secondary-button {
+  background: #101117 !important;
+  border: 1px solid rgba(33, 22, 9, 0.35) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16) !important;
+}
+
+.customer-premium-list-panel .customer-premium-secondary-button:hover,
+.customer-premium-form-panel .customer-premium-secondary-button:hover,
+.cart-panel .customer-premium-secondary-button:hover,
+.checkout-footer-panel .customer-premium-secondary-button:hover {
+  background: #191b24 !important;
+  border-color: #211609 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 5. Refatoração Premium do Rodapé do PDV (Fundo Escuro e Borda Dourada) */
+.checkout-footer-panel {
+  background: #101117 !important;
+  border: 1px solid rgba(226, 232, 240, 0.08) !important;
+  border-top: 2px solid var(--color-gold) !important; /* Borda superior dourada para sofisticação */
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.32) !important;
+  color: #ffffff !important;
+}
+
+.checkout-footer-panel span {
+  color: #aeb8c8 !important;
+}
+
+.checkout-footer-panel strong {
+  color: var(--color-gold-soft) !important;
 }
 
