@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Edit3, FileText, Phone, RotateCcw, Save, Search, UserCheck, UserPlus, X, Gift, Mail, MapPin, DollarSign, TrendingUp, AlertTriangle, Receipt, CreditCard, Sparkles } from 'lucide-react'
-import { createCustomer, getCustomerPage, getCustomerProfile, getCustomers, updateCustomer } from '../services/customerService'
+import { CreditCard, DollarSign, Download, Edit3, FileText, Gift, Mail, MapPin, Phone, Receipt, RotateCcw, Save, Search, ShoppingBag, UserCheck, UserPlus, X } from 'lucide-react'
+import { createCustomer, downloadCustomerProfileExcelReport, getCustomerPage, getCustomerProfile, getCustomers, updateCustomer } from '../services/customerService'
 import type { Customer, CustomerPayload, CustomerProfile } from '../types/customer'
+import type { PromissoryNoteStatus } from '../types/promissoryNote'
+import type { Sale, SaleStatus } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { PaginationControls } from '../components/PaginationControls'
+import { usePagination } from '../hooks/usePagination'
 import { maskCpf, maskPhone } from '../utils/masks'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 
@@ -35,6 +38,58 @@ type CustomerManagementMode = 'create' | 'list' | 'profile'
 type CustomerManagementPageProps = {
   mode?: CustomerManagementMode
 }
+type ProfileTab = 'summary' | 'sales' | 'products' | 'notes' | 'cancelled'
+
+type ProfileFilters = {
+  startDate: string
+  endDate: string
+  saleStatus: SaleStatus | ''
+  noteStatus: PromissoryNoteStatus | ''
+  query: string
+}
+
+const initialProfileFilters: ProfileFilters = {
+  startDate: '',
+  endDate: '',
+  saleStatus: '',
+  noteStatus: '',
+  query: '',
+}
+
+const noteStatusLabels: Record<PromissoryNoteStatus, string> = {
+  PENDING: 'Pendente',
+  PARTIALLY_PAID: 'Parcial',
+  PAID: 'Paga',
+  OVERDUE: 'Vencida',
+  CANCELLED: 'Cancelada',
+}
+
+const paymentMethodLabels: Record<string, string> = {
+  CASH: 'Dinheiro',
+  PIX: 'Pix',
+  DEBIT_CARD: 'Debito',
+  CREDIT_CARD: 'Credito',
+  PROMISSORY_NOTE: 'Promissoria',
+}
+
+function formatDate(value: string | null | undefined) {
+  return value ? value.split('-').reverse().join('/') : '-'
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function saleMatchesQuery(sale: Sale, query: string) {
+  if (!query) return true
+  const haystack = [
+    String(sale.id),
+    sale.paymentMethod,
+    sale.items.map((item) => `${item.productName} ${item.productCode}`).join(' '),
+  ].join(' ').toLowerCase()
+
+  return haystack.includes(query)
+}
 
 export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPageProps) {
   const { notify } = useAppMessage()
@@ -55,11 +110,90 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
   const [selectedProfileCustomerId, setSelectedProfileCustomerId] = useState('')
   const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null)
   const [isProfileLoading, setIsProfileLoading] = useState(false)
+  const [isProfileExporting, setIsProfileExporting] = useState(false)
+  const [profileTab, setProfileTab] = useState<ProfileTab>('summary')
+  const [profileFilters, setProfileFilters] = useState<ProfileFilters>(initialProfileFilters)
 
   const activeCustomers = useMemo(() => customers.filter((customer) => customer.active).length, [customers])
   const showForm = mode === 'create'
   const showList = mode === 'list'
   const showProfile = mode === 'profile'
+  const profileFilterQuery = normalizeSearch(profileFilters.query)
+  const profileSales = customerProfile?.sales ?? customerProfile?.latestSales ?? []
+  const profilePurchasedItems = customerProfile?.purchasedItems ?? []
+  const profilePromissoryNotes = customerProfile?.promissoryNotes ?? []
+  const filteredSales = useMemo(() => {
+    if (!customerProfile) return []
+
+    return profileSales.filter((sale) => {
+      const saleDate = sale.soldAt.slice(0, 10)
+      return (!profileFilters.startDate || saleDate >= profileFilters.startDate)
+        && (!profileFilters.endDate || saleDate <= profileFilters.endDate)
+        && (!profileFilters.saleStatus || sale.status === profileFilters.saleStatus)
+        && saleMatchesQuery(sale, profileFilterQuery)
+    })
+  }, [customerProfile, profileFilterQuery, profileFilters.endDate, profileFilters.saleStatus, profileFilters.startDate, profileSales])
+  const filteredCancelledSales = useMemo(() => (
+    filteredSales.filter((sale) => sale.status === 'CANCELLED')
+  ), [filteredSales])
+  const filteredCompletedSales = useMemo(() => (
+    filteredSales.filter((sale) => sale.status === 'COMPLETED')
+  ), [filteredSales])
+  const filteredPurchasedItems = useMemo(() => {
+    if (!customerProfile) return []
+
+    return profilePurchasedItems.filter((item) => {
+      if (!profileFilterQuery) return true
+      return `${item.productName} ${item.productCode}`.toLowerCase().includes(profileFilterQuery)
+    })
+  }, [customerProfile, profileFilterQuery, profilePurchasedItems])
+  const filteredNotes = useMemo(() => {
+    if (!customerProfile) return []
+
+    return profilePromissoryNotes.filter((note) => {
+      return (!profileFilters.startDate || note.dueDate >= profileFilters.startDate)
+        && (!profileFilters.endDate || note.dueDate <= profileFilters.endDate)
+        && (!profileFilters.noteStatus || note.status === profileFilters.noteStatus)
+        && (!profileFilterQuery || [
+          String(note.id),
+          note.saleId ? String(note.saleId) : 'avulsa',
+          (note.saleItems ?? []).map((item) => `${item.productName} ${item.productCode}`).join(' '),
+        ].join(' ').toLowerCase().includes(profileFilterQuery))
+    })
+  }, [customerProfile, profileFilterQuery, profileFilters.endDate, profileFilters.noteStatus, profileFilters.startDate, profilePromissoryNotes])
+  const completedProfileSales = useMemo(() => (
+    profileSales.filter((sale) => sale.status === 'COMPLETED')
+  ), [profileSales])
+  const cancelledProfileSales = useMemo(() => (
+    profileSales.filter((sale) => sale.status === 'CANCELLED')
+  ), [profileSales])
+  const openProfileNotes = useMemo(() => (
+    profilePromissoryNotes.filter((note) => ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(note.status))
+  ), [profilePromissoryNotes])
+  const overdueProfileNotes = useMemo(() => (
+    profilePromissoryNotes.filter((note) => note.status === 'OVERDUE')
+  ), [profilePromissoryNotes])
+  const paidProfileNotes = useMemo(() => (
+    profilePromissoryNotes.filter((note) => note.status === 'PAID')
+  ), [profilePromissoryNotes])
+  const totalPurchasedAmount = customerProfile?.totalPurchasedAmount ?? completedProfileSales.reduce((total, sale) => total + sale.totalAmount, 0)
+  const openPromissoryAmount = customerProfile?.openPromissoryAmount ?? openProfileNotes.reduce((total, note) => total + note.remainingAmount, 0)
+  const overduePromissoryAmount = customerProfile?.overduePromissoryAmount ?? overdueProfileNotes.reduce((total, note) => total + note.remainingAmount, 0)
+  const paidPromissoryAmount = customerProfile?.paidPromissoryAmount ?? profilePromissoryNotes.reduce((total, note) => total + note.paidAmount, 0)
+  const completedSaleCount = customerProfile?.completedSaleCount ?? completedProfileSales.length
+  const cancelledSaleCount = customerProfile?.cancelledSaleCount ?? cancelledProfileSales.length
+  const openPromissoryCount = customerProfile?.openPromissoryCount ?? openProfileNotes.length
+  const overduePromissoryCount = customerProfile?.overduePromissoryCount ?? overdueProfileNotes.length
+  const paidPromissoryCount = customerProfile?.paidPromissoryCount ?? paidProfileNotes.length
+  const averageTicketAmount = customerProfile?.averageTicketAmount ?? (completedSaleCount > 0 ? totalPurchasedAmount / completedSaleCount : 0)
+  const filteredCancelledNotes = useMemo(() => (
+    filteredNotes.filter((note) => note.status === 'CANCELLED')
+  ), [filteredNotes])
+  const completedSalesPagination = usePagination(filteredCompletedSales, 8)
+  const purchasedItemsPagination = usePagination(filteredPurchasedItems, 8)
+  const notesPagination = usePagination(filteredNotes, 8)
+  const cancelledSalesPagination = usePagination(filteredCancelledSales, 8)
+  const cancelledNotesPagination = usePagination(filteredCancelledNotes, 8)
 
   const loadCustomers = useCallback(async (nextSearch = appliedSearch, nextPage = customerPage) => {
     setIsLoading(true)
@@ -184,6 +318,30 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
     event.preventDefault()
     setAppliedSearch(search)
     setCustomerPage(0)
+  }
+
+  async function handleProfileExport() {
+    if (!customerProfile) return
+
+    setIsProfileExporting(true)
+    try {
+      await downloadCustomerProfileExcelReport(customerProfile.customer.id, {
+        startDate: profileFilters.startDate || undefined,
+        endDate: profileFilters.endDate || undefined,
+        saleStatus: profileFilters.saleStatus,
+        noteStatus: profileFilters.noteStatus,
+      })
+      notify({
+        type: 'success',
+        title: 'Relatorio exportado',
+        message: 'A consulta completa do cliente foi baixada em CSV compativel com Excel.',
+      })
+    } catch (error) {
+      const message = getErrorMessage(error, 'Nao foi possivel exportar a consulta do cliente.')
+      notify({ type: 'error', title: 'Erro ao exportar', message })
+    } finally {
+      setIsProfileExporting(false)
+    }
   }
 
   return (
@@ -432,6 +590,244 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
           ) : null}
 
           {showProfile ? (
+            <section className="product-list-panel customer-list-panel relationship-client-panel" style={{ background: '#080b12', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '18px', padding: '22px', color: '#e5e7eb', boxShadow: '0 24px 70px rgba(0,0,0,0.26)' }}>
+              <header className="section-header relationship-client-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px' }}>
+                <div className="relationship-client-title">
+                  <span className="relationship-client-icon" aria-hidden="true">
+                    <Search size={22} strokeWidth={2.4} />
+                  </span>
+                  <div>
+                    <h2>Consulta completa do cliente</h2>
+                    <p>Visao administrativa com compras, produtos, dividas, promissorias e exportacao Excel.</p>
+                  </div>
+                </div>
+                {customerProfile ? (
+                  <button className="customer-premium-secondary-button" type="button" onClick={() => void handleProfileExport()} disabled={isProfileExporting}>
+                    <Download size={16} aria-hidden="true" />
+                    {isProfileExporting ? 'Exportando...' : 'Exportar Excel'}
+                  </button>
+                ) : null}
+              </header>
+
+              <div className="history-filter-form customer-profile-search" style={{ gap: '16px', background: '#0d1016', padding: '18px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.08)', margin: '20px 0' }}>
+                <div className="field-group" style={{ flex: 1 }}>
+                  <label htmlFor="customerProfileSearch">Filtrar lista</label>
+                  <input
+                    id="customerProfileSearch"
+                    value={profileSearch}
+                    onChange={(event) => setProfileSearch(event.target.value)}
+                    placeholder="Filtrar por nome do cliente..."
+                  />
+                </div>
+                <div className="field-group" style={{ flex: 1 }}>
+                  <label htmlFor="customerProfileSelect">Cliente</label>
+                  <select
+                    id="customerProfileSelect"
+                    value={selectedProfileCustomerId}
+                    onChange={(event) => {
+                      setSelectedProfileCustomerId(event.target.value)
+                      setProfileTab('summary')
+                      setProfileFilters(initialProfileFilters)
+                      if (!event.target.value) setCustomerProfile(null)
+                    }}
+                  >
+                    <option value="">Selecione um cliente para consulta...</option>
+                    {profileOptions.map((customer) => (
+                      <option value={customer.id} key={customer.id}>{customer.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {customerProfile ? (
+                <div className="history-filter-form" style={{ gap: '12px', alignItems: 'end', background: '#0d1016', padding: '16px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.08)', marginBottom: '20px' }}>
+                  <div className="field-group">
+                    <label htmlFor="profileStartDate">Inicio</label>
+                    <input id="profileStartDate" type="date" value={profileFilters.startDate} onChange={(event) => setProfileFilters((current) => ({ ...current, startDate: event.target.value }))} />
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="profileEndDate">Fim</label>
+                    <input id="profileEndDate" type="date" value={profileFilters.endDate} onChange={(event) => setProfileFilters((current) => ({ ...current, endDate: event.target.value }))} />
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="profileSaleStatus">Venda</label>
+                    <select id="profileSaleStatus" value={profileFilters.saleStatus} onChange={(event) => setProfileFilters((current) => ({ ...current, saleStatus: event.target.value as SaleStatus | '' }))}>
+                      <option value="">Todas</option>
+                      <option value="COMPLETED">Concluidas</option>
+                      <option value="CANCELLED">Canceladas</option>
+                    </select>
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="profileNoteStatus">Promissoria</label>
+                    <select id="profileNoteStatus" value={profileFilters.noteStatus} onChange={(event) => setProfileFilters((current) => ({ ...current, noteStatus: event.target.value as PromissoryNoteStatus | '' }))}>
+                      <option value="">Todas</option>
+                      <option value="PENDING">Pendentes</option>
+                      <option value="PARTIALLY_PAID">Parciais</option>
+                      <option value="PAID">Pagas</option>
+                      <option value="OVERDUE">Vencidas</option>
+                      <option value="CANCELLED">Canceladas</option>
+                    </select>
+                  </div>
+                  <div className="field-group" style={{ flex: 1, minWidth: '220px' }}>
+                    <label htmlFor="profileQuery">Produto, codigo ou venda</label>
+                    <input id="profileQuery" value={profileFilters.query} onChange={(event) => setProfileFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Buscar no historico..." />
+                  </div>
+                  <button className="customer-premium-secondary-button" type="button" onClick={() => setProfileFilters(initialProfileFilters)}>
+                    <X size={15} aria-hidden="true" />
+                    Limpar
+                  </button>
+                </div>
+              ) : null}
+
+              {isProfileLoading ? (
+                <div className="product-empty">Carregando perfil do cliente...</div>
+              ) : !customerProfile ? (
+                <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Selecione um cliente para visualizar o perfil completo.</div>
+              ) : (
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <article className="cart-item" style={{ background: '#121722', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '14px', padding: '22px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                    <div>
+                      <span style={{ display: 'inline-block', background: '#151922', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace', marginBottom: '8px' }}>
+                        {customerProfile.customer.cpf ? maskCpf(customerProfile.customer.cpf) : 'Sem CPF'}
+                      </span>
+                      <h3 style={{ margin: '0 0 8px', color: '#fff' }}>{customerProfile.customer.name}</h3>
+                      <small style={{ color: '#aeb8c8', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                        <span><Phone size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.phone ? maskPhone(customerProfile.customer.phone) : 'Sem telefone'}</span>
+                        {customerProfile.customer.email ? <span><Mail size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.email}</span> : null}
+                        {customerProfile.customer.birthDate ? <span><Gift size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{formatDate(customerProfile.customer.birthDate)}</span> : null}
+                      </small>
+                      {customerProfile.customer.address ? <p style={{ margin: '8px 0 0', color: '#8d98a8', fontSize: '0.82rem' }}><MapPin size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.address}</p> : null}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(120px, 1fr))', gap: '12px', minWidth: '300px' }}>
+                      <strong style={{ color: '#f6d78b' }}>{formatCurrency(totalPurchasedAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Total comprado</span></strong>
+                      <strong style={{ color: '#fb7185' }}>{formatCurrency(openPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Saldo aberto</span></strong>
+                      <strong style={{ color: '#fb7185' }}>{formatCurrency(overduePromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Vencido</span></strong>
+                      <strong style={{ color: '#2dd4bf' }}>{formatCurrency(paidPromissoryAmount)}<span style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Pago</span></strong>
+                    </div>
+                  </article>
+
+                  <div className="promissory-mini-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(130px, 1fr))', gap: '12px' }}>
+                    {[
+                      ['Compras', completedSaleCount, `${formatCurrency(averageTicketAmount)} ticket medio`, Receipt],
+                      ['Canceladas', cancelledSaleCount, 'vendas separadas', X],
+                      ['Abertas', openPromissoryCount, formatCurrency(openPromissoryAmount), DollarSign],
+                      ['Vencidas', overduePromissoryCount, formatCurrency(overduePromissoryAmount), CreditCard],
+                      ['Pagas', paidPromissoryCount, formatCurrency(paidPromissoryAmount), UserCheck],
+                    ].map(([label, value, caption, Icon]) => {
+                      const MetricIcon = Icon as typeof Receipt
+                      return (
+                        <div className="promissory-mini-card" key={String(label)} style={{ background: '#111827', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '10px', padding: '16px' }}>
+                          <MetricIcon size={16} style={{ color: '#d7ad55', marginBottom: '8px' }} />
+                          <span style={{ display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', color: '#aeb8c8', fontWeight: 900 }}>{String(label)}</span>
+                          <strong style={{ display: 'block', fontSize: '1.35rem', color: '#fff' }}>{String(value)}</strong>
+                          <small style={{ color: '#707b8c' }}>{String(caption)}</small>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      ['summary', 'Resumo'],
+                      ['sales', `Compras (${filteredCompletedSales.length})`],
+                      ['products', `Produtos (${filteredPurchasedItems.length})`],
+                      ['notes', `Promissorias (${filteredNotes.length})`],
+                      ['cancelled', `Cancelados (${filteredCancelledSales.length})`],
+                    ].map(([tab, label]) => (
+                      <button key={tab} className={profileTab === tab ? 'customer-premium-primary-button' : 'customer-premium-secondary-button'} type="button" onClick={() => setProfileTab(tab as ProfileTab)}>
+                        {String(label)}
+                      </button>
+                    ))}
+                  </div>
+
+                  {profileTab === 'summary' ? (
+                    <section className="promissory-detail-section" style={{ background: '#101620', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '14px', padding: '22px', color: '#e5e7eb' }}>
+                      <header style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '16px', flexWrap: 'wrap' }}>
+                        <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.22rem', fontFamily: 'inherit', fontWeight: 800 }}>Resumo filtrado</h2>
+                        <p style={{ color: '#cbd5e1', margin: 0, fontSize: '0.86rem', fontWeight: 700 }}>{filteredSales.length} venda(s), {filteredNotes.length} promissoria(s), {filteredPurchasedItems.length} produto(s).</p>
+                      </header>
+                      <div className="promissory-mini-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                        <div style={{ background: '#0b1018', border: '1px dashed rgba(148,163,184,0.35)', borderRadius: '10px', padding: '18px', color: '#cbd5e1' }}>Compras filtradas: <strong style={{ color: '#f6d78b' }}>{formatCurrency(filteredCompletedSales.reduce((total, sale) => total + sale.totalAmount, 0))}</strong></div>
+                        <div style={{ background: '#0b1018', border: '1px dashed rgba(148,163,184,0.35)', borderRadius: '10px', padding: '18px', color: '#cbd5e1' }}>Saldo aberto filtrado: <strong style={{ color: '#fb7185' }}>{formatCurrency(filteredNotes.reduce((total, note) => total + (['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(note.status) ? note.remainingAmount : 0), 0))}</strong></div>
+                        <div style={{ background: '#0b1018', border: '1px dashed rgba(148,163,184,0.35)', borderRadius: '10px', padding: '18px', color: '#cbd5e1' }}>Itens comprados: <strong style={{ color: '#f8fafc' }}>{filteredPurchasedItems.reduce((total, item) => total + item.quantity, 0)} un.</strong></div>
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {profileTab === 'sales' ? (
+                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Compras</h2></header>
+                      {filteredCompletedSales.length === 0 ? <div className="product-empty">Nenhuma compra encontrada.</div> : completedSalesPagination.pageItems.map((sale) => (
+                        <details className="promissory-history-item" key={sale.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                          <summary style={{ cursor: 'pointer', color: '#fff' }}>Venda #{sale.id} - {formatNullableDateTime(sale.soldAt)} - {paymentMethodLabels[sale.paymentMethod]} - {formatCurrency(sale.totalAmount)}</summary>
+                          <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
+                            {sale.items.map((item) => <div key={item.id} style={{ color: '#aeb8c8' }}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
+                            <small style={{ color: '#707b8c' }}>Desconto: {formatCurrency(sale.discountAmount)} | Operador: {sale.operator?.displayName ?? '-'}</small>
+                          </div>
+                        </details>
+                      ))}
+                      <PaginationControls itemLabel="compras" page={completedSalesPagination.page} pageSize={completedSalesPagination.pageSize} totalItems={completedSalesPagination.totalItems} totalPages={completedSalesPagination.totalPages} onPageChange={completedSalesPagination.setPage} />
+                    </section>
+                  ) : null}
+
+                  {profileTab === 'products' ? (
+                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Produtos comprados</h2></header>
+                      {filteredPurchasedItems.length === 0 ? <div className="product-empty">Nenhum produto encontrado.</div> : purchasedItemsPagination.pageItems.map((item) => (
+                        <div className="promissory-history-item" key={item.productId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                          <div><strong style={{ color: '#fff' }}><ShoppingBag size={15} style={{ marginRight: '6px', verticalAlign: 'middle', color: '#d7ad55' }} />{item.productName}</strong><small style={{ display: 'block', color: '#707b8c' }}>Codigo: {item.productCode} | Ultima compra: {formatNullableDateTime(item.lastPurchaseAt)}</small></div>
+                          <strong style={{ color: '#f6d78b' }}>{item.quantity} un. | {formatCurrency(item.totalAmount)}</strong>
+                        </div>
+                      ))}
+                      <PaginationControls itemLabel="produtos" page={purchasedItemsPagination.page} pageSize={purchasedItemsPagination.pageSize} totalItems={purchasedItemsPagination.totalItems} totalPages={purchasedItemsPagination.totalPages} onPageChange={purchasedItemsPagination.setPage} />
+                    </section>
+                  ) : null}
+
+                  {profileTab === 'notes' ? (
+                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Promissorias</h2></header>
+                      {filteredNotes.length === 0 ? <div className="product-empty">Nenhuma promissoria encontrada.</div> : notesPagination.pageItems.map((note) => (
+                        <details className="promissory-history-item" key={note.id} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                          <summary style={{ cursor: 'pointer', color: note.status === 'OVERDUE' ? '#fb7185' : '#fff' }}>Nota #{note.id} - {noteStatusLabels[note.status]} - venc. {formatDate(note.dueDate)} - saldo {formatCurrency(note.remainingAmount)}</summary>
+                          <div style={{ display: 'grid', gap: '10px', marginTop: '12px', color: '#aeb8c8' }}>
+                            <div>Venda: {note.saleId ?? 'Avulsa'} | Parcela {note.installmentNumber}/{note.totalInstallments} | Atualizado: {formatCurrency(note.updatedAmount)}</div>
+                            {(note.saleItems ?? []).map((item) => <div key={item.id}>{item.quantity}x {item.productName} ({item.productCode}) - {formatCurrency(item.subtotal)}</div>)}
+                            {(note.payments ?? []).length === 0 ? <small style={{ color: '#707b8c' }}>Sem pagamentos registrados.</small> : (note.payments ?? []).map((payment) => (
+                              <small key={payment.id} style={{ color: '#2dd4bf' }}>Pagamento {formatNullableDateTime(payment.paidAt)} - {paymentMethodLabels[payment.paymentMethod]} - {formatCurrency(payment.totalReceived)} por {payment.paidBy?.displayName ?? '-'}</small>
+                            ))}
+                          </div>
+                        </details>
+                      ))}
+                      <PaginationControls itemLabel="promissorias" page={notesPagination.page} pageSize={notesPagination.pageSize} totalItems={notesPagination.totalItems} totalPages={notesPagination.totalPages} onPageChange={notesPagination.setPage} />
+                    </section>
+                  ) : null}
+
+                  {profileTab === 'cancelled' ? (
+                    <section className="promissory-detail-section" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '22px' }}>
+                      <header className="section-header" style={{ marginBottom: '16px' }}><h2 style={{ color: '#fff', margin: 0 }}>Cancelados</h2></header>
+                      {filteredCancelledSales.length === 0 && filteredCancelledNotes.length === 0 ? <div className="product-empty">Nenhum cancelamento encontrado.</div> : null}
+                      {cancelledSalesPagination.pageItems.map((sale) => (
+                        <div key={sale.id} className="promissory-history-item" style={{ background: '#0d1016', border: '1px solid rgba(251,113,133,0.18)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                          <strong style={{ color: '#fff' }}>Venda #{sale.id} - {formatCurrency(sale.totalAmount)}</strong>
+                          <small style={{ display: 'block', color: '#fb7185' }}>{formatNullableDateTime(sale.cancelledAt)} - {sale.cancellationReason ?? 'Sem motivo registrado'}</small>
+                        </div>
+                      ))}
+                      <PaginationControls itemLabel="vendas canceladas" page={cancelledSalesPagination.page} pageSize={cancelledSalesPagination.pageSize} totalItems={cancelledSalesPagination.totalItems} totalPages={cancelledSalesPagination.totalPages} onPageChange={cancelledSalesPagination.setPage} />
+                      {cancelledNotesPagination.pageItems.map((note) => (
+                        <div key={note.id} className="promissory-history-item" style={{ background: '#0d1016', border: '1px solid rgba(251,113,133,0.18)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }}>
+                          <strong style={{ color: '#fff' }}>Nota #{note.id} cancelada</strong>
+                          <small style={{ display: 'block', color: '#fb7185' }}>Venda: {note.saleId ?? 'Avulsa'} | Valor: {formatCurrency(note.amount)}</small>
+                        </div>
+                      ))}
+                      <PaginationControls itemLabel="promissorias canceladas" page={cancelledNotesPagination.page} pageSize={cancelledNotesPagination.pageSize} totalItems={cancelledNotesPagination.totalItems} totalPages={cancelledNotesPagination.totalPages} onPageChange={cancelledNotesPagination.setPage} />
+                    </section>
+                  ) : null}
+                </div>
+              )}
+            </section>
+          ) : null}
+
+          {/* Legacy profile implementation disabled after the complete admin consultation redesign.
             <section className="product-list-panel customer-list-panel relationship-client-panel">
               <header className="section-header relationship-client-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px' }}>
                 <div className="relationship-client-title">
@@ -629,7 +1025,7 @@ export function CustomerManagementPage({ mode = 'list' }: CustomerManagementPage
                 </div>
               )}
             </section>
-          ) : null}
+          */}
         </div>
       </div>
 

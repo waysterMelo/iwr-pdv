@@ -1,28 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
   AlertCircle,
   ArrowLeft,
-  CalendarDays,
   CalendarClock,
   CheckCircle2,
   FileDown,
   MessageCircle,
-  Package,
   PlusCircle,
   Printer,
   ReceiptText,
   Search,
-  X,
-  UserCheck,
-  RotateCcw,
   Save,
-  DollarSign,
-  TrendingUp,
-  Briefcase
 } from 'lucide-react'
 import { CurrencyInput } from '../components/CurrencyInput'
 import { PercentInput } from '../components/PercentInput'
-import { PageHeader } from '../components/PageHeader'
 import { PaginationControls } from '../components/PaginationControls'
 import { getCustomers } from '../services/customerService'
 import {
@@ -33,7 +24,6 @@ import {
   getPromissoryNotePayments,
   getPromissoryNotes,
   getPromissoryNotesDueToday,
-  getPromissoryPaymentReceiptUrl,
   getPromissoryDelinquencyReport,
   getPromissoryWhatsappMessage,
   payPromissoryNote,
@@ -54,7 +44,7 @@ import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { usePagination } from '../hooks/usePagination'
-import { maskCpf, maskPhone } from '../utils/masks'
+import { maskPhone } from '../utils/masks'
 
 const statusLabels: Record<PromissoryNoteStatus, string> = {
   PENDING: 'Pendente',
@@ -69,10 +59,6 @@ const paymentLabels: Record<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>, string> =
   PIX: 'Pix',
   DEBIT_CARD: 'Cartão débito',
   CREDIT_CARD: 'Cartão crédito',
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(`${value}T00:00:00`))
 }
 
 function getDaysInArrears(dueDateStr: string): number {
@@ -172,7 +158,6 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>>('CASH')
   const [paymentAmount, setPaymentAmount] = useState('')
-  const [interestAmount, setInterestAmount] = useState('0.00')
   const [interestRate, setInterestRate] = useState('0')
   const [payments, setPayments] = useState<PromissoryNotePayment[]>([])
   const [delinquencyReport, setDelinquencyReport] = useState<PromissoryNoteDelinquencyRange[]>([])
@@ -181,8 +166,6 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
   const [isPaying, setIsPaying] = useState(false)
   const [isExportingReport, setIsExportingReport] = useState(false)
   const [isCreatingManualNote, setIsCreatingManualNote] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const printFrameRef = useRef<HTMLIFrameElement>(null)
 
   function changePageMode(nextMode: PromissoryNotesPageMode) {
     setPageMode(nextMode)
@@ -202,6 +185,8 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
   }, [notes, searchTerm])
   
   const notePagination = usePagination(filteredNotes, 8)
+  const manualItemsPagination = usePagination(manualItems, 6)
+  const paymentsPagination = usePagination(payments, 5)
   const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth])
   
   const calendarTotals = useMemo(() => {
@@ -252,13 +237,12 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
       const response = await getPromissoryNotesDueToday()
       setNotes(response)
       setSelectedNote((current) => response.find((note) => note.id === current?.id) ?? response[0] ?? null)
-      setErrorMessage(null)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Não foi possível carregar notas para cobrança.'))
+      notify({ type: 'error', title: 'Erro ao carregar notas', message: getErrorMessage(error, 'Nao foi possivel carregar notas para cobranca.') })
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [notify])
 
   const loadNotes = useCallback(async (nextFilters: PromissoryNoteFilters = {}) => {
     setIsLoading(true)
@@ -266,13 +250,12 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
       const response = await getPromissoryNotes(nextFilters)
       setNotes(response)
       setSelectedNote((current) => response.find((note) => note.id === current?.id) ?? response[0] ?? null)
-      setErrorMessage(null)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Não foi possível carregar notas promissórias.'))
+      notify({ type: 'error', title: 'Erro ao carregar promissorias', message: getErrorMessage(error, 'Nao foi possivel carregar notas promissorias.') })
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [notify])
 
   const loadDelinquencyReport = useCallback(async () => {
     try {
@@ -347,8 +330,6 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
       }
 
       setPaymentAmount(selectedNote.remainingAmount > 0 ? selectedNote.remainingAmount.toFixed(2) : '')
-      setInterestAmount('0.00')
-
       getPromissoryNotePayments(selectedNote.id)
         .then((nextPayments) => {
           if (!isCurrent) return
@@ -841,8 +822,8 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                   {manualItems.length === 0 ? (
                     <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '16px 0' }}>Nenhum item inserido ainda.</div>
                   ) : (
-                    <div style={{ display: 'grid', gap: '8px', marginTop: '6px', maxHeight: '180px', overflowY: 'auto' }}>
-                      {manualItems.map((item) => (
+                    <div style={{ display: 'grid', gap: '8px', marginTop: '6px' }}>
+                      {manualItemsPagination.pageItems.map((item) => (
                         <div key={item.productId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '10px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{item.name}</strong>
@@ -854,6 +835,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                           </div>
                         </div>
                       ))}
+                      <PaginationControls itemLabel="itens" page={manualItemsPagination.page} pageSize={manualItemsPagination.pageSize} totalItems={manualItemsPagination.totalItems} totalPages={manualItemsPagination.totalPages} onPageChange={manualItemsPagination.setPage} />
                     </div>
                   )}
                 </div>
@@ -923,7 +905,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                   <article key={index} className="customer-premium-card" style={{ borderLeft: '4px solid #fb7185' }}>
                     <div className="customer-premium-card-header">
                       <div>
-                        <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: '0 0 4px' }}>Atraso: {range.daysRange} dias</h3>
+                        <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: '0 0 4px' }}>{range.range}</h3>
                         <span style={{ fontSize: '0.68rem', background: '#151922', padding: '2px 6px', borderRadius: '4px', color: '#fb7185', fontWeight: 'bold' }}>
                           Inadimplente
                         </span>
@@ -1312,7 +1294,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                     <div style={{ color: '#7b8493', fontSize: '0.72rem', padding: '8px 0' }}>Nenhum pagamento recebido nesta parcela.</div>
                   ) : (
                     <div style={{ display: 'grid', gap: '6px', marginTop: '6px' }}>
-                      {payments.map((p) => (
+                      {paymentsPagination.pageItems.map((p) => (
                         <div key={p.id} style={{ background: '#0d1016', borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <strong style={{ color: '#fff', fontSize: '0.75rem', display: 'block' }}>Recebimento #{p.id}</strong>
@@ -1324,6 +1306,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                           </div>
                         </div>
                       ))}
+                      <PaginationControls itemLabel="pagamentos" page={paymentsPagination.page} pageSize={paymentsPagination.pageSize} totalItems={paymentsPagination.totalItems} totalPages={paymentsPagination.totalPages} onPageChange={paymentsPagination.setPage} />
                     </div>
                   )}
                 </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { BadgeDollarSign, CalendarClock, Package, Percent, ReceiptText, UserRound, Barcode, CheckCircle2, Printer, ChevronDown, ChevronUp, Plus, Minus, X, Sparkles, AlertTriangle, Gift } from 'lucide-react'
+import { BadgeDollarSign, CalendarClock, Package, UserRound, Barcode, CheckCircle2, Printer, ChevronDown, ChevronUp, Plus, Minus, X } from 'lucide-react'
 import { getCartItemTotal, useSalesCart } from '../hooks/useSalesCart'
 import { createCustomer, getCustomers } from '../services/customerService'
 import { getPromissoryNotesBySalePrintUrl } from '../services/promissoryNoteService'
@@ -9,7 +9,6 @@ import type { PromissoryInstallmentPayload } from '../types/promissoryNote'
 import type { PaymentMethod, Sale } from '../types/sale'
 import { formatCurrency } from '../utils/formatters'
 import { CurrencyInput } from '../components/CurrencyInput'
-import { PageHeader } from '../components/PageHeader'
 import { PaginationControls } from '../components/PaginationControls'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { usePagination } from '../hooks/usePagination'
@@ -893,7 +892,7 @@ export function SalesCheckoutPage() {
             <h2 style={{ fontSize: '1.25rem', color: '#fff', margin: 0, fontWeight: 500 }}>
               {fakeScanStatus === 'scanning' ? 'Lendo código...' : 'Código lido com sucesso!'}
             </h2>
-            <div style={{ height: '140px', position: 'relative', background: '#0d1016', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContainer: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div style={{ height: '140px', position: 'relative', background: '#0d1016', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                {fakeScanStatus === 'scanning' ? (
                  <>
                    <Barcode size={80} style={{ color: 'rgba(215,173,85,0.35)' }} />

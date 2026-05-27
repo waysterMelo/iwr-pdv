@@ -88,7 +88,7 @@ function App() {
       items: [
         { id: 'customers-create', label: 'Cadastrar', eyebrow: 'Clientes' },
         { id: 'customers-list', label: 'Listar', eyebrow: 'Clientes' },
-        { id: 'customer-profile', label: 'Consulta completa', eyebrow: 'Clientes' },
+        { id: 'customer-profile', label: 'Consulta completa', eyebrow: 'Clientes', adminOnly: true },
         { id: 'loyalty', label: 'Aniversarios', eyebrow: 'Clientes' },
       ],
     },

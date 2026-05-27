@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Cake, CalendarDays, Gift, HeartHandshake, Phone, Sparkles, X, MessageSquare, Copy, Send, UserCheck } from 'lucide-react'
+import { Cake, CalendarDays, Gift, HeartHandshake, Sparkles, X, MessageSquare, Copy, UserCheck } from 'lucide-react'
 import { PaginationControls } from '../components/PaginationControls'
 import { getCustomerBirthdays } from '../services/customerService'
 import type { Customer } from '../types/customer'

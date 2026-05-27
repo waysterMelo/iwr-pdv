@@ -299,7 +299,7 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
                       }
                     />
                   </div>
-                </div>>
+                </div>
 
                 {errorMessage ? <div className="feedback-message feedback-message--error">{errorMessage}</div> : null}
                 {successMessage ? (

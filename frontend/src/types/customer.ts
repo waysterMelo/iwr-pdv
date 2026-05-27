@@ -40,16 +40,45 @@ export type CustomerPurchasedItem = {
   lastPurchaseAt: string
 }
 
+export type CustomerPromissoryNote = {
+  id: number
+  saleId: number | null
+  installmentNumber: number
+  totalInstallments: number
+  amount: number
+  paidAmount: number
+  remainingAmount: number
+  updatedAmount: number
+  daysOverdue: number
+  dueDate: string
+  status: import('./promissoryNote').PromissoryNoteStatus
+  paidAt: string | null
+  paidBy: import('./auth').AuthUser | null
+  paymentMethod: import('./sale').PaymentMethod | null
+  createdAt: string
+  updatedAt: string
+  saleItems: import('./sale').SaleItem[]
+  payments: import('./promissoryNote').PromissoryNotePayment[]
+}
+
 export type CustomerProfile = {
   customer: Customer
   saleCount: number
+  completedSaleCount: number
+  cancelledSaleCount: number
   totalPurchasedAmount: number
+  totalDiscountAmount: number
+  averageTicketAmount: number
   openPromissoryCount: number
   overduePromissoryCount: number
+  paidPromissoryCount: number
+  cancelledPromissoryCount: number
   openPromissoryAmount: number
   overduePromissoryAmount: number
   paidPromissoryAmount: number
   purchasedItems: CustomerPurchasedItem[]
   latestSales: import('./sale').Sale[]
-  promissoryNotes: import('./promissoryNote').PromissoryNote[]
+  sales: import('./sale').Sale[]
+  cancelledSales: import('./sale').Sale[]
+  promissoryNotes: CustomerPromissoryNote[]
 }
