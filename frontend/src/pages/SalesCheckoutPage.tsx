@@ -267,10 +267,10 @@ export function SalesCheckoutPage() {
             <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Barcode size={22} style={{ color: '#d7ad55' }} />
+                  <Barcode size={22} style={{ color: '#101117' }} />
                   <div>
-                    <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Leitor de código</h2>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Simule a leitura de um código de barras de luxo.</p>
+                    <h2 style={{ fontSize: '1.1rem', color: '#211609', margin: 0, fontWeight: 500 }}>Leitor de código</h2>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#4a361c' }}>Simule a leitura de um código de barras de luxo.</p>
                   </div>
                 </div>
               </header>
@@ -298,7 +298,7 @@ export function SalesCheckoutPage() {
                 onMouseOver={(e) => { e.currentTarget.style.borderColor = 'rgba(215,173,85,0.85)'; e.currentTarget.style.color = '#fff' }}
                 onMouseOut={(e) => { e.currentTarget.style.borderColor = 'rgba(215,173,85,0.35)'; e.currentTarget.style.color = '#7b8493' }}
               >
-                <Barcode size={50} style={{ color: '#d7ad55' }} />
+                <Barcode size={50} style={{ color: '#101117' }} />
                 <span style={{ fontSize: '0.75rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Toque para ler código</span>
                 {/* Feixe a laser vermelho animado contínuo */}
                 <div style={{ 
@@ -335,10 +335,10 @@ export function SalesCheckoutPage() {
             {/* Seção de Pagamento */}
             <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <header style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
-                <BadgeDollarSign size={22} style={{ color: '#d7ad55' }} />
+                <BadgeDollarSign size={22} style={{ color: '#101117' }} />
                 <div>
-                  <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Pagamento</h2>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Revise subtotal, desconto e forma de pagamento.</p>
+                  <h2 style={{ fontSize: '1.1rem', color: '#211609', margin: 0, fontWeight: 500 }}>Pagamento</h2>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#4a361c' }}>Revise subtotal, desconto e forma de pagamento.</p>
                 </div>
               </header>
 
@@ -391,8 +391,8 @@ export function SalesCheckoutPage() {
               {checkout.paymentMethod === 'PROMISSORY_NOTE' ? (
                 <section style={{ background: '#0d1016', border: '1px solid rgba(215, 173, 85, 0.2)', borderRadius: '14px', padding: '18px', display: 'grid', gap: '16px', marginTop: '10px' }}>
                   <header style={{ borderBottom: '1px solid rgba(226,232,240,0.06)', paddingBottom: '10px' }}>
-                    <h3 style={{ margin: 0, fontSize: '0.9rem', color: '#f6d78b', fontWeight: 500 }}>Venda por Promissória</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: '#aeb8c8' }}>Associe a venda a um cliente para gerar as parcelas.</p>
+                    <h3 style={{ margin: 0, fontSize: '0.9rem', color: '#3e2723', fontWeight: 500 }}>Venda por Promissória</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: '#4a361c' }}>Associe a venda a um cliente para gerar as parcelas.</p>
                   </header>
 
                   <div className="field-group" style={{ position: 'relative' }}>
@@ -424,8 +424,8 @@ export function SalesCheckoutPage() {
                             }}
                             style={{ padding: '10px 14px', borderBottom: '1px solid rgba(226,232,240,0.04)', cursor: 'pointer' }}
                           >
-                            <div className="customer-dropdown-name" style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold' }}>{customer.name}</div>
-                            <div className="customer-dropdown-doc" style={{ color: '#aeb8c8', fontSize: '0.7rem' }}>
+                            <div className="customer-dropdown-name" style={{ color: '#211609', fontSize: '0.85rem', fontWeight: 'bold' }}>{customer.name}</div>
+                            <div className="customer-dropdown-doc" style={{ color: '#4a361c', fontSize: '0.7rem' }}>
                               {[
                                 customer.cpf ? maskCpf(customer.cpf) : '',
                                 customer.phone ? maskPhone(customer.phone) : ''
@@ -440,11 +440,11 @@ export function SalesCheckoutPage() {
                   {/* Card Premium de Cliente Selecionado */}
                   {selectedCustomer ? (
                     <div style={{ background: '#101117', border: '1px solid rgba(215,173,85,0.4)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', color: '#f6d78b', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', color: '#3e2723', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                         <UserRound size={12} /> Cliente Selecionado
                       </span>
-                      <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{selectedCustomer.name}</strong>
-                      <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>
+                      <strong style={{ color: '#211609', fontSize: '0.95rem' }}>{selectedCustomer.name}</strong>
+                      <small style={{ color: '#4a361c', fontSize: '0.75rem' }}>
                         {[
                           selectedCustomer.cpf ? maskCpf(selectedCustomer.cpf) : '',
                           selectedCustomer.phone ? maskPhone(selectedCustomer.phone) : '',
@@ -470,14 +470,14 @@ export function SalesCheckoutPage() {
                           borderRadius: '10px',
                           padding: '0 14px',
                           cursor: 'pointer',
-                          color: '#fff',
+                          color: '#211609',
                           fontSize: '0.75rem',
                           fontWeight: 'bold',
                           transition: 'all 0.2s'
                         }}
                       >
                         <span>Cadastrar Novo Cliente</span>
-                        {isCustomerFormOpen ? <ChevronUp size={16} style={{ color: '#d7ad55' }} /> : <ChevronDown size={16} style={{ color: '#7e8794' }} />}
+                        {isCustomerFormOpen ? <ChevronUp size={16} style={{ color: '#101117' }} /> : <ChevronDown size={16} style={{ color: '#7e8794' }} />}
                       </button>
 
                       {isCustomerFormOpen && (
@@ -564,7 +564,7 @@ export function SalesCheckoutPage() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Total Parcelado</span>
-                        <strong style={{ display: 'block', fontSize: '1.25rem', color: '#f6d78b', marginTop: '2px' }}>
+                        <strong style={{ display: 'block', fontSize: '1.25rem', color: '#3e2723', marginTop: '2px' }}>
                           {formatCurrency(installments.reduce((sum, item) => sum + Number(item.amount), 0))}
                         </strong>
                       </div>
@@ -573,8 +573,8 @@ export function SalesCheckoutPage() {
                     <div className="installment-list" style={{ display: 'grid', gap: '10px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
                       {installments.map((installment, index) => (
                         <article className="installment-row" key={index} style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '10px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: '#fff', fontWeight: 'bold' }}>
-                            <CalendarClock size={13} style={{ color: '#d7ad55' }} /> Parc. {index + 1}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: '#211609', fontWeight: 'bold' }}>
+                            <CalendarClock size={13} style={{ color: '#101117' }} /> Parc. {index + 1}
                           </span>
                           <div className="field-group" style={{ margin: 0, width: '120px' }}>
                             <input
@@ -637,10 +637,10 @@ export function SalesCheckoutPage() {
           <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '480px' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Package size={22} style={{ color: '#d7ad55' }} />
+                <Package size={22} style={{ color: '#101117' }} />
                 <div>
-                  <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Resumo da venda</h2>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Conferência rápida do carrinho de compras.</p>
+                  <h2 style={{ fontSize: '1.1rem', color: '#211609', margin: 0, fontWeight: 500 }}>Resumo da venda</h2>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#4a361c' }}>Conferência rápida do carrinho de compras.</p>
                 </div>
               </div>
               <button
@@ -658,15 +658,15 @@ export function SalesCheckoutPage() {
             <div className="sales-summary-totals" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', background: '#0d1016', padding: '14px', borderRadius: '12px', border: '1px solid rgba(226,232,240,0.06)' }}>
               <div>
                 <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Itens</span>
-                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#fff', marginTop: '2px' }}>{checkout.totalItems}</strong>
+                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#211609', marginTop: '2px' }}>{checkout.totalItems}</strong>
               </div>
               <div>
                 <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Desconto</span>
-                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#fff', marginTop: '2px' }}>{formatCurrency(checkout.parsedDiscountAmount)}</strong>
+                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#211609', marginTop: '2px' }}>{formatCurrency(checkout.parsedDiscountAmount)}</strong>
               </div>
               <div>
                 <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Total Geral</span>
-                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#f6d78b', marginTop: '2px' }}>{formatCurrency(checkout.totalAmount)}</strong>
+                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#3e2723', marginTop: '2px' }}>{formatCurrency(checkout.totalAmount)}</strong>
               </div>
             </div>
 
@@ -693,10 +693,10 @@ export function SalesCheckoutPage() {
                     }}
                   >
                     <div className="cart-item-main" style={{ display: 'grid', gap: '2px', minWidth: 0, flex: 1 }}>
-                      <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#f6d78b', background: '#151922', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#3e2723', background: '#151922', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
                         {item.product.code}
                       </span>
-                      <strong style={{ color: '#fff', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.product.name}</strong>
+                      <strong style={{ color: '#211609', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.product.name}</strong>
                       <small style={{ color: '#7b8493', fontSize: '0.72rem' }}>Estoque: {item.product.stockQuantity}</small>
                     </div>
 
@@ -712,7 +712,7 @@ export function SalesCheckoutPage() {
                           borderRadius: '50%',
                           background: 'rgba(215, 173, 85, 0.1)',
                           border: '1px solid rgba(215, 173, 85, 0.3)',
-                          color: '#f6d78b',
+                          color: '#3e2723',
                           cursor: 'pointer',
                           display: 'grid',
                           placeItems: 'center',
@@ -735,7 +735,7 @@ export function SalesCheckoutPage() {
                           textAlign: 'center',
                           background: 'transparent',
                           border: 0,
-                          color: '#fff',
+                          color: '#211609',
                           fontSize: '0.85rem',
                           fontWeight: 'bold',
                           padding: 0
@@ -752,7 +752,7 @@ export function SalesCheckoutPage() {
                           borderRadius: '50%',
                           background: 'rgba(215, 173, 85, 0.1)',
                           border: '1px solid rgba(215, 173, 85, 0.3)',
-                          color: '#f6d78b',
+                          color: '#3e2723',
                           cursor: 'pointer',
                           display: 'grid',
                           placeItems: 'center',
@@ -769,7 +769,7 @@ export function SalesCheckoutPage() {
 
                     <div className="cart-price" style={{ textAlign: 'right', minWidth: '70px' }}>
                       <span style={{ display: 'block', fontSize: '0.72rem', color: '#7b8493' }}>{formatCurrency(item.product.price)}</span>
-                      <strong style={{ display: 'block', fontSize: '0.85rem', color: '#f6d78b', marginTop: '2px' }}>{formatCurrency(getCartItemTotal(item))}</strong>
+                      <strong style={{ display: 'block', fontSize: '0.85rem', color: '#3e2723', marginTop: '2px' }}>{formatCurrency(getCartItemTotal(item))}</strong>
                     </div>
                   </article>
                 ))}
@@ -789,10 +789,10 @@ export function SalesCheckoutPage() {
         {/* Rodapé Flutuante de Fechamento */}
         <section className="checkout-footer-panel" style={{ background: '#101117', border: '1px solid rgba(226,232,240,0.08)', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '22px' }}>
           <div>
-            <span style={{ fontSize: '0.75rem', color: '#aeb8c8', display: 'block' }}>
+            <span style={{ fontSize: '0.75rem', color: '#4a361c', display: 'block' }}>
               Subtotal: {formatCurrency(checkout.subtotalAmount)} — Desconto: {formatCurrency(checkout.parsedDiscountAmount)}
             </span>
-            <strong style={{ fontSize: '1.65rem', color: '#f6d78b', marginTop: '4px', display: 'block' }}>
+            <strong style={{ fontSize: '1.65rem', color: '#3e2723', marginTop: '4px', display: 'block' }}>
               {formatCurrency(checkout.totalAmount)}
             </strong>
           </div>
@@ -810,7 +810,7 @@ export function SalesCheckoutPage() {
                   fontSize: '0.72rem',
                   fontWeight: 900,
                   textTransform: 'uppercase',
-                  color: '#fff',
+                  color: '#211609',
                   cursor: 'pointer'
                 }}
               >
