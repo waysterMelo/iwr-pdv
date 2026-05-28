@@ -1,0 +1,159 @@
+/* PDV gold card layer
+ * Adds selective gold surfaces to the checkout without changing business logic.
+ */
+
+:root {
+  --gold-card-bg: linear-gradient(135deg, #f3d987 0%, #d7ad55 48%, #b98216 100%);
+  --gold-card-bg-soft: linear-gradient(135deg, #ffe7a3 0%, #d7ad55 58%, #a96e12 100%);
+  --gold-card-ink: #11100d;
+  --gold-card-muted: rgba(17, 16, 13, 0.68);
+  --gold-card-line: rgba(17, 16, 13, 0.16);
+  --gold-card-shadow: 0 24px 70px rgba(183, 127, 22, 0.24);
+}
+
+/* Hero total card */
+.customer-premium-target-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--gold-card-bg) !important;
+  border: 1px solid rgba(255, 231, 163, 0.72) !important;
+  color: var(--gold-card-ink) !important;
+  box-shadow: var(--gold-card-shadow) !important;
+}
+
+.customer-premium-target-card::before {
+  content: '';
+  position: absolute;
+  inset: -40% auto auto -18%;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+  filter: blur(2px);
+}
+
+.customer-premium-target-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -22% -56% auto;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.customer-premium-target-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.customer-premium-target-card span,
+.customer-premium-target-card small {
+  color: var(--gold-card-muted) !important;
+}
+
+.customer-premium-target-card strong {
+  color: var(--gold-card-ink) !important;
+  text-shadow: none !important;
+}
+
+.customer-premium-progress {
+  background: rgba(17, 16, 13, 0.18) !important;
+}
+
+.customer-premium-progress span {
+  background: #11100d !important;
+  box-shadow: 0 0 24px rgba(17, 16, 13, 0.28);
+}
+
+/* Resumo da venda: make the total geral card gold */
+.sales-summary-totals > div:last-child {
+  position: relative;
+  overflow: hidden;
+  background: var(--gold-card-bg-soft) !important;
+  border: 1px solid rgba(255, 231, 163, 0.74) !important;
+  box-shadow: 0 14px 36px rgba(183, 127, 22, 0.18);
+}
+
+.sales-summary-totals > div:last-child::after {
+  content: '';
+  position: absolute;
+  right: -28px;
+  top: -34px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.sales-summary-totals > div:last-child span,
+.sales-summary-totals > div:last-child strong {
+  position: relative;
+  z-index: 1;
+  color: var(--gold-card-ink) !important;
+}
+
+.sales-summary-totals > div:last-child span {
+  color: var(--gold-card-muted) !important;
+}
+
+/* Pagamento: troco gets a softer gold block */
+.sales-checkout-grid .field-group:has(label) strong[style*="font-size: 1.55rem"] {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 50px;
+  width: 100%;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 231, 163, 0.58);
+  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(243, 217, 135, 0.20), rgba(215, 173, 85, 0.08));
+  color: #f8e5a6 !important;
+}
+
+/* Finalização: left total area with gold emphasis */
+.checkout-footer-panel > div:first-child {
+  position: relative;
+  min-width: 280px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 231, 163, 0.70);
+  border-radius: 18px;
+  background: var(--gold-card-bg) !important;
+  color: var(--gold-card-ink) !important;
+  box-shadow: 0 18px 46px rgba(183, 127, 22, 0.18);
+}
+
+.checkout-footer-panel > div:first-child span,
+.checkout-footer-panel > div:first-child strong {
+  color: var(--gold-card-ink) !important;
+}
+
+.checkout-footer-panel > div:first-child span {
+  opacity: 0.72;
+}
+
+/* Keep destructive/secondary controls readable near gold surfaces */
+.checkout-footer-panel .customer-premium-primary-button,
+.customer-premium-primary-button {
+  border: 1px solid rgba(255, 231, 163, 0.74) !important;
+  background: var(--gold-card-bg-soft) !important;
+  color: var(--gold-card-ink) !important;
+  box-shadow: 0 16px 42px rgba(183, 127, 22, 0.24) !important;
+}
+
+.checkout-footer-panel .customer-premium-primary-button:hover,
+.customer-premium-primary-button:hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
+/* Mobile keeps gold cards stacked and readable */
+@media (max-width: 900px) {
+  .checkout-footer-panel > div:first-child {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .sales-summary-totals > div:last-child {
+    min-height: 86px;
+  }
+}
