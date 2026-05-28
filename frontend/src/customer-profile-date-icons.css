@@ -1,0 +1,40 @@
+/* Date input icon contrast fix for dark customer profile UI */
+
+.relationship-client-panel input[type="date"],
+.customer-profile-filter-grid input[type="date"],
+.customer-profile-search input[type="date"] {
+  color-scheme: dark !important;
+  color: #f8fafc !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1 !important;
+  cursor: pointer;
+  filter: invert(86%) sepia(20%) saturate(1137%) hue-rotate(358deg) brightness(101%) contrast(93%) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(91%) sepia(40%) saturate(768%) hue-rotate(352deg) brightness(108%) contrast(101%) drop-shadow(0 0 6px rgba(216, 177, 94, 0.45)) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit {
+  color: #f8fafc !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: #f8fafc !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-text {
+  color: rgba(248, 250, 252, 0.62) !important;
+}
