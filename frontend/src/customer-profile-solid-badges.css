@@ -1,0 +1,90 @@
+/* Solid badge colors for Consulta completa customer status */
+
+:root {
+  --solid-text-dark: #07110d;
+  --solid-gold: #ffd166;
+  --solid-green: #00f5a0;
+  --solid-blue: #8b5cf6;
+  --solid-red: #ff4d6d;
+  --solid-slate: #e2e8f0;
+}
+
+/* CPF badge */
+.relationship-client-panel .cart-item:first-of-type span[style*="font-family: monospace"] {
+  color: #f8fafc !important;
+  background: #263241 !important;
+  border: 1px solid #64748b !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 8px 18px rgba(0,0,0,.22) !important;
+}
+
+/* Status: EM DIA */
+.relationship-client-panel .cart-item:first-of-type span[style*="2dd4bf"],
+.relationship-client-panel .cart-item:first-of-type span[style*="45,212,191"],
+.relationship-client-panel .cart-item:first-of-type span[style*="10b981"],
+.relationship-client-panel .cart-item:first-of-type span[style*="16, 185, 129"] {
+  color: #001b11 !important;
+  background: #00f5a0 !important;
+  border: 1px solid #5fffc6 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 16px rgba(0,245,160,.24), 0 8px 18px rgba(0,0,0,.22) !important;
+}
+
+/* Status: CLIENTE RECORRENTE */
+.relationship-client-panel .cart-item:first-of-type span[style*="818cf8"],
+.relationship-client-panel .cart-item:first-of-type span[style*="99,102,241"],
+.relationship-client-panel .cart-item:first-of-type span[style*="99, 102, 241"] {
+  color: #ffffff !important;
+  background: #6d5dfc !important;
+  border: 1px solid #a5b4fc !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 16px rgba(109,93,252,.28), 0 8px 18px rgba(0,0,0,.22) !important;
+}
+
+/* Status: ALTO VALOR / GOLD */
+.relationship-client-panel .cart-item:first-of-type span[style*="var(--gold-strong)"],
+.relationship-client-panel .cart-item:first-of-type span[style*="215,173,85"],
+.relationship-client-panel .cart-item:first-of-type span[style*="215, 173, 85"] {
+  color: #1b1200 !important;
+  background: #ffd166 !important;
+  border: 1px solid #ffe29a !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 16px rgba(255,209,102,.26), 0 8px 18px rgba(0,0,0,.22) !important;
+}
+
+/* Status: ATENÇÃO */
+.relationship-client-panel .cart-item:first-of-type span[style*="fbbf24"],
+.relationship-client-panel .cart-item:first-of-type span[style*="245,158,11"],
+.relationship-client-panel .cart-item:first-of-type span[style*="245, 158, 11"] {
+  color: #1b1200 !important;
+  background: #ffb703 !important;
+  border: 1px solid #ffd166 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 16px rgba(255,183,3,.28), 0 8px 18px rgba(0,0,0,.22) !important;
+}
+
+/* Status: INADIMPLENTE / VERMELHO */
+.relationship-client-panel .cart-item:first-of-type span[style*="f87171"],
+.relationship-client-panel .cart-item:first-of-type span[style*="239,68,68"],
+.relationship-client-panel .cart-item:first-of-type span[style*="239, 68, 68"] {
+  color: #ffffff !important;
+  background: #ff4d6d !important;
+  border: 1px solid #ff8fa3 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 16px rgba(255,77,109,.28), 0 8px 18px rgba(0,0,0,.22) !important;
+}
+
+/* All customer status badges: stronger shape */
+.relationship-client-panel .cart-item:first-of-type span[style*="textTransform: 'uppercase'"],
+.relationship-client-panel .cart-item:first-of-type span[style*="text-transform: uppercase"],
+.relationship-client-panel .cart-item:first-of-type span[style*="fontWeight: 'bold'"],
+.relationship-client-panel .cart-item:first-of-type span[style*="font-weight: bold"] {
+  opacity: 1 !important;
+  font-weight: 950 !important;
+}
