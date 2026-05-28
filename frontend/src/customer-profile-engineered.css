@@ -1,0 +1,547 @@
+/* Engineered customer complete profile UI
+ * Final visual layer for Clientes > Consulta completa.
+ * Focus: two-column app layout, contrast, semantic financial colors, card depth.
+ */
+
+:root {
+  --ec-bg: #05070b;
+  --ec-panel: #111318;
+  --ec-panel-2: #151b24;
+  --ec-panel-3: #101827;
+  --ec-input: #080d15;
+  --ec-border: rgba(255, 255, 255, 0.12);
+  --ec-border-soft: rgba(255, 255, 255, 0.08);
+  --ec-gold: #d8b15e;
+  --ec-gold-soft: #f1d37c;
+  --ec-gold-bg: linear-gradient(135deg, #f6d77e, #d6ab50);
+  --ec-cyan: #2dd4bf;
+  --ec-green: #34d399;
+  --ec-red: #fb7185;
+  --ec-red-soft: #fca5a5;
+  --ec-violet: #818cf8;
+  --ec-blue: #93c5fd;
+  --ec-text: #f8fafc;
+  --ec-muted: #aeb8c6;
+  --ec-muted-2: #6b7280;
+}
+
+/* Two-column behavior: sidebar stays column 1, content uses column 2. */
+.workspace .app-shell:has(.relationship-client-panel) {
+  padding: 0 32px 42px 42px !important;
+  width: 100% !important;
+}
+
+.customer-premium-container:has(.relationship-client-panel) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.content-grid:has(.relationship-client-panel) {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Main central card, closer to the reference image. */
+.relationship-client-panel {
+  width: min(1040px, 100%) !important;
+  margin: 0 auto !important;
+  padding: 20px !important;
+  border: 1px solid var(--ec-border) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.040), rgba(255,255,255,.015)),
+    var(--ec-panel) !important;
+  color: var(--ec-text) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45) !important;
+}
+
+.relationship-client-panel,
+.relationship-client-panel *:not(svg):not(path) {
+  font-family: var(--font-sans, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif) !important;
+}
+
+.relationship-client-header {
+  padding-bottom: 18px !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+}
+
+.relationship-client-icon {
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 13px !important;
+  background: rgba(216,177,94,.13) !important;
+  color: var(--ec-gold-soft) !important;
+}
+
+.relationship-client-title h2 {
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 1.15rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em !important;
+}
+
+.relationship-client-title p {
+  margin-top: 4px !important;
+  color: var(--ec-muted-2) !important;
+  font-size: .78rem !important;
+  font-weight: 700 !important;
+}
+
+/* Header buttons. */
+.relationship-client-header button {
+  min-height: 42px !important;
+  padding: 0 18px !important;
+  border-radius: 12px !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+  transform: none !important;
+}
+
+.relationship-client-header button:first-of-type {
+  border: 1px solid rgba(255,235,180,.62) !important;
+  background: var(--ec-gold-bg) !important;
+  color: #0d0b08 !important;
+  box-shadow: 0 14px 34px rgba(216,177,94,.18) !important;
+}
+
+.relationship-client-header button:first-of-type svg {
+  color: #0d0b08 !important;
+}
+
+.relationship-client-header button:last-of-type {
+  border: 1px solid rgba(16,185,129,.45) !important;
+  background: rgba(16,185,129,.06) !important;
+  color: #10b981 !important;
+}
+
+.relationship-client-header button:last-of-type svg {
+  color: #10b981 !important;
+}
+
+/* Select and filter blocks: similar visual weight to reference, but with readable contrast. */
+.customer-profile-search,
+.customer-profile-filter-grid {
+  border: 1px solid rgba(216,177,94,.40) !important;
+  border-radius: 14px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018)),
+    rgba(71,52,18,.55) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 14px 36px rgba(0,0,0,.24) !important;
+}
+
+.customer-profile-search {
+  margin: 18px 0 !important;
+  padding: 14px !important;
+}
+
+.customer-profile-filter-grid {
+  padding: 14px !important;
+  gap: 12px !important;
+  margin-bottom: 18px !important;
+}
+
+.customer-profile-search .field-group label,
+.customer-profile-filter-grid .field-group label {
+  display: block !important;
+  margin-bottom: 8px !important;
+  color: #f6e3af !important;
+  font-size: .70rem !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+}
+
+.customer-profile-search input,
+.customer-profile-search select,
+.customer-profile-filter-grid input,
+.customer-profile-filter-grid select,
+.relationship-client-panel textarea {
+  height: 42px !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  border-radius: 9px !important;
+  background: var(--ec-input) !important;
+  color: var(--ec-text) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.relationship-client-panel textarea {
+  height: auto !important;
+  min-height: 75px !important;
+  padding: 12px !important;
+  border-color: rgba(216,177,94,.50) !important;
+}
+
+.customer-profile-search input::placeholder,
+.customer-profile-filter-grid input::placeholder,
+.relationship-client-panel textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+.customer-profile-search input:focus,
+.customer-profile-search select:focus,
+.customer-profile-filter-grid input:focus,
+.customer-profile-filter-grid select:focus,
+.relationship-client-panel textarea:focus {
+  border-color: rgba(216,177,94,.72) !important;
+  box-shadow: 0 0 0 4px rgba(216,177,94,.14), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+.customer-profile-checkboxes label {
+  min-height: 42px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  border-radius: 8px !important;
+  background: var(--ec-input) !important;
+  color: #f6e3af !important;
+  font-size: .72rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  line-height: 1.12 !important;
+}
+
+.customer-profile-checkboxes input {
+  width: 16px !important;
+  height: 16px !important;
+  accent-color: var(--ec-gold) !important;
+}
+
+.customer-profile-filter-grid .customer-premium-secondary-button {
+  min-height: 42px !important;
+  border: 1px solid rgba(216,177,94,.28) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.035) !important;
+  color: #d1d5db !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+}
+
+.customer-profile-filter-grid .customer-premium-secondary-button:hover {
+  border-color: rgba(216,177,94,.48) !important;
+  background: rgba(216,177,94,.10) !important;
+  color: var(--ec-gold-soft) !important;
+}
+
+/* Selected customer card. */
+.relationship-client-panel .cart-item:first-of-type {
+  display: grid !important;
+  grid-template-columns: 1fr 300px !important;
+  gap: 18px !important;
+  align-items: start !important;
+  padding: 18px !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: 16px !important;
+  background: #151b24 !important;
+  box-shadow: 0 18px 50px rgba(0,0,0,.28) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type h3 {
+  margin: 0 0 8px !important;
+  color: #ffffff !important;
+  font-size: 1.35rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type small,
+.relationship-client-panel .cart-item:first-of-type small span,
+.relationship-client-panel .cart-item:first-of-type p {
+  color: #cbd5e1 !important;
+  font-size: .78rem !important;
+  font-weight: 750 !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type p {
+  color: #aeb8c6 !important;
+}
+
+/* Badges inside customer card. */
+.relationship-client-panel .cart-item:first-of-type span[style*="font-family: monospace"] {
+  min-height: 20px !important;
+  padding: 4px 8px !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  border-radius: 5px !important;
+  background: rgba(255,255,255,.04) !important;
+  color: #aeb8c6 !important;
+  font-size: .62rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em !important;
+}
+
+/* Financial mini cards inside selected customer card. */
+.relationship-client-panel .cart-item:first-of-type > div:last-child {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  min-width: 300px !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong {
+  position: relative !important;
+  overflow: hidden !important;
+  min-height: 78px !important;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.060), rgba(255,255,255,.020)),
+    #0d1420 !important;
+  color: var(--ec-text) !important;
+  font-size: 1.18rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.03em !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong::after {
+  content: "";
+  position: absolute;
+  right: -24px;
+  top: -28px;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: rgba(216,177,94,.08);
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(1) { color: var(--ec-gold-soft) !important; }
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(2) { color: var(--ec-red) !important; }
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(3) { color: var(--ec-red-soft) !important; }
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(4) { color: var(--ec-green) !important; }
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong span {
+  display: block !important;
+  margin-top: 3px !important;
+  color: #9aa6b8 !important;
+  font-size: .62rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+}
+
+/* KPI cards. */
+.promissory-mini-grid {
+  gap: 12px !important;
+}
+
+.promissory-mini-card {
+  min-height: 92px !important;
+  padding: 13px !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 12px !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(216,177,94,.075), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,.060), rgba(255,255,255,.018)),
+    var(--ec-panel-3) !important;
+  box-shadow: 0 14px 36px rgba(0,0,0,.22) !important;
+}
+
+.promissory-mini-card svg {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 6px !important;
+  border: 1px solid rgba(216,177,94,.22) !important;
+  border-radius: 9px !important;
+  background: rgba(216,177,94,.10) !important;
+  color: var(--ec-gold-soft) !important;
+}
+
+.promissory-mini-card span {
+  display: block !important;
+  margin-top: 10px !important;
+  color: #cbd5e1 !important;
+  font-size: .66rem !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+}
+
+.promissory-mini-card strong {
+  display: block !important;
+  margin-top: 4px !important;
+  color: #ffffff !important;
+  font-size: 1.35rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em !important;
+}
+
+.promissory-mini-card:nth-child(1) strong { color: var(--ec-gold-soft) !important; }
+.promissory-mini-card:nth-child(2) strong { color: var(--ec-violet) !important; }
+.promissory-mini-card:nth-child(3) strong { color: var(--ec-red) !important; }
+.promissory-mini-card:nth-child(4) strong { color: var(--ec-red-soft) !important; }
+.promissory-mini-card:nth-child(5) strong { color: var(--ec-green) !important; }
+
+.promissory-mini-card small {
+  display: block !important;
+  margin-top: 1px !important;
+  color: #9aa6b8 !important;
+  font-size: .68rem !important;
+  font-weight: 800 !important;
+}
+
+/* Tabs. */
+.customer-profile-tabs {
+  margin-top: 18px !important;
+  border: 1px solid rgba(216,177,94,.24) !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,.025) !important;
+  padding: 6px !important;
+}
+
+.customer-profile-tabs button {
+  min-height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(216,177,94,.18) !important;
+  background: transparent !important;
+  color: var(--ec-text) !important;
+  font-size: .68rem !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  box-shadow: none !important;
+}
+
+.customer-profile-tabs .customer-premium-primary-button {
+  border-color: rgba(255,235,180,.62) !important;
+  background: var(--ec-gold-bg) !important;
+  color: #0d0b08 !important;
+}
+
+.customer-profile-tabs .customer-premium-secondary-button:hover {
+  border-color: rgba(216,177,94,.48) !important;
+  background: rgba(216,177,94,.10) !important;
+  color: var(--ec-gold-soft) !important;
+}
+
+/* Dashboard modules. */
+.relationship-client-panel div[style*="repeat(auto-fit, minmax(320px, 1fr))"] {
+  grid-template-columns: 1fr 1fr !important;
+  gap: 18px !important;
+}
+
+.relationship-client-panel div[style*="flex-direction: column"] {
+  gap: 18px !important;
+}
+
+.relationship-client-panel section,
+.relationship-client-panel article:not(.cart-item):not(.promissory-mini-card) {
+  border: 1px solid rgba(255,255,255,.13) !important;
+  border-radius: 12px !important;
+  background: #10151d !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,.22) !important;
+}
+
+.relationship-client-panel h3 {
+  margin: 0 0 13px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid rgba(226,232,240,.08) !important;
+  color: #ffffff !important;
+  font-size: .98rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.03em !important;
+}
+
+.relationship-client-panel h3 svg {
+  color: var(--ec-gold-soft) !important;
+}
+
+/* Rows and text inside modules. */
+.relationship-client-panel section div[style*="justify-content: space-between"] {
+  min-height: 30px;
+  align-items: center !important;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.025);
+}
+
+.relationship-client-panel section div[style*="justify-content: space-between"] span {
+  color: #aeb8c6 !important;
+}
+
+.relationship-client-panel section div[style*="justify-content: space-between"] strong {
+  color: var(--ec-text) !important;
+  font-weight: 950 !important;
+}
+
+.relationship-client-panel section div[style*="justify-content: space-between"] strong[style*="fb7185"] {
+  color: var(--ec-red) !important;
+}
+
+/* Analysis mini cards. */
+.relationship-client-panel div[style*="gridTemplateColumns: 'repeat(2, 1fr)'"] > div,
+.relationship-client-panel div[style*="grid-template-columns: repeat(2, 1fr)"] > div {
+  border: 1px solid rgba(226,232,240,.10) !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.014)),
+    #090e16 !important;
+}
+
+.relationship-client-panel table {
+  border-spacing: 0 8px !important;
+}
+
+.relationship-client-panel thead th {
+  color: #9aa6b8 !important;
+}
+
+.relationship-client-panel tbody tr {
+  background: rgba(255,255,255,.035) !important;
+}
+
+.relationship-client-panel tbody td {
+  color: #d6deea !important;
+  border-top: 1px solid rgba(226,232,240,.08) !important;
+  border-bottom: 1px solid rgba(226,232,240,.08) !important;
+}
+
+@media (min-width: 1500px) {
+  .relationship-client-panel {
+    width: min(1180px, 100%) !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .relationship-client-panel {
+    width: 100% !important;
+  }
+
+  .relationship-client-panel .cart-item:first-of-type,
+  .relationship-client-panel div[style*="repeat(auto-fit, minmax(320px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .relationship-client-panel .cart-item:first-of-type > div:last-child {
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace .app-shell:has(.relationship-client-panel) {
+    padding: 14px 14px 88px !important;
+  }
+
+  .relationship-client-panel {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .customer-profile-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .customer-profile-checkboxes,
+  .customer-profile-filter-grid .field-group[style*="span 2"] {
+    grid-column: auto !important;
+  }
+
+  .customer-profile-tabs button {
+    flex: 1 1 100%;
+  }
+}
