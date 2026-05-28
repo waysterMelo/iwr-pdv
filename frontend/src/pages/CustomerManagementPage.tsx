@@ -9,6 +9,7 @@ import type { Sale, SaleStatus } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { PaginationControls } from '../components/PaginationControls'
+import { PageHeader } from '../components/PageHeader'
 import { usePagination } from '../hooks/usePagination'
 import { maskCpf, maskPhone } from '../utils/masks'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
@@ -44,7 +45,8 @@ type CustomerManagementMode = 'create' | 'list' | 'profile'
 
 type CustomerManagementPageProps = {
   mode?: CustomerManagementMode
-  onViewChange?: (view: any) => void
+  initialProfileCustomerId?: number | null
+  onViewChange?: (view: 'customer-profile', customerId?: number) => void
 }
 type ProfileTab = 'summary' | 'timeline' | 'sales' | 'products' | 'notes' | 'cancelled'
 
@@ -106,7 +108,7 @@ function saleMatchesQuery(sale: Sale, query: string) {
   return haystack.includes(query)
 }
 
-export function CustomerManagementPage({ mode = 'list', onViewChange }: CustomerManagementPageProps) {
+export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId, onViewChange }: CustomerManagementPageProps) {
   const { notify } = useAppMessage()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [form, setForm] = useState<CustomerPayload>(initialForm)
@@ -123,7 +125,7 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
   const [profileSearch, setProfileSearch] = useState('')
   const [profileOptions, setProfileOptions] = useState<Customer[]>([])
   const [selectedProfileCustomerId, setSelectedProfileCustomerId] = useState(() => {
-    return localStorage.getItem('selected_profile_customer_id') || ''
+    return initialProfileCustomerId ? String(initialProfileCustomerId) : localStorage.getItem('selected_profile_customer_id') || ''
   })
   const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null)
   const [isProfileLoading, setIsProfileLoading] = useState(false)
@@ -710,6 +712,14 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
   }, [profileSearch, showProfile])
 
   useEffect(() => {
+    if (selectedProfileCustomerId) {
+      localStorage.setItem('selected_profile_customer_id', selectedProfileCustomerId)
+    } else {
+      localStorage.removeItem('selected_profile_customer_id')
+    }
+  }, [selectedProfileCustomerId])
+
+  useEffect(() => {
     if (!selectedProfileCustomerId) {
       return
     }
@@ -906,6 +916,17 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
               </article>
             </div>
           </>
+        ) : null}
+
+        {showProfile ? (
+          <PageHeader
+            eyebrow="Clientes"
+            title="Consulta completa do cliente"
+            subtitle="Visão administrativa com compras, linha do tempo, produtos, promissórias e análise de risco."
+            metricLabel="Análise"
+            metricValue={customerProfile ? 'Ativa' : 'Selecione'}
+            status="Somente ADMIN"
+          />
         ) : null}
 
         <div className={showProfile ? 'content-grid' : 'customer-premium-content'}>
@@ -1167,9 +1188,8 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                           <button
                             type="button"
                             onClick={() => {
-                              localStorage.setItem('selected_profile_customer_id', String(customer.id));
                               if (onViewChange) {
-                                onViewChange('customer-profile');
+                                onViewChange('customer-profile', customer.id);
                               }
                             }}
                             className="customer-premium-primary-button"
@@ -1211,20 +1231,20 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
           ) : null}
 
           {showProfile ? (
-            <section className="product-list-panel customer-list-panel relationship-client-panel" style={{ background: 'var(--surface-elevated)', border: '1px solid rgba(215, 173, 85, 0.18)', borderRadius: '18px', padding: '22px', color: '#e5e7eb', boxShadow: '0 24px 70px rgba(0,0,0,0.26)' }}>
-              <header className="section-header relationship-client-header" style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.08)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div className="relationship-client-title" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <span className="relationship-client-icon" aria-hidden="true" style={{ background: 'rgba(215, 173, 85, 0.15)', padding: '10px', borderRadius: '12px', color: '#d7ad55' }}>
+            <section className="customer-premium-list-panel customer-list-panel relationship-client-panel">
+              <header className="section-header relationship-client-header">
+                <div className="relationship-client-title">
+                  <span className="relationship-client-icon" aria-hidden="true">
                     <Search size={22} strokeWidth={2.4} />
                   </span>
                   <div>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Consulta completa do cliente</h2>
-                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Visão administrativa com compras, linha do tempo, produtos, promissórias e análise de risco.</p>
+                    <h2>Seleção e análise</h2>
+                    <p>Escolha o cliente e aplique filtros para auditar compras, produtos e promissórias.</p>
                   </div>
                 </div>
 
                 {customerProfile && (
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <div className="relationship-client-actions">
                     <button
                       type="button"
                       onClick={handlePrintProfile}
@@ -1384,10 +1404,10 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
               ) : (
                 <div style={{ display: 'grid', gap: '20px' }}>
                   {/* Perfil e Scores */}
-                  <article className="cart-item" style={{ background: '#121722', border: '1px solid rgba(226,232,240,0.10)', borderRadius: '14px', padding: '22px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                  <article className="cart-item customer-profile-summary-card" style={{ background: '#f8f5ed', border: '1px solid rgba(75,59,22,0.14)', borderRadius: '14px', padding: '22px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', color: '#211609' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                        <span style={{ display: 'inline-block', background: 'var(--surface-elevated)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#b9c4d4', fontFamily: 'monospace' }}>
+                        <span style={{ display: 'inline-block', background: 'rgba(33, 22, 9, 0.08)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#5f4b1d', fontFamily: 'monospace' }}>
                           {customerProfile.customer.cpf ? maskCpf(customerProfile.customer.cpf) : 'Sem CPF'}
                         </span>
                         
@@ -1407,13 +1427,13 @@ export function CustomerManagementPage({ mode = 'list', onViewChange }: Customer
                           )
                         })}
                       </div>
-                      <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: '1.4rem' }}>{customerProfile.customer.name}</h3>
-                      <small style={{ color: 'var(--text-secondary)', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                      <h3 style={{ margin: '0 0 8px', color: '#211609', fontSize: '1.4rem' }}>{customerProfile.customer.name}</h3>
+                      <small style={{ color: '#5f4b1d', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                         <span><Phone size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.phone ? maskPhone(customerProfile.customer.phone) : 'Sem telefone'}</span>
                         {customerProfile.customer.email ? <span><Mail size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.email}</span> : null}
                         {customerProfile.customer.birthDate ? <span><Gift size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{formatDate(customerProfile.customer.birthDate)}</span> : null}
                       </small>
-                      {customerProfile.customer.address ? <p style={{ margin: '8px 0 0', color: '#8d98a8', fontSize: '0.82rem' }}><MapPin size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.address}</p> : null}
+                      {customerProfile.customer.address ? <p style={{ margin: '8px 0 0', color: '#6e5a2a', fontSize: '0.82rem' }}><MapPin size={12} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#d7ad55' }} />{customerProfile.customer.address}</p> : null}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(120px, 1fr))', gap: '12px', minWidth: '300px' }}>

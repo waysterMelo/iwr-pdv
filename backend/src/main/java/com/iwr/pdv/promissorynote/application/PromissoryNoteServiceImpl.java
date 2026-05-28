@@ -210,7 +210,7 @@ public class PromissoryNoteServiceImpl implements PromissoryNoteService {
 
         Charges charges = Boolean.TRUE.equals(request.chargeInterestAndPenalty())
                 ? calculateCharges(remainingAmount, note.getDueDate())
-                : new Charges(BigDecimal.ZERO, BigDecimal.ZERO);
+                : new Charges(BigDecimal.ZERO, money(request.interestAmount()));
         BigDecimal totalReceived = paymentAmount.add(charges.penaltyAmount()).add(charges.interestAmount());
 
         PromissoryNotePayment payment = new PromissoryNotePayment();

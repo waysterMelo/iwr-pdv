@@ -68,6 +68,7 @@ function App() {
   const [currentView, setCurrentView] = useState<AppView>('checkout')
   const [mobileView, setMobileView] = useState<MobileView>('home')
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
+  const [selectedCustomerProfileId, setSelectedCustomerProfileId] = useState<number | null>(null)
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [isSessionChecking, setIsSessionChecking] = useState(() => Boolean(getAuthToken()))
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -344,12 +345,6 @@ function App() {
           ))}
         </div>
 
-        {currentUser.passwordChangeRequired ? (
-          <div className="feedback-message feedback-message--warning">
-            Troque a senha padrao antes de operar em producao.
-          </div>
-        ) : null}
-
         <Suspense fallback={<LoadingView />}>
           {visibleView === 'checkout' ? <SalesCheckoutPage /> : null}
           {visibleView === 'admin-dashboard' ? <AdminDashboardPage /> : null}
@@ -377,10 +372,36 @@ function App() {
               }}
             />
           ) : null}
-          {visibleView === 'loyalty' ? <LoyaltyPage onViewChange={setCurrentView} /> : null}
+          {visibleView === 'loyalty' ? (
+            <LoyaltyPage
+              onViewChange={(nextView, customerId) => {
+                if (nextView === 'customer-profile' && typeof customerId === 'number') {
+                  setSelectedCustomerProfileId(customerId)
+                }
+                setCurrentView(nextView)
+              }}
+            />
+          ) : null}
           {visibleView === 'customers-create' ? <CustomerManagementPage mode="create" onViewChange={setCurrentView} /> : null}
-          {visibleView === 'customers-list' ? <CustomerManagementPage mode="list" onViewChange={setCurrentView} /> : null}
-          {visibleView === 'customer-profile' ? <CustomerManagementPage mode="profile" onViewChange={setCurrentView} /> : null}
+          {visibleView === 'customers-list' ? (
+            <CustomerManagementPage
+              mode="list"
+              onViewChange={(nextView, customerId) => {
+                if (nextView === 'customer-profile' && typeof customerId === 'number') {
+                  setSelectedCustomerProfileId(customerId)
+                }
+                setCurrentView(nextView)
+              }}
+            />
+          ) : null}
+          {visibleView === 'customer-profile' ? (
+            <CustomerManagementPage
+              key={selectedCustomerProfileId ?? 'profile'}
+              mode="profile"
+              initialProfileCustomerId={selectedCustomerProfileId}
+              onViewChange={setCurrentView}
+            />
+          ) : null}
           {visibleView === 'history' ? <SalesHistoryPage /> : null}
           {visibleView === 'audit' ? <AuditLogPage /> : null}
           {visibleView === 'products-create' ? (

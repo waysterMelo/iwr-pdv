@@ -108,6 +108,12 @@ function emptySummary(filters: AdminDashboardFilters): AdminDashboardSummary {
     dueTodayReceivables: 0,
     dueNext7DaysReceivables: 0,
     dueNext30DaysReceivables: 0,
+    globalStockItems: 0,
+    globalCostValue: 0,
+    globalSaleValue: 0,
+    totalCMV: 0,
+    totalProfit: 0,
+    topProducts: [],
   }
 }
 

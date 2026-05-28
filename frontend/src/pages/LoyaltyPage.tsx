@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Cake, CalendarDays, Gift, Sparkles, X, MessageSquare, Copy, UserCheck, Phone, Mail, Search } from 'lucide-react'
 import { PaginationControls } from '../components/PaginationControls'
+import { PageHeader } from '../components/PageHeader'
 import { getCustomerBirthdays } from '../services/customerService'
 import type { Customer } from '../types/customer'
 import { getErrorMessage } from '../utils/errors'
@@ -55,7 +56,7 @@ function birthdayStatus(days: number) {
 }
 
 type LoyaltyPageProps = {
-  onViewChange?: (view: any) => void
+  onViewChange?: (view: 'customer-profile', customerId?: number) => void
 }
 
 export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
@@ -169,41 +170,48 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
   };
 
   return (
-    <main className="app-shell customer-premium-shell">
-      <style>{`
-        .customer-premium-card {
-          background: rgba(255, 250, 235, 0.72) !important;
-          border: 1px solid rgba(91, 58, 10, 0.16) !important;
-          border-radius: 16px !important;
-          padding: 18px !important;
-          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
-          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
-          color: #211609 !important;
-        }
-        .customer-premium-card:hover {
-          transform: translateY(-3px) scale(1.01);
-          border-color: rgba(33, 22, 9, 0.34) !important;
-          box-shadow: 0 12px 28px rgba(91, 58, 10, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
-        }
-        .customer-premium-card--today {
-          background: linear-gradient(135deg, #f9e7b5 0%, #e2c074 100%) !important;
-          border: 2px solid #5b3a0a !important;
-          box-shadow: 0 16px 36px rgba(91, 58, 10, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
-        }
-        .customer-premium-list-panel {
-          background: radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.46), transparent 32%), linear-gradient(135deg, #f8dc91 0%, #d8ad53 50%, #b97e24 100%) !important;
-          color: #211609 !important;
-          border: 1px solid rgba(91, 58, 10, 0.22) !important;
-          border-radius: 18px !important;
-          padding: 22px !important;
-          box-shadow: 0 26px 64px rgba(91, 58, 10, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
-        }
-        .customer-premium-felicitar-btn:hover {
-          transform: scale(1.02);
-          box-shadow: 0 4px 12px rgba(215, 173, 85, 0.3) !important;
-        }
-      `}</style>
+    <main className="app-shell customer-premium-shell loyalty-page">
       <div className="app-container customer-premium-container">
+        <PageHeader
+          eyebrow="Clientes"
+          title="Aniversariantes"
+          subtitle="Acompanhe datas especiais para relacionamento, ofertas e atendimento personalizado do Atelier."
+          metricLabel="Proximos 7 dias"
+          metricValue={String(nextSevenDaysCount)}
+          status="Fidelidade"
+        />
+
+        <div className="metric-grid metric-grid--3 loyalty-filter-grid" aria-label="Filtros de aniversariantes">
+          <button
+            type="button"
+            className={aniversariosFiltro === 'hoje' ? 'metric-card loyalty-filter-card loyalty-filter-card--active' : 'metric-card loyalty-filter-card'}
+            onClick={() => setAniversariosFiltro('hoje')}
+          >
+            <span className="metric-card__label"><Gift size={16} strokeWidth={2.4} aria-hidden="true" />Hoje</span>
+            <strong className="metric-card__value">{todayCount}</strong>
+            <small className="metric-card__hint">Clientes com aniversario hoje</small>
+          </button>
+
+          <button
+            type="button"
+            className={aniversariosFiltro === 'proximos' ? 'metric-card loyalty-filter-card loyalty-filter-card--active' : 'metric-card loyalty-filter-card'}
+            onClick={() => setAniversariosFiltro('proximos')}
+          >
+            <span className="metric-card__label"><CalendarDays size={16} strokeWidth={2.4} aria-hidden="true" />Proximos 7 dias</span>
+            <strong className="metric-card__value">{nextSevenDaysCount}</strong>
+            <small className="metric-card__hint">Agenda imediata de relacionamento</small>
+          </button>
+
+          <button
+            type="button"
+            className={aniversariosFiltro === 'todos' ? 'metric-card loyalty-filter-card loyalty-filter-card--active' : 'metric-card loyalty-filter-card'}
+            onClick={() => setAniversariosFiltro('todos')}
+          >
+            <span className="metric-card__label"><UserCheck size={16} strokeWidth={2.4} aria-hidden="true" />Com data cadastrada</span>
+            <strong className="metric-card__value">{birthdayCustomers.length}</strong>
+            <small className="metric-card__hint">Base completa com aniversario</small>
+          </button>
+        </div>
         
         {/* Banner do Topo */}
         <div className="customer-premium-hero">
@@ -370,9 +378,8 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
                       <button
                         type="button"
                         onClick={() => {
-                          localStorage.setItem('selected_profile_customer_id', String(customer.id));
                           if (onViewChange) {
-                            onViewChange('customer-profile');
+                            onViewChange('customer-profile', customer.id);
                           }
                         }}
                         className="customer-premium-primary-button"
@@ -468,14 +475,12 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
                   Visualização da Mensagem
                 </label>
                 <textarea
+                  className="loyalty-message-textarea"
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
                   style={{
                     width: '100%',
                     minHeight: '120px',
-                    background: 'rgba(0, 0, 0, 0.55)',
-                    color: 'var(--text-secondary)',
-                    border: '1px solid var(--border-gold)',
                     borderRadius: '12px',
                     padding: '16px',
                     fontSize: '0.85rem',

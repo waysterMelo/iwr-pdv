@@ -20,6 +20,7 @@ import {
   createManualPromissoryNotes,
   downloadPromissoryNotesExcelReport,
   getPromissoryNotePrintUrl,
+  getPromissoryPaymentReceiptUrl,
   getPromissoryNoteCalendarDays,
   getPromissoryNotePayments,
   getPromissoryNotes,
@@ -568,6 +569,15 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
       return
     }
 
+    if (amount !== undefined && amount > selectedNote.remainingAmount) {
+      notify({
+        type: 'error',
+        title: 'Valor acima do saldo',
+        message: `O valor da baixa nao pode ultrapassar ${formatCurrency(selectedNote.remainingAmount)}.`,
+      })
+      return
+    }
+
     const confirmed = await confirm({
       type: 'warning',
       title: 'Baixar nota?',
@@ -604,6 +614,13 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
   async function handlePrintNote() {
     if (!selectedNote) return
     const printWindow = window.open(getPromissoryNotePrintUrl(selectedNote.id), '_blank')
+    printWindow?.addEventListener('load', () => {
+      printWindow.print()
+    })
+  }
+
+  function handlePrintPaymentReceipt(paymentId: number) {
+    const printWindow = window.open(getPromissoryPaymentReceiptUrl(paymentId), '_blank')
     printWindow?.addEventListener('load', () => {
       printWindow.print()
     })
@@ -1295,8 +1312,15 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                             <small style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Método: {formatPaymentMethod(p.paymentMethod)} — {formatNullableDateTime(p.paidAt)}</small>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <strong style={{ color: '#2dd4bf', fontSize: '0.78rem' }}>+{formatCurrency(p.amount)}</strong>
+                            <strong style={{ color: '#2dd4bf', fontSize: '0.78rem' }}>+{formatCurrency(p.totalReceived)}</strong>
                             {p.interestAmount > 0 && <small style={{ display: 'block', fontSize: '0.65rem', color: '#fb7185' }}>Juros: {formatCurrency(p.interestAmount)}</small>}
+                            <button
+                              type="button"
+                              onClick={() => handlePrintPaymentReceipt(p.id)}
+                              style={{ marginTop: '4px', border: 0, background: 'transparent', color: 'var(--gold-strong)', cursor: 'pointer', fontSize: '0.66rem', padding: 0 }}
+                            >
+                              Recibo
+                            </button>
                           </div>
                         </div>
                       ))}
