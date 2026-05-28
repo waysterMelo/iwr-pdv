@@ -3,10 +3,46 @@
 :root {
   --solid-text-dark: #07110d;
   --solid-gold: #ffd166;
-  --solid-green: #00f5a0;
+  --solid-green: #00ff88;
   --solid-blue: #8b5cf6;
   --solid-red: #ff4d6d;
   --solid-slate: #e2e8f0;
+}
+
+/* Header/title contrast */
+.relationship-client-title h2,
+.relationship-client-panel .relationship-client-title h2,
+.relationship-client-panel header h2 {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  font-weight: 950 !important;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.14), 0 0 22px rgba(216, 177, 94, 0.10) !important;
+}
+
+.relationship-client-title p,
+.relationship-client-panel .relationship-client-title p,
+.relationship-client-panel header p {
+  color: #d7deeb !important;
+  opacity: 1 !important;
+  font-weight: 760 !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Header search icon stronger */
+.relationship-client-icon,
+.relationship-client-panel .relationship-client-icon {
+  color: #ffd875 !important;
+  background: rgba(255, 216, 117, 0.18) !important;
+  border: 1px solid rgba(255, 216, 117, 0.38) !important;
+  box-shadow: 0 0 18px rgba(255, 216, 117, 0.18) !important;
+}
+
+.relationship-client-icon svg,
+.relationship-client-panel .relationship-client-icon svg {
+  color: #ffd875 !important;
+  stroke: #ffd875 !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 6px rgba(255, 216, 117, 0.42)) !important;
 }
 
 /* CPF badge */
@@ -22,14 +58,16 @@
 /* Status: EM DIA */
 .relationship-client-panel .cart-item:first-of-type span[style*="2dd4bf"],
 .relationship-client-panel .cart-item:first-of-type span[style*="45,212,191"],
+.relationship-client-panel .cart-item:first-of-type span[style*="45, 212, 191"],
 .relationship-client-panel .cart-item:first-of-type span[style*="10b981"],
+.relationship-client-panel .cart-item:first-of-type span[style*="16,185,129"],
 .relationship-client-panel .cart-item:first-of-type span[style*="16, 185, 129"] {
-  color: #001b11 !important;
-  background: #00f5a0 !important;
-  border: 1px solid #5fffc6 !important;
+  color: #00170d !important;
+  background: #00ff88 !important;
+  border: 1px solid #8affcc !important;
   opacity: 1 !important;
   text-shadow: none !important;
-  box-shadow: 0 0 16px rgba(0,245,160,.24), 0 8px 18px rgba(0,0,0,.22) !important;
+  box-shadow: 0 0 22px rgba(0,255,136,.42), 0 8px 18px rgba(0,0,0,.26) !important;
 }
 
 /* Status: CLIENTE RECORRENTE */
