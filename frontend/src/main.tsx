@@ -5,6 +5,7 @@ import './ui-overhaul.css'
 import './pdv-gold-cards.css'
 import './pdv-visual-rebalance.css'
 import './customer-profile-polish.css'
+import './customer-profile-engineered.css'
 import App from './App.tsx'
 import { AppMessageProvider } from './components/AppMessageModal.tsx'
 
