@@ -1,0 +1,178 @@
+/* Stronger contrast layer for Clientes > Consulta completa */
+
+:root {
+  --boost-gold: #ffd875;
+  --boost-gold-2: #f6c85f;
+  --boost-text: #f8fafc;
+  --boost-muted: #d7deeb;
+  --boost-green: #22e39f;
+  --boost-red: #ff6f91;
+  --boost-blue: #93c5fd;
+}
+
+/* Date inputs: stronger calendar icon and readable date text */
+.relationship-client-panel input[type="date"],
+.customer-profile-filter-grid input[type="date"],
+.customer-profile-search input[type="date"] {
+  color-scheme: dark !important;
+  color: var(--boost-text) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1 !important;
+  cursor: pointer !important;
+  filter: invert(82%) sepia(86%) saturate(520%) hue-rotate(358deg) brightness(105%) contrast(101%) drop-shadow(0 0 5px rgba(255, 216, 117, 0.46)) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(88%) sepia(95%) saturate(700%) hue-rotate(350deg) brightness(112%) contrast(108%) drop-shadow(0 0 8px rgba(255, 216, 117, 0.74)) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit,
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: var(--boost-text) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-text {
+  color: rgba(255, 216, 117, 0.72) !important;
+}
+
+/* Generic form icon color inside filter/search blocks */
+.customer-profile-filter-grid svg,
+.customer-profile-search svg,
+.relationship-client-panel .field-group svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 216, 117, 0.35));
+}
+
+/* Inputs and labels stronger */
+.customer-profile-search .field-group label,
+.customer-profile-filter-grid .field-group label {
+  color: #ffe9ad !important;
+  text-shadow: 0 0 10px rgba(255, 216, 117, 0.18);
+}
+
+.customer-profile-search input,
+.customer-profile-search select,
+.customer-profile-filter-grid input,
+.customer-profile-filter-grid select {
+  color: var(--boost-text) !important;
+  border-color: rgba(255, 216, 117, 0.24) !important;
+  font-weight: 820 !important;
+}
+
+.customer-profile-search input::placeholder,
+.customer-profile-filter-grid input::placeholder {
+  color: rgba(215, 222, 235, 0.78) !important;
+  font-weight: 760 !important;
+}
+
+/* Contact row: phone/email/date/address icons and values more visible */
+.relationship-client-panel .cart-item:first-of-type small,
+.relationship-client-panel .cart-item:first-of-type small span,
+.relationship-client-panel .cart-item:first-of-type p {
+  color: var(--boost-muted) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type small svg,
+.relationship-client-panel .cart-item:first-of-type p svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 216, 117, 0.42));
+}
+
+.relationship-client-panel .cart-item:first-of-type h3 {
+  color: #ffffff !important;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+/* Badges: stronger contrast */
+.relationship-client-panel .cart-item:first-of-type span[style*="font-family: monospace"] {
+  color: #dce6f6 !important;
+  background: rgba(255, 255, 255, 0.075) !important;
+  border-color: rgba(226, 232, 240, 0.20) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="2dd4bf"],
+.relationship-client-panel .cart-item:first-of-type span[style*="45,212,191"] {
+  color: var(--boost-green) !important;
+  background: rgba(34, 227, 159, 0.16) !important;
+  border-color: rgba(34, 227, 159, 0.42) !important;
+  text-shadow: 0 0 10px rgba(34, 227, 159, 0.24);
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="818cf8"],
+.relationship-client-panel .cart-item:first-of-type span[style*="99,102,241"] {
+  color: #aeb8ff !important;
+  background: rgba(129, 140, 248, 0.18) !important;
+  border-color: rgba(129, 140, 248, 0.42) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="var(--gold-strong)"],
+.relationship-client-panel .cart-item:first-of-type span[style*="215,173,85"] {
+  color: var(--boost-gold) !important;
+  background: rgba(255, 216, 117, 0.16) !important;
+  border-color: rgba(255, 216, 117, 0.42) !important;
+}
+
+/* Money cards: labels and values with stronger semantic colors */
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(1) {
+  color: var(--boost-gold) !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(2) {
+  color: var(--boost-red) !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(3) {
+  color: #ff9dad !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(4) {
+  color: var(--boost-green) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong span {
+  color: rgba(215, 222, 235, 0.82) !important;
+}
+
+/* KPI icons and text */
+.promissory-mini-card svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  background: rgba(255, 216, 117, 0.14) !important;
+  border-color: rgba(255, 216, 117, 0.34) !important;
+  filter: drop-shadow(0 0 7px rgba(255, 216, 117, 0.28));
+}
+
+.promissory-mini-card span {
+  color: #e2e8f0 !important;
+}
+
+.promissory-mini-card small {
+  color: rgba(215, 222, 235, 0.78) !important;
+}
+
+/* Checkbox square stronger */
+.customer-profile-checkboxes input {
+  accent-color: var(--boost-gold) !important;
+  filter: drop-shadow(0 0 4px rgba(255, 216, 117, 0.36));
+}
+
+.customer-profile-checkboxes label {
+  color: #ffe9ad !important;
+  border-color: rgba(255, 216, 117, 0.26) !important;
+}
