@@ -3,12 +3,39 @@
  */
 
 :root {
-  --gold-card-bg: linear-gradient(135deg, #f3d987 0%, #d7ad55 48%, #b98216 100%);
-  --gold-card-bg-soft: linear-gradient(135deg, #ffe7a3 0%, #d7ad55 58%, #a96e12 100%);
+  --gold-card-bg: linear-gradient(135deg, #f6dfa0 0%, #d8b15e 48%, #b77a1a 100%);
+  --gold-card-bg-soft: linear-gradient(135deg, #ffe9ad 0%, #d9b45f 58%, #a97217 100%);
   --gold-card-ink: #11100d;
-  --gold-card-muted: rgba(17, 16, 13, 0.68);
+  --gold-card-muted: rgba(17, 16, 13, 0.70);
   --gold-card-line: rgba(17, 16, 13, 0.16);
   --gold-card-shadow: 0 24px 70px rgba(183, 127, 22, 0.24);
+  --pdv-text-main: #f8fafc;
+  --pdv-text-soft: rgba(226, 232, 240, 0.76);
+  --pdv-text-muted: rgba(226, 232, 240, 0.58);
+  --pdv-button-dark: #12141b;
+  --pdv-button-dark-hover: #1a1d26;
+  --pdv-button-border: rgba(226, 232, 240, 0.16);
+  --pdv-danger: #fca5a5;
+  --pdv-success: #6ee7b7;
+}
+
+/* General PDV text tuning */
+.customer-premium-shell h1,
+.customer-premium-shell h2,
+.customer-premium-shell h3,
+.sales-checkout-grid h2,
+.sales-checkout-grid h3 {
+  color: var(--pdv-text-main) !important;
+}
+
+.customer-premium-shell p,
+.sales-checkout-grid p {
+  color: var(--pdv-text-soft) !important;
+}
+
+.customer-premium-shell .field-group label,
+.sales-checkout-grid .field-group label {
+  color: var(--pdv-text-muted) !important;
 }
 
 /* Hero total card */
@@ -16,7 +43,7 @@
   position: relative;
   overflow: hidden;
   background: var(--gold-card-bg) !important;
-  border: 1px solid rgba(255, 231, 163, 0.72) !important;
+  border: 1px solid rgba(255, 235, 180, 0.78) !important;
   color: var(--gold-card-ink) !important;
   box-shadow: var(--gold-card-shadow) !important;
 }
@@ -66,12 +93,45 @@
   box-shadow: 0 0 24px rgba(17, 16, 13, 0.28);
 }
 
+/* Quick actions */
+.quick-actions {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)), #101117 !important;
+  border-color: rgba(226, 232, 240, 0.12) !important;
+  box-shadow: 0 16px 46px rgba(0, 0, 0, 0.22);
+}
+
+.customer-premium-secondary-button,
+.customer-premium-shell .secondary-button,
+.customer-premium-shell .icon-button,
+.customer-premium-shell .icon-link {
+  border: 1px solid var(--pdv-button-border) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)), var(--pdv-button-dark) !important;
+  color: var(--pdv-text-main) !important;
+  box-shadow: none !important;
+}
+
+.customer-premium-secondary-button:hover,
+.customer-premium-shell .secondary-button:hover,
+.customer-premium-shell .icon-button:hover,
+.customer-premium-shell .icon-link:hover {
+  border-color: rgba(216, 177, 94, 0.62) !important;
+  background: linear-gradient(180deg, rgba(216, 177, 94, 0.14), rgba(255, 255, 255, 0.035)), var(--pdv-button-dark-hover) !important;
+  color: #ffe9ad !important;
+}
+
+.customer-premium-secondary-button:disabled,
+.customer-premium-shell button:disabled {
+  opacity: 0.48 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.22);
+}
+
 /* Resumo da venda: make the total geral card gold */
 .sales-summary-totals > div:last-child {
   position: relative;
   overflow: hidden;
   background: var(--gold-card-bg-soft) !important;
-  border: 1px solid rgba(255, 231, 163, 0.74) !important;
+  border: 1px solid rgba(255, 235, 180, 0.78) !important;
   box-shadow: 0 14px 36px rgba(183, 127, 22, 0.18);
 }
 
@@ -97,6 +157,14 @@
   color: var(--gold-card-muted) !important;
 }
 
+.sales-summary-totals > div:not(:last-child) span {
+  color: var(--pdv-text-muted) !important;
+}
+
+.sales-summary-totals > div:not(:last-child) strong {
+  color: var(--pdv-text-main) !important;
+}
+
 /* Pagamento: troco gets a softer gold block */
 .sales-checkout-grid .field-group:has(label) strong[style*="font-size: 1.55rem"] {
   display: inline-flex !important;
@@ -104,10 +172,42 @@
   min-height: 50px;
   width: 100%;
   padding: 0 16px;
-  border: 1px solid rgba(255, 231, 163, 0.58);
+  border: 1px solid rgba(255, 235, 180, 0.46);
   border-radius: 15px;
-  background: linear-gradient(135deg, rgba(243, 217, 135, 0.20), rgba(215, 173, 85, 0.08));
-  color: #f8e5a6 !important;
+  background: linear-gradient(135deg, rgba(246, 223, 160, 0.18), rgba(216, 177, 94, 0.08));
+  color: #ffe9ad !important;
+}
+
+.sales-checkout-grid .field-group input,
+.sales-checkout-grid .field-group select {
+  border-color: rgba(226, 232, 240, 0.14) !important;
+  background: rgba(6, 8, 13, 0.72) !important;
+  color: var(--pdv-text-main) !important;
+}
+
+.sales-checkout-grid .field-group input:hover,
+.sales-checkout-grid .field-group select:hover {
+  border-color: rgba(216, 177, 94, 0.42) !important;
+}
+
+.sales-checkout-grid .field-group input:focus,
+.sales-checkout-grid .field-group select:focus {
+  border-color: rgba(216, 177, 94, 0.82) !important;
+  box-shadow: 0 0 0 4px rgba(216, 177, 94, 0.15) !important;
+}
+
+/* Cart item text */
+.sales-checkout-grid .cart-item-main strong {
+  color: var(--pdv-text-main) !important;
+}
+
+.sales-checkout-grid .cart-item-main small,
+.sales-checkout-grid .cart-price span {
+  color: var(--pdv-text-muted) !important;
+}
+
+.sales-checkout-grid .cart-price strong {
+  color: #ffe9ad !important;
 }
 
 /* Finalização: left total area with gold emphasis */
@@ -115,7 +215,7 @@
   position: relative;
   min-width: 280px;
   padding: 14px 18px;
-  border: 1px solid rgba(255, 231, 163, 0.70);
+  border: 1px solid rgba(255, 235, 180, 0.78);
   border-radius: 18px;
   background: var(--gold-card-bg) !important;
   color: var(--gold-card-ink) !important;
@@ -128,22 +228,41 @@
 }
 
 .checkout-footer-panel > div:first-child span {
-  opacity: 0.72;
+  opacity: 0.74;
 }
 
-/* Keep destructive/secondary controls readable near gold surfaces */
+/* Primary buttons */
 .checkout-footer-panel .customer-premium-primary-button,
 .customer-premium-primary-button {
-  border: 1px solid rgba(255, 231, 163, 0.74) !important;
+  border: 1px solid rgba(255, 235, 180, 0.80) !important;
   background: var(--gold-card-bg-soft) !important;
   color: var(--gold-card-ink) !important;
   box-shadow: 0 16px 42px rgba(183, 127, 22, 0.24) !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.08em !important;
 }
 
 .checkout-footer-panel .customer-premium-primary-button:hover,
 .customer-premium-primary-button:hover {
-  filter: brightness(1.04);
+  filter: brightness(1.035);
   transform: translateY(-1px);
+  box-shadow: 0 20px 54px rgba(183, 127, 22, 0.30) !important;
+}
+
+.checkout-footer-panel .customer-premium-primary-button:disabled,
+.customer-premium-primary-button:disabled {
+  background: linear-gradient(135deg, rgba(216, 177, 94, 0.38), rgba(169, 114, 23, 0.32)) !important;
+  color: rgba(17, 16, 13, 0.52) !important;
+  box-shadow: none !important;
+}
+
+/* Feedback messages inside PDV */
+.customer-premium-shell .feedback-message--success {
+  color: #d1fae5 !important;
+}
+
+.customer-premium-shell .feedback-message--error {
+  color: #fecaca !important;
 }
 
 /* Mobile keeps gold cards stacked and readable */
