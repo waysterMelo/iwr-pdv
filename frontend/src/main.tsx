@@ -8,6 +8,7 @@ import './customer-profile-polish.css'
 import './customer-profile-engineered.css'
 import './customer-profile-date-icons.css'
 import './customer-profile-contrast-boost.css'
+import './customer-profile-solid-badges.css'
 import App from './App.tsx'
 import { AppMessageProvider } from './components/AppMessageModal.tsx'
 
