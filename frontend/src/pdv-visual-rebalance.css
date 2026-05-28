@@ -1,0 +1,188 @@
+/* Final PDV visual rebalance.
+ * Keeps gold for money and final CTA. Operational buttons remain dark.
+ */
+
+:root {
+  --pdv-gold-bg: linear-gradient(135deg, #ffe9ad 0%, #d8b15e 58%, #a97217 100%);
+  --pdv-gold-ink: #12100b;
+  --pdv-dark-1: #0d1017;
+  --pdv-dark-2: #151922;
+  --pdv-border: rgba(226, 232, 240, 0.14);
+  --pdv-gold-border: rgba(216, 177, 94, 0.52);
+  --pdv-text: #f8fafc;
+  --pdv-soft: rgba(226, 232, 240, 0.72);
+  --pdv-muted: rgba(226, 232, 240, 0.48);
+}
+
+/* Quick action bar: Nova venda no escuro, Buscar produto destacado, Imprimir discreto */
+.quick-actions {
+  align-items: center !important;
+  padding: 14px !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)), var(--pdv-dark-1) !important;
+  border-color: var(--pdv-border) !important;
+  box-shadow: 0 16px 46px rgba(0,0,0,.24) !important;
+}
+
+.quick-actions button {
+  min-height: 44px !important;
+  padding: 0 22px !important;
+  border-radius: 13px !important;
+  font-size: .70rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .12em !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.quick-actions button:nth-child(1) {
+  border: 1px solid rgba(216,177,94,.32) !important;
+  background: linear-gradient(180deg, rgba(216,177,94,.10), rgba(255,255,255,.018)), #11141c !important;
+  color: #f7df9d !important;
+}
+
+.quick-actions button:nth-child(2) {
+  border: 1px solid rgba(226,232,240,.12) !important;
+  background: rgba(255,255,255,.026) !important;
+  color: rgba(226,232,240,.52) !important;
+}
+
+.quick-actions button:nth-child(3) {
+  border: 1px solid rgba(216,177,94,.50) !important;
+  background: linear-gradient(180deg, rgba(216,177,94,.13), rgba(255,255,255,.02)), #11141c !important;
+  color: #ffe9ad !important;
+}
+
+.quick-actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,235,180,.72) !important;
+  background: linear-gradient(180deg, rgba(216,177,94,.20), rgba(255,255,255,.04)), #171a23 !important;
+  color: #ffe9ad !important;
+}
+
+.quick-actions button:disabled,
+.customer-premium-shell button:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  filter: none !important;
+  color: rgba(226,232,240,.38) !important;
+}
+
+/* Finalizar venda desabilitado: visual claro de indisponivel, sem parecer quebrado */
+.checkout-footer-panel .customer-premium-primary-button:disabled,
+.customer-premium-primary-button:disabled {
+  border-color: rgba(226,232,240,.13) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)), #151720 !important;
+  color: rgba(248,250,252,.46) !important;
+  box-shadow: none !important;
+}
+
+/* Finalizar venda ativo continua sendo o CTA principal */
+.checkout-footer-panel .customer-premium-primary-button:not(:disabled) {
+  border: 1px solid rgba(255,235,180,.80) !important;
+  background: var(--pdv-gold-bg) !important;
+  color: var(--pdv-gold-ink) !important;
+  box-shadow: 0 16px 42px rgba(183,127,22,.24) !important;
+}
+
+/* Total Geral em card gold: texto escuro e forte */
+.sales-summary-totals > div:last-child span,
+.sales-summary-totals > div:last-child strong,
+.sales-summary-totals > div:last-child [style] {
+  color: #141006 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.sales-summary-totals > div:last-child span {
+  font-weight: 950 !important;
+  letter-spacing: .16em !important;
+}
+
+.sales-summary-totals > div:last-child strong {
+  font-size: 1.35rem !important;
+  font-weight: 950 !important;
+}
+
+/* Scanner modal: volta para base escura tecnica, com detalhe gold */
+.customer-premium-modal-backdrop {
+  background: radial-gradient(circle at 50% 18%, rgba(216,177,94,.10), transparent 34%), rgba(0,0,0,.76) !important;
+  backdrop-filter: blur(10px);
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] {
+  width: min(430px, calc(100vw - 32px)) !important;
+  padding: 28px !important;
+  border: 1px solid rgba(216,177,94,.38) !important;
+  border-radius: 28px !important;
+  background: radial-gradient(circle at 50% -10%, rgba(216,177,94,.14), transparent 38%), linear-gradient(180deg, #151922 0%, #0d1017 100%) !important;
+  color: var(--pdv-text) !important;
+  box-shadow: 0 34px 110px rgba(0,0,0,.62), 0 18px 58px rgba(183,127,22,.12) !important;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] h2 {
+  color: var(--pdv-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 1.08rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.02em;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] > div[style*="height: 140px"] {
+  height: 152px !important;
+  border: 1px solid rgba(216,177,94,.20) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, rgba(7,10,18,.98), rgba(5,7,13,.99)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 18px 48px rgba(0,0,0,.28);
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] p {
+  max-width: 330px;
+  margin-inline: auto !important;
+  color: var(--pdv-soft) !important;
+  font-size: .82rem !important;
+  line-height: 1.55;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] p strong {
+  color: #ffe9ad !important;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] .customer-premium-secondary-button {
+  min-height: 42px !important;
+  border-color: rgba(226,232,240,.14) !important;
+  background: rgba(255,255,255,.035) !important;
+  color: var(--pdv-soft) !important;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] .customer-premium-secondary-button:hover {
+  border-color: rgba(216,177,94,.42) !important;
+  background: rgba(216,177,94,.10) !important;
+  color: #ffe9ad !important;
+}
+
+/* Text contrast in checkout panels */
+.sales-checkout-grid h2,
+.sales-checkout-grid h3 {
+  color: var(--pdv-text) !important;
+}
+
+.sales-checkout-grid p {
+  color: var(--pdv-soft) !important;
+}
+
+.sales-checkout-grid .field-group label,
+.sales-checkout-grid .cart-item-main small,
+.sales-checkout-grid .cart-price span {
+  color: var(--pdv-muted) !important;
+}
+
+@media (max-width: 900px) {
+  .quick-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .quick-actions button {
+    width: 100%;
+  }
+}
