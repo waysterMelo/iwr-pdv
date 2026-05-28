@@ -436,7 +436,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                 <span>Valor em Página</span>
                 <small>Estoque precificado</small>
               </div>
-              <strong style={{ color: '#f6d78b' }}>{formatCurrency(inventoryValue)}</strong>
+              <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(inventoryValue)}</strong>
               <div className="customer-premium-progress">
                 <span style={{ width: products.length > 0 ? '100%' : '0%' }} />
               </div>
@@ -457,7 +457,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
             <article>
               <div>
                 <span>Estoque total</span>
-                <strong style={{ color: '#f6d78b' }}>{products.reduce((sum, p) => sum + p.stockQuantity, 0)}</strong>
+                <strong style={{ color: 'var(--gold-strong)' }}>{products.reduce((sum, p) => sum + p.stockQuantity, 0)}</strong>
               </div>
               <Boxes size={19} aria-hidden="true" style={{ color: '#d7ad55', background: 'rgba(215, 173, 85, 0.1)' }} />
             </article>
@@ -485,7 +485,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
           
           {/* Formulário Novo Produto */}
           {showForm ? (
-            <section className="customer-premium-form-panel">
+            <section className="customer-premium-form-panel product-entry-panel">
               <header>
                 <Package size={26} aria-hidden="true" />
                 <div>
@@ -615,7 +615,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
 
           {/* Listagem de Estoque */}
           {showList ? (
-            <section className="customer-premium-list-panel">
+            <section className="customer-premium-list-panel product-inventory-panel">
               <header>
                 <div>
                   <h2>Produtos cadastrados</h2>
@@ -624,9 +624,9 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
               </header>
 
               {/* Filtros e Barra de Ferramentas */}
-              <section className="customer-premium-search" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', alignItems: 'end', background: '#101117', border: '1px solid rgba(226,232,240,0.08)', padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
+              <section className="customer-premium-search" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', alignItems: 'end', background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
                 <div className="field-group" style={{ margin: 0 }}>
-                  <label htmlFor="productSearch" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Buscar</label>
+                  <label htmlFor="productSearch" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Buscar</label>
                   <div className="customer-premium-search-input" style={{ width: '100%', minHeight: '48px' }}>
                     <Search size={16} aria-hidden="true" />
                     <input
@@ -640,16 +640,16 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                 </div>
 
                 <div className="field-group" style={{ margin: 0 }}>
-                  <label htmlFor="categoryFilter" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Categoria</label>
+                  <label htmlFor="categoryFilter" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Categoria</label>
                   <select
                     id="categoryFilter"
                     value={filters.categoryId}
                     onChange={(event) => updateFilter('categoryId', event.target.value)}
-                    style={{ minHeight: '48px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 16px', width: '100%', outline: 'none' }}
+                    style={{ minHeight: '48px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 16px', width: '100%', outline: 'none' }}
                   >
-                    <option value="" style={{ background: '#0d1016' }}>Todas</option>
+                    <option value="" style={{ background: 'var(--surface-dark)' }}>Todas</option>
                     {categories.map((category) => (
-                      <option value={category.id} key={category.id} style={{ background: '#0d1016' }}>
+                      <option value={category.id} key={category.id} style={{ background: 'var(--surface-dark)' }}>
                         {category.name}
                       </option>
                     ))}
@@ -657,19 +657,19 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                 </div>
 
                 <div className="field-group" style={{ margin: 0 }}>
-                  <label htmlFor="stockFilter" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Estoque</label>
+                  <label htmlFor="stockFilter" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Estoque</label>
                   <select
                     id="stockFilter"
                     value={filters.stockStatus}
                     onChange={(event) =>
                       updateFilter('stockStatus', event.target.value as ProductPageFilters['stockStatus'])
                     }
-                    style={{ minHeight: '48px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 16px', width: '100%', outline: 'none' }}
+                    style={{ minHeight: '48px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 16px', width: '100%', outline: 'none' }}
                   >
-                    <option value="ALL" style={{ background: '#0d1016' }}>Todos</option>
-                    <option value="IN_STOCK" style={{ background: '#0d1016' }}>Em estoque</option>
-                    <option value="LOW_STOCK" style={{ background: '#0d1016' }}>Estoque baixo</option>
-                    <option value="OUT_OF_STOCK" style={{ background: '#0d1016' }}>Sem estoque</option>
+                    <option value="ALL" style={{ background: 'var(--surface-dark)' }}>Todos</option>
+                    <option value="IN_STOCK" style={{ background: 'var(--surface-dark)' }}>Em estoque</option>
+                    <option value="LOW_STOCK" style={{ background: 'var(--surface-dark)' }}>Estoque baixo</option>
+                    <option value="OUT_OF_STOCK" style={{ background: 'var(--surface-dark)' }}>Sem estoque</option>
                   </select>
                 </div>
 
@@ -694,106 +694,106 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
 
               {/* Filtros Avançados Expansíveis */}
               {isAdvancedFiltersOpen ? (
-                <section className="customer-premium-search" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', background: '#101117', border: '1px solid rgba(226,232,240,0.08)', padding: '20px', borderRadius: '16px', marginBottom: '20px', marginTop: '16px' }}>
+                <section className="customer-premium-search" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', background: 'var(--surface-elevated)', border: '1px solid rgba(226,232,240,0.08)', padding: '20px', borderRadius: '16px', marginBottom: '20px', marginTop: '16px' }}>
                   <div className="field-group" style={{ margin: 0 }}>
-                    <label htmlFor="activeFilter" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Status</label>
+                    <label htmlFor="activeFilter" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Status</label>
                     <select
                       id="activeFilter"
                       value={filters.active}
                       onChange={(event) => updateFilter('active', event.target.value as ProductPageFilters['active'])}
-                      style={{ minHeight: '44px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
+                      style={{ minHeight: '44px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
                     >
-                      <option value="ALL" style={{ background: '#0d1016' }}>Todos</option>
-                      <option value="ACTIVE" style={{ background: '#0d1016' }}>Ativos</option>
-                      <option value="INACTIVE" style={{ background: '#0d1016' }}>Inativos</option>
+                      <option value="ALL" style={{ background: 'var(--surface-dark)' }}>Todos</option>
+                      <option value="ACTIVE" style={{ background: 'var(--surface-dark)' }}>Ativos</option>
+                      <option value="INACTIVE" style={{ background: 'var(--surface-dark)' }}>Inativos</option>
                     </select>
                   </div>
 
                   <div className="field-group" style={{ margin: 0 }}>
-                    <label htmlFor="minPrice" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Preço mín.</label>
+                    <label htmlFor="minPrice" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Preço mín.</label>
                     <input
                       id="minPrice"
                       inputMode="decimal"
                       value={filters.minPrice}
                       onChange={(event) => updateFilter('minPrice', event.target.value)}
                       placeholder="0.00"
-                      style={{ minHeight: '44px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
+                      style={{ minHeight: '44px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
                     />
                   </div>
 
                   <div className="field-group" style={{ margin: 0 }}>
-                    <label htmlFor="maxPrice" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Preço máx.</label>
+                    <label htmlFor="maxPrice" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Preço máx.</label>
                     <input
                       id="maxPrice"
                       inputMode="decimal"
                       value={filters.maxPrice}
                       onChange={(event) => updateFilter('maxPrice', event.target.value)}
                       placeholder="999.00"
-                      style={{ minHeight: '44px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
+                      style={{ minHeight: '44px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
                     />
                   </div>
 
                   <div className="field-group" style={{ margin: 0 }}>
-                    <label htmlFor="lowStockThreshold" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Min. Estoque Baixo</label>
+                    <label htmlFor="lowStockThreshold" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Min. Estoque Baixo</label>
                     <input
                       id="lowStockThreshold"
                       inputMode="numeric"
                       value={filters.lowStockThreshold}
                       onChange={(event) => updateFilter('lowStockThreshold', event.target.value)}
-                      style={{ minHeight: '44px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
+                      style={{ minHeight: '44px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
                     />
                   </div>
 
                   <div className="field-group" style={{ margin: 0 }}>
-                    <label htmlFor="sortField" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Ordenar por</label>
+                    <label htmlFor="sortField" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Ordenar por</label>
                     <select
                       id="sortField"
                       value={filters.sort}
                       onChange={(event) => updateFilter('sort', event.target.value as ProductPageFilters['sort'])}
-                      style={{ minHeight: '44px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
+                      style={{ minHeight: '44px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
                     >
-                      <option value="createdAt" style={{ background: '#0d1016' }}>Data de Cadastro</option>
-                      <option value="updatedAt" style={{ background: '#0d1016' }}>Data de Atualização</option>
-                      <option value="name" style={{ background: '#0d1016' }}>Nome do Produto</option>
-                      <option value="code" style={{ background: '#0d1016' }}>Código</option>
-                      <option value="price" style={{ background: '#0d1016' }}>Preço</option>
-                      <option value="stockQuantity" style={{ background: '#0d1016' }}>Quantidade Estoque</option>
+                      <option value="createdAt" style={{ background: 'var(--surface-dark)' }}>Data de Cadastro</option>
+                      <option value="updatedAt" style={{ background: 'var(--surface-dark)' }}>Data de Atualização</option>
+                      <option value="name" style={{ background: 'var(--surface-dark)' }}>Nome do Produto</option>
+                      <option value="code" style={{ background: 'var(--surface-dark)' }}>Código</option>
+                      <option value="price" style={{ background: 'var(--surface-dark)' }}>Preço</option>
+                      <option value="stockQuantity" style={{ background: 'var(--surface-dark)' }}>Quantidade Estoque</option>
                     </select>
                   </div>
 
                   <div className="field-group" style={{ margin: 0 }}>
-                    <label htmlFor="sortDirection" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Direção</label>
+                    <label htmlFor="sortDirection" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Direção</label>
                     <select
                       id="sortDirection"
                       value={filters.direction}
                       onChange={(event) => updateFilter('direction', event.target.value as ProductPageFilters['direction'])}
-                      style={{ minHeight: '44px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
+                      style={{ minHeight: '44px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
                     >
-                      <option value="desc" style={{ background: '#0d1016' }}>Decrescente</option>
-                      <option value="asc" style={{ background: '#0d1016' }}>Crescente</option>
+                      <option value="desc" style={{ background: 'var(--surface-dark)' }}>Decrescente</option>
+                      <option value="asc" style={{ background: 'var(--surface-dark)' }}>Crescente</option>
                     </select>
                   </div>
 
                   <div className="field-group" style={{ margin: 0 }}>
-                    <label htmlFor="pageSize" style={{ color: '#f6d78b', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Por página</label>
+                    <label htmlFor="pageSize" style={{ color: 'var(--gold-strong)', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Por página</label>
                     <select
                       id="pageSize"
                       value={filters.size}
                       onChange={(event) => updateFilter('size', Number(event.target.value))}
-                      style={{ minHeight: '44px', borderRadius: '12px', background: '#0d1016', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
+                      style={{ minHeight: '44px', borderRadius: '12px', background: 'var(--surface-dark)', color: '#fff', border: '1px solid rgba(226,232,240,0.12)', padding: '0 12px', width: '100%', outline: 'none' }}
                     >
-                      <option value={8} style={{ background: '#0d1016' }}>8 itens</option>
-                      <option value={12} style={{ background: '#0d1016' }}>12 itens</option>
-                      <option value={24} style={{ background: '#0d1016' }}>24 itens</option>
-                      <option value={48} style={{ background: '#0d1016' }}>48 itens</option>
+                      <option value={8} style={{ background: 'var(--surface-dark)' }}>8 itens</option>
+                      <option value={12} style={{ background: 'var(--surface-dark)' }}>12 itens</option>
+                      <option value={24} style={{ background: 'var(--surface-dark)' }}>24 itens</option>
+                      <option value={48} style={{ background: 'var(--surface-dark)' }}>48 itens</option>
                     </select>
                   </div>
                 </section>
               ) : null}
 
               {/* Status de Resultados */}
-              <div className="inventory-result-bar" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', background: '#0d1016', borderRadius: '12px', border: '1px solid rgba(226,232,240,0.06)' }}>
-                <span style={{ fontSize: '0.72rem', color: '#aeb8c8' }}>
+              <div className="inventory-result-bar" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--surface-dark)', borderRadius: '12px', border: '1px solid rgba(226,232,240,0.06)' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
                   {isProductsLoading
                     ? 'Atualizando listagem...'
                     : `${productPage.totalElements} produto(s) encontrado(s)${
@@ -807,12 +807,12 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
 
               {/* Barra de Múltipla Seleção de Etiquetas */}
               {selectedProductIds.size > 0 ? (
-                <div className="product-selection-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#101117', border: '1px solid rgba(215,173,85,0.4)', padding: '14px 20px', borderRadius: '14px', marginTop: '10px' }} role="status">
+                <div className="product-selection-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-elevated)', border: '1px solid rgba(215,173,85,0.4)', padding: '14px 20px', borderRadius: '14px', marginTop: '10px' }} role="status">
                   <div>
-                    <span className="selection-count" style={{ display: 'block', color: '#f6d78b', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                    <span className="selection-count" style={{ display: 'block', color: 'var(--gold-strong)', fontSize: '0.85rem', fontWeight: 'bold' }}>
                       {selectedProductIds.size} selecionado(s)
                     </span>
-                    <strong style={{ color: '#aeb8c8', fontSize: '0.72rem', fontWeight: 'normal' }}>
+                    <strong style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 'normal' }}>
                       Uma etiqueta por unidade em estoque de cada produto.
                     </strong>
                   </div>
@@ -822,7 +822,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                       href={getBulkLabelsUrl(Array.from(selectedProductIds))}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ minHeight: '38px', display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: '#101117', fontSize: '0.72rem' }}
+                      style={{ minHeight: '38px', display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: '#16120A', fontSize: '0.72rem' }}
                     >
                       <Printer size={14} style={{ marginRight: '6px' }} />
                       Imprimir etiquetas
@@ -849,7 +849,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                 {isProductsLoading ? (
                   <div className="product-empty">Carregando estoque de peças...</div>
                 ) : products.length === 0 ? (
-                  <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Nenhum produto cadastrado com os filtros ativos.</div>
+                  <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhum produto cadastrado com os filtros ativos.</div>
                 ) : (
                   products.map((product) => {
                     return (
@@ -888,7 +888,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                                   aria-label={`Selecionar ${product.name}`}
                                   style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#d7ad55' }}
                                 />
-                                <Tags size={14} style={{ color: '#7b8493' }} />
+                                <Tags size={14} style={{ color: 'var(--text-muted)' }} />
                               </label>
                               <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
                                 {product.name}
@@ -901,7 +901,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
 
                           {/* Linha Inferior: Código + Categoria + Status Ativo/Inativo */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', width: '100%' }}>
-                            <span className="product-card-code" style={{ display: 'inline-block', background: '#151922', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontFamily: 'monospace', color: '#aeb8c8', flexShrink: 0 }}>
+                            <span className="product-card-code" style={{ display: 'inline-block', background: 'var(--surface-elevated)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary)', flexShrink: 0 }}>
                               {product.code}
                             </span>
                             
@@ -928,7 +928,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                         <div className="customer-premium-contact-box">
                           <div>
                             <span>Preço de Venda</span>
-                            <strong style={{ color: '#f6d78b' }}>{formatCurrency(product.price)}</strong>
+                            <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(product.price)}</strong>
                           </div>
                           <div>
                             <span>Estoque Disponível</span>
@@ -936,7 +936,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                           </div>
                           <div>
                             <span>Total Financeiro</span>
-                            <strong style={{ color: '#f6d78b' }}>{formatCurrency(product.price * product.stockQuantity)}</strong>
+                            <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(product.price * product.stockQuantity)}</strong>
                           </div>
                           {product.lotDate && (
                             <div>
@@ -966,7 +966,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                               />
                             </button>
                             <div className="product-qr-copy" style={{ minWidth: 0, flex: 1 }}>
-                              <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', display: 'block', lineHeight: 1.2 }}>Código de barras</span>
+                              <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', lineHeight: 1.2 }}>Código de barras</span>
                               <strong style={{ color: '#fff', fontSize: '0.78rem', fontFamily: 'monospace', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.code}</strong>
                             </div>
                           </div>
@@ -1041,7 +1041,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                 >
                   Anterior
                 </button>
-                <span style={{ fontSize: '0.8rem', color: '#aeb8c8' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                   Mostrando {products.length} de {productPage.totalElements} registros
                 </span>
                 <button
@@ -1102,7 +1102,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
                 className="customer-premium-primary-button"
                 href={getBarcodeUrl(selectedBarcodeProduct.id)}
                 download={getBarcodeDownloadName(selectedBarcodeProduct)}
-                style={{ minHeight: '38px', display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: '#101117', fontSize: '0.72rem', flex: 1 }}
+                style={{ minHeight: '38px', display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: '#16120A', fontSize: '0.72rem', flex: 1 }}
               >
                 Baixar PNG
               </a>
@@ -1174,3 +1174,6 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
     </main>
   )
 }
+
+
+

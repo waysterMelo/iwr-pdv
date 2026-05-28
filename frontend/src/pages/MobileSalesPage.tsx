@@ -231,3 +231,6 @@ export function MobileSalesPage({ onBack }: MobileSalesPageProps) {
     </main>
   )
 }
+
+
+

@@ -3,6 +3,7 @@ package com.iwr.pdv.customer.application;
 import com.iwr.pdv.common.exception.ResourceConflictException;
 import com.iwr.pdv.common.exception.ResourceNotFoundException;
 import com.iwr.pdv.customer.api.dto.CustomerPageResponse;
+import com.iwr.pdv.customer.api.dto.CustomerProfileInsightResponse;
 import com.iwr.pdv.customer.api.dto.CustomerProfileResponse;
 import com.iwr.pdv.customer.api.dto.CustomerPromissoryNoteResponse;
 import com.iwr.pdv.customer.api.dto.CustomerPurchasedItemResponse;
@@ -29,6 +30,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -200,7 +202,16 @@ public class CustomerServiceImpl implements CustomerService {
                 cancelledSales.stream().map(saleMapper::toResponse).toList(),
                 notes.stream()
                         .map(note -> toCustomerPromissoryNoteResponse(note, paymentsByNoteId))
-                        .toList()
+                        .toList(),
+                buildProfileInsights(
+                        customer,
+                        completedSales,
+                        notes,
+                        openPromissoryAmount,
+                        overduePromissoryAmount,
+                        totalPurchasedAmount,
+                        averageTicketAmount
+                )
         );
     }
 
@@ -378,6 +389,139 @@ public class CustomerServiceImpl implements CustomerService {
 
     private void refreshOverdueStatuses() {
         promissoryNoteRepository.markPendingNotesOverdue(LocalDate.now(clock), OffsetDateTime.now(clock));
+    }
+
+    private List<CustomerProfileInsightResponse> buildProfileInsights(
+            Customer customer,
+            List<Sale> completedSales,
+            List<PromissoryNote> notes,
+            BigDecimal openPromissoryAmount,
+            BigDecimal overduePromissoryAmount,
+            BigDecimal totalPurchasedAmount,
+            BigDecimal averageTicketAmount
+    ) {
+        List<CustomerProfileInsightResponse> insights = new java.util.ArrayList<>();
+        LocalDate today = LocalDate.now(clock);
+        List<PromissoryNote> overdueNotes = notes.stream()
+                .filter(note -> note.getStatus() == PromissoryNoteStatus.OVERDUE)
+                .toList();
+        long openCount = notes.stream().filter(this::isOpenNote).count();
+        long maxOverdueDays = overdueNotes.stream()
+                .mapToLong(note -> Math.max(0, ChronoUnit.DAYS.between(note.getDueDate(), today)))
+                .max()
+                .orElse(0);
+
+        if (openPromissoryAmount.compareTo(BigDecimal.ZERO) == 0 && !completedSales.isEmpty()) {
+            insights.add(insight(
+                    "GOOD_PAYER",
+                    CustomerProfileInsightResponse.Severity.SUCCESS,
+                    "Cliente em dia",
+                    "Nao ha parcelas em aberto para este cliente.",
+                    "Cliente apto para novas vendas, respeitando o limite de credito cadastrado."
+            ));
+        }
+
+        if (!overdueNotes.isEmpty()) {
+            insights.add(insight(
+                    "OVERDUE_BALANCE",
+                    CustomerProfileInsightResponse.Severity.WARNING,
+                    "Parcelas vencidas",
+                    "%d parcela(s) vencida(s), somando R$ %s, com atraso maximo de %d dia(s)."
+                            .formatted(overdueNotes.size(), formatMoney(overduePromissoryAmount), maxOverdueDays),
+                    "Priorize contato de cobranca e registre qualquer acordo nas observacoes administrativas."
+            ));
+        }
+
+        if (maxOverdueDays > 30) {
+            insights.add(insight(
+                    "CREDIT_SUSPENSION_RECOMMENDED",
+                    CustomerProfileInsightResponse.Severity.DANGER,
+                    "Risco alto de inadimplencia",
+                    "Existe atraso superior a 30 dias no historico financeiro do cliente.",
+                    "Suspenda novas vendas a prazo ate que a pendencia seja regularizada."
+            ));
+        }
+
+        if (openCount > 0 && overdueNotes.isEmpty()) {
+            insights.add(insight(
+                    "OPEN_BALANCE",
+                    CustomerProfileInsightResponse.Severity.INFO,
+                    "Saldo em aberto",
+                    "%d parcela(s) ainda em aberto, sem vencimento atrasado no momento.".formatted(openCount),
+                    "Acompanhe os proximos vencimentos e mantenha o cliente informado."
+            ));
+        }
+
+        completedSales.stream()
+                .findFirst()
+                .ifPresent(lastSale -> {
+                    long inactiveDays = ChronoUnit.DAYS.between(lastSale.getSoldAt().toLocalDate(), today);
+                    if (inactiveDays > 60) {
+                        insights.add(insight(
+                                "COMMERCIAL_REACTIVATION",
+                                CustomerProfileInsightResponse.Severity.INFO,
+                                "Cliente inativo",
+                                "Cliente sem compras concluidas ha %d dia(s).".formatted(inactiveDays),
+                                "Considere contato de reativacao com novidades ou condicao especial."
+                        ));
+                    }
+                });
+
+        if (customer.getBirthDate() != null && customer.getBirthDate().getMonth() == today.getMonth()) {
+            insights.add(insight(
+                    "BIRTHDAY_MONTH",
+                    CustomerProfileInsightResponse.Severity.INFO,
+                    "Aniversariante do mes",
+                    "O aniversario do cliente acontece em %s.".formatted(formatDate(customer.getBirthDate())),
+                    "Use uma abordagem de relacionamento ou oferta especial de aniversario."
+            ));
+        }
+
+        if (customer.getCreditLimit() != null
+                && customer.getCreditLimit().compareTo(BigDecimal.ZERO) > 0
+                && openPromissoryAmount.compareTo(customer.getCreditLimit()) > 0) {
+            insights.add(insight(
+                    "CREDIT_LIMIT_EXCEEDED",
+                    CustomerProfileInsightResponse.Severity.DANGER,
+                    "Limite de credito excedido",
+                    "Saldo aberto de R$ %s acima do limite cadastrado de R$ %s."
+                            .formatted(formatMoney(openPromissoryAmount), formatMoney(customer.getCreditLimit())),
+                    "Revise o limite antes de liberar novas compras a prazo."
+            ));
+        }
+
+        if (completedSales.size() >= 4 || totalPurchasedAmount.compareTo(new BigDecimal("1500.00")) >= 0 || averageTicketAmount.compareTo(new BigDecimal("300.00")) >= 0) {
+            insights.add(insight(
+                    "HIGH_VALUE_CUSTOMER",
+                    CustomerProfileInsightResponse.Severity.SUCCESS,
+                    "Cliente de alto valor",
+                    "Historico com %d compra(s), total de R$ %s e ticket medio de R$ %s."
+                            .formatted(completedSales.size(), formatMoney(totalPurchasedAmount), formatMoney(averageTicketAmount)),
+                    "Priorize atendimento consultivo e ofertas alinhadas ao perfil de compra."
+            ));
+        }
+
+        if (insights.isEmpty()) {
+            insights.add(insight(
+                    "NO_HISTORY",
+                    CustomerProfileInsightResponse.Severity.INFO,
+                    "Sem historico suficiente",
+                    "Ainda nao ha dados financeiros relevantes para classificar este cliente.",
+                    "Mantenha cadastro completo para melhorar as proximas analises."
+            ));
+        }
+
+        return insights;
+    }
+
+    private CustomerProfileInsightResponse insight(
+            String code,
+            CustomerProfileInsightResponse.Severity severity,
+            String title,
+            String message,
+            String recommendedAction
+    ) {
+        return new CustomerProfileInsightResponse(code, severity, title, message, recommendedAction);
     }
 
     private Map<Long, List<PromissoryNotePaymentResponse>> paymentsByNoteId(Long customerId) {

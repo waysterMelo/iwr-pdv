@@ -42,6 +42,7 @@ import type {
 import type { PaymentMethod } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency, formatNullableDateTime } from '../utils/formatters'
+import { formatPaymentMethod } from '../utils/paymentMethods'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { usePagination } from '../hooks/usePagination'
 import { maskPhone } from '../utils/masks'
@@ -52,13 +53,6 @@ const statusLabels: Record<PromissoryNoteStatus, string> = {
   PAID: 'Pago',
   OVERDUE: 'Vencido',
   CANCELLED: 'Cancelado',
-}
-
-const paymentLabels: Record<Exclude<PaymentMethod, 'PROMISSORY_NOTE'>, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'Pix',
-  DEBIT_CARD: 'Cartão débito',
-  CREDIT_CARD: 'Cartão crédito',
 }
 
 function getDaysInArrears(dueDateStr: string): number {
@@ -638,9 +632,9 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
       return { border: '1px solid rgba(251, 113, 133, 0.28)', background: 'rgba(251, 113, 133, 0.1)', color: '#fb7185' }
     }
     if (['PENDING', 'PARTIALLY_PAID'].includes(status)) {
-      return { border: '1px solid rgba(215, 173, 85, 0.28)', background: 'rgba(215, 173, 85, 0.1)', color: '#f6d78b' }
+      return { border: '1px solid rgba(215, 173, 85, 0.28)', background: 'rgba(215, 173, 85, 0.1)', color: 'var(--gold-strong)' }
     }
-    return { border: '1px solid rgba(226, 232, 240, 0.1)', background: 'rgba(255, 255, 255, 0.05)', color: '#7b8493' }
+    return { border: '1px solid rgba(226, 232, 240, 0.1)', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }
   }
 
   /* TELA 2: CADASTRAR COM PRODUTOS (MANUAL CREATE) */
@@ -664,14 +658,14 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                 <span>Total Lançado</span>
                 <small>Estoque e parcelas</small>
               </div>
-              <strong style={{ color: '#f6d78b' }}>{formatCurrency(manualTotalAmount)}</strong>
+              <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(manualTotalAmount)}</strong>
               <div className="customer-premium-progress">
                 <span style={{ width: manualItems.length > 0 ? '100%' : '0%' }} />
               </div>
             </section>
           </div>
 
-          <div className="quick-actions" style={{ display: 'flex', gap: '12px', background: '#101117', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
+          <div className="quick-actions" style={{ display: 'flex', gap: '12px', background: 'var(--surface-elevated)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
             <button className="customer-premium-secondary-button" type="button" onClick={() => changePageMode('wallet')} disabled={isCreatingManualNote} style={{ minHeight: '40px' }}>
               <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Voltar para Carteira
             </button>
@@ -683,7 +677,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
             <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
                 <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Pesquisa de produtos</h2>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Pesquise e insira os produtos que compõem o parcelamento.</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Pesquise e insira os produtos que compõem o parcelamento.</p>
               </header>
 
               <div className="customer-premium-form" style={{ padding: 0, display: 'grid', gap: '14px' }}>
@@ -760,7 +754,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
             <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
                 <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Configuração da nota</h2>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Revise o cliente associado e as parcelas.</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Revise o cliente associado e as parcelas.</p>
               </header>
 
               <form className="customer-premium-form" onSubmit={handleManualNoteSubmit} style={{ padding: 0, display: 'grid', gap: '14px' }}>
@@ -818,19 +812,19 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
 
                 {/* Resumo de itens adicionados */}
                 <div style={{ borderTop: '1px solid rgba(226,232,240,0.06)', paddingTop: '14px' }}>
-                  <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Itens na Nota</span>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>Itens na Nota</span>
                   {manualItems.length === 0 ? (
-                    <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '16px 0' }}>Nenhum item inserido ainda.</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '16px 0' }}>Nenhum item inserido ainda.</div>
                   ) : (
                     <div style={{ display: 'grid', gap: '8px', marginTop: '6px' }}>
                       {manualItemsPagination.pageItems.map((item) => (
-                        <div key={item.productId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '10px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div key={item.productId} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '10px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{item.name}</strong>
-                            <small style={{ color: '#7b8493', fontSize: '0.7rem' }}>Código: {item.code} — {item.quantity} un. x {formatCurrency(item.unitPrice)}</small>
+                            <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Código: {item.code} — {item.quantity} un. x {formatCurrency(item.unitPrice)}</small>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <strong style={{ color: '#f6d78b', fontSize: '0.85rem' }}>{formatCurrency(item.unitPrice * item.quantity)}</strong>
+                            <strong style={{ color: 'var(--gold-strong)', fontSize: '0.85rem' }}>{formatCurrency(item.unitPrice * item.quantity)}</strong>
                             <button type="button" onClick={() => removeManualItem(item.productId, item.unitPrice)} style={{ border: 0, background: 'transparent', color: '#fb7185', cursor: 'pointer', fontSize: '0.75rem' }}>Excluir</button>
                           </div>
                         </div>
@@ -875,7 +869,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
             </section>
           </div>
 
-          <div className="quick-actions" style={{ display: 'flex', gap: '12px', background: '#101117', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
+          <div className="quick-actions" style={{ display: 'flex', gap: '12px', background: 'var(--surface-elevated)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
             <button className="customer-premium-secondary-button" type="button" onClick={() => changePageMode('wallet')} style={{ minHeight: '40px' }}>
               <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Voltar para Carteira
             </button>
@@ -894,7 +888,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
           <section className="customer-premium-list-panel" style={{ padding: '24px' }}>
             <header style={{ marginBottom: '20px' }}>
               <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Divisão de Atrasos por Período</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Veja a quantidade de notas promissórias e valores totais pendentes agrupados por faixas de dias.</p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Veja a quantidade de notas promissórias e valores totais pendentes agrupados por faixas de dias.</p>
             </header>
 
             <div className="customer-premium-card-grid">
@@ -906,7 +900,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                     <div className="customer-premium-card-header">
                       <div>
                         <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: '0 0 4px' }}>{range.range}</h3>
-                        <span style={{ fontSize: '0.68rem', background: '#151922', padding: '2px 6px', borderRadius: '4px', color: '#fb7185', fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '0.68rem', background: 'var(--surface-elevated)', padding: '2px 6px', borderRadius: '4px', color: '#fb7185', fontWeight: 'bold' }}>
                           Inadimplente
                         </span>
                       </div>
@@ -958,7 +952,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
               <span>Vence Hoje</span>
               <small>Foco do dia</small>
             </div>
-            <strong style={{ color: '#f6d78b' }}>{formatCurrency(metrics.dueTodayAmount)}</strong>
+            <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(metrics.dueTodayAmount)}</strong>
             <div className="customer-premium-progress">
               <span style={{ width: notes.length > 0 ? '100%' : '0%' }} />
             </div>
@@ -986,7 +980,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
           <article>
             <div>
               <span>Vence hoje</span>
-              <strong style={{ color: '#f6d78b' }}>{formatCurrency(metrics.dueTodayAmount)}</strong>
+              <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(metrics.dueTodayAmount)}</strong>
             </div>
             <CalendarClock size={19} aria-hidden="true" style={{ color: '#d7ad55', background: 'rgba(215, 173, 85, 0.1)' }} />
           </article>
@@ -1001,7 +995,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
         </div>
 
         {/* Ações e Sub-Navegação */}
-        <div className="quick-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#101117', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
+        <div className="quick-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-elevated)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(226,232,240,0.08)' }}>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button 
               className={listMode === 'due-today' ? 'customer-premium-primary-button' : 'customer-premium-secondary-button'} 
@@ -1120,7 +1114,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
               {isLoading ? (
                 <div className="product-empty">Carregando carteira de recebíveis...</div>
               ) : filteredNotes.length === 0 ? (
-                <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Nenhuma nota promissória pendente para o filtro selecionado.</div>
+                <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhuma nota promissória pendente para o filtro selecionado.</div>
               ) : (
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {notePagination.pageItems.map((note) => {
@@ -1142,11 +1136,11 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                         }}
                       >
                         <div style={{ display: 'grid', gap: '3px' }}>
-                          <span style={{ fontSize: '0.62rem', background: '#151922', color: '#aeb8c8', fontFamily: 'monospace', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
+                          <span style={{ fontSize: '0.62rem', background: 'var(--surface-elevated)', color: 'var(--text-secondary)', fontFamily: 'monospace', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
                             Nota #{note.id}
                           </span>
                           <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{note.customer.name}</strong>
-                          <small style={{ color: '#7b8493', fontSize: '0.72rem' }}>
+                          <small style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
                             Vence em: {note.dueDate.split('-').reverse().join('/')} — {note.saleId ? `Venda #${note.saleId}` : 'Nota Avulsa'}
                           </small>
                         </div>
@@ -1154,7 +1148,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                           <div style={{ textAlign: 'right' }}>
                             <span style={{ fontSize: '0.62rem', color: '#707b8c', textTransform: 'uppercase', display: 'block' }}>Saldo Devedor</span>
-                            <strong style={{ color: '#f6d78b', fontSize: '0.95rem' }}>{formatCurrency(note.remainingAmount)}</strong>
+                            <strong style={{ color: 'var(--gold-strong)', fontSize: '0.95rem' }}>{formatCurrency(note.remainingAmount)}</strong>
                           </div>
                           
                           <span 
@@ -1204,7 +1198,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                 </div>
               </header>
 
-              <div className="calendar-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900, marginBottom: '6px' }}>
+              <div className="calendar-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900, marginBottom: '6px' }}>
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => <span key={day}>{day}</span>)}
               </div>
               <div className="collection-calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
@@ -1246,11 +1240,11 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                 
                 {/* Cabeçalho da Nota */}
                 <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px' }}>
-                  <span style={{ fontSize: '0.62rem', background: '#151922', color: '#aeb8c8', fontFamily: 'monospace', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
+                  <span style={{ fontSize: '0.62rem', background: 'var(--surface-elevated)', color: 'var(--text-secondary)', fontFamily: 'monospace', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>
                     Parcela selecionada: #{selectedNote.id}
                   </span>
                   <h2 style={{ fontSize: '1.2rem', color: '#fff', margin: '4px 0 2px', fontWeight: 500 }}>{selectedNote.customer.name}</h2>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#aeb8c8' }}>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                     Vencimento em: <strong>{selectedNote.dueDate.split('-').reverse().join('/')}</strong>
                   </p>
                 </header>
@@ -1267,7 +1261,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                   </div>
                   <div>
                     <span>Saldo Restante</span>
-                    <strong style={{ color: '#f6d78b', fontSize: '1.1rem' }}>{formatCurrency(selectedNote.remainingAmount)}</strong>
+                    <strong style={{ color: 'var(--gold-strong)', fontSize: '1.1rem' }}>{formatCurrency(selectedNote.remainingAmount)}</strong>
                   </div>
                   {selectedNote.customer.phone && (
                     <div>
@@ -1289,16 +1283,16 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
 
                 {/* Histórico de Pagamentos */}
                 <div style={{ borderTop: '1px solid rgba(226,232,240,0.06)', paddingTop: '14px' }}>
-                  <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Histórico de Recebimentos</span>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>Histórico de Recebimentos</span>
                   {payments.length === 0 ? (
-                    <div style={{ color: '#7b8493', fontSize: '0.72rem', padding: '8px 0' }}>Nenhum pagamento recebido nesta parcela.</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', padding: '8px 0' }}>Nenhum pagamento recebido nesta parcela.</div>
                   ) : (
                     <div style={{ display: 'grid', gap: '6px', marginTop: '6px' }}>
                       {paymentsPagination.pageItems.map((p) => (
-                        <div key={p.id} style={{ background: '#0d1016', borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div key={p.id} style={{ background: 'var(--surface-dark)', borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <strong style={{ color: '#fff', fontSize: '0.75rem', display: 'block' }}>Recebimento #{p.id}</strong>
-                            <small style={{ color: '#7b8493', fontSize: '0.68rem' }}>Método: {paymentLabels[p.paymentMethod]} — {formatNullableDateTime(p.paidAt)}</small>
+                            <small style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Método: {formatPaymentMethod(p.paymentMethod)} — {formatNullableDateTime(p.paidAt)}</small>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <strong style={{ color: '#2dd4bf', fontSize: '0.78rem' }}>+{formatCurrency(p.amount)}</strong>
@@ -1314,7 +1308,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                 {/* Seção de Baixa / Recebimento */}
                 {selectedNote.remainingAmount > 0 && (
                   <div style={{ borderTop: '1px solid rgba(226,232,240,0.06)', paddingTop: '14px', display: 'grid', gap: '12px' }}>
-                    <span style={{ fontSize: '0.62rem', color: '#f6d78b', textTransform: 'uppercase', fontWeight: 900 }}>Registrar Pagamento / Baixa</span>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--gold-strong)', textTransform: 'uppercase', fontWeight: 900 }}>Registrar Pagamento / Baixa</span>
                     
                     <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       <div className="field-group">
@@ -1333,7 +1327,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                       </div>
 
                       <div className="field-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <label style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900, marginBottom: '4px' }}>Dias em Atraso</label>
+                        <label style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900, marginBottom: '4px' }}>Dias em Atraso</label>
                         <span style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -1376,13 +1370,13 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
 
                     <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px', background: 'rgba(215, 173, 85, 0.04)', border: '1px solid rgba(215, 173, 85, 0.1)', padding: '12px', borderRadius: '8px', marginTop: '4px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontSize: '0.62rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>Valor Juros</span>
+                        <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>Valor Juros</span>
                         <strong style={{ fontSize: '1rem', color: montanteJuros > 0 ? '#fb7185' : '#aeb8c8' }}>
                           {formatCurrency(montanteJuros)}
                         </strong>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.62rem', color: '#f6d78b', textTransform: 'uppercase', fontWeight: 900 }}>Total a Baixar</span>
+                        <span style={{ fontSize: '0.62rem', color: 'var(--gold-strong)', textTransform: 'uppercase', fontWeight: 900 }}>Total a Baixar</span>
                         <strong style={{ fontSize: '1.1rem', color: '#2dd4bf' }}>
                           {formatCurrency(valorTotalBaixa)}
                         </strong>
@@ -1405,7 +1399,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
 
               </section>
             ) : (
-              <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Selecione uma nota promissória na carteira para realizar baixas ou registrar cobranças.</div>
+              <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Selecione uma nota promissória na carteira para realizar baixas ou registrar cobranças.</div>
             )}
           </div>
 
@@ -1415,3 +1409,6 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
     </main>
   )
 }
+
+
+

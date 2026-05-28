@@ -12,20 +12,12 @@ import type {
   AdminDashboardReceivables,
   AdminDashboardSummary,
 } from '../types/adminDashboard'
-import type { PaymentMethod } from '../types/sale'
 import { getErrorMessage } from '../utils/errors'
 import { formatCurrency } from '../utils/formatters'
+import { formatPaymentMethod } from '../utils/paymentMethods'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { PaginationControls } from '../components/PaginationControls'
 import { usePagination } from '../hooks/usePagination'
-
-const paymentLabels: Record<PaymentMethod, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'Pix',
-  DEBIT_CARD: 'Débito',
-  CREDIT_CARD: 'Crédito',
-  PROMISSORY_NOTE: 'Promissória',
-}
 
 const statusLabels = {
   PENDING: 'Pendente',
@@ -116,12 +108,6 @@ function emptySummary(filters: AdminDashboardFilters): AdminDashboardSummary {
     dueTodayReceivables: 0,
     dueNext7DaysReceivables: 0,
     dueNext30DaysReceivables: 0,
-    globalStockItems: 0,
-    globalCostValue: 0,
-    globalSaleValue: 0,
-    totalCMV: 0,
-    totalProfit: 0,
-    topProducts: [],
   }
 }
 
@@ -273,7 +259,7 @@ export function AdminDashboardPage() {
             <button className="customer-premium-secondary-button" type="button" onClick={() => applyPreset('month')} style={{ minHeight: '36px', fontSize: '0.72rem', flex: 1 }}>Este mês</button>
           </div>
 
-          <form className="history-filter-form" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '14px', alignItems: 'end', background: '#0d1016', padding: '18px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.06)' }}>
+          <form className="history-filter-form" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '14px', alignItems: 'end', background: 'var(--surface-dark)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.06)' }}>
             <div className="field-group">
               <label htmlFor="dashboardStart">Início</label>
               <input
@@ -309,7 +295,7 @@ export function AdminDashboardPage() {
           <article style={{ border: '1px solid rgba(215, 173, 85, 0.4)', background: 'linear-gradient(180deg, rgba(215,173,85,0.04), rgba(0,0,0,0))' }}>
             <div>
               <span>Faturamento total</span>
-              <strong style={{ color: '#f6d78b' }}>{formatCurrency(summary.totalSold)}</strong>
+              <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(summary.totalSold)}</strong>
             </div>
             <TrendingUp size={19} aria-hidden="true" style={{ color: '#d7ad55', background: 'rgba(215, 173, 85, 0.1)' }} />
           </article>
@@ -374,21 +360,21 @@ export function AdminDashboardPage() {
             <BarChart3 size={22} style={{ color: '#d7ad55' }} />
             <div>
               <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Visão Analítica de BI</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Indicadores gráficos e métricas rápidas de performance.</p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Indicadores gráficos e métricas rápidas de performance.</p>
             </div>
           </header>
 
-          <div className="admin-bi-grid">
-            {/* Linha 1: Gráficos de Faturamento por Forma */}
-            <div className="admin-mini-chart" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Faturamento por Forma</span>
+          <div className="admin-bi-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '22px' }}>
+            {/* Gráficos de Barras com degradê Gold */}
+            <div className="admin-mini-chart" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <span style={{ color: 'var(--gold-strong)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Faturamento por Forma</span>
               {paymentMethods.length === 0 ? (
-                <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '20px 0' }}>Sem movimentações no período.</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '20px 0' }}>Sem movimentações no período.</div>
               ) : (
                 <div style={{ display: 'grid', gap: '10px' }}>
                   {paymentMethods.map((payment) => (
                     <div className="admin-chart-row" key={payment.paymentMethod} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <small style={{ width: '80px', color: '#aeb8c8', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{paymentLabels[payment.paymentMethod]}</small>
+                      <small style={{ width: '80px', color: 'var(--text-secondary)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{formatPaymentMethod(payment.paymentMethod)}</small>
                       <div style={{ flex: 1, height: '8px', background: '#11141a', borderRadius: '4px', overflow: 'hidden' }}>
                         <i style={{ 
                           display: 'block', 
@@ -405,124 +391,12 @@ export function AdminDashboardPage() {
               )}
             </div>
 
-            {/* Linha 1: Performance Financeira / CMV */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
-              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Performance do Período</span>
+            {/* Divisão de Recebíveis */}
+            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
+              <span style={{ color: 'var(--gold-strong)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recebíveis da Carteira</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>Receita Bruta</small>
-                  <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{formatCurrency(summary.totalSold)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#fb7185', fontSize: '0.75rem' }}>Custo das Vendas (CMV)</small>
-                  <strong style={{ color: '#fb7185', fontSize: '0.85rem' }}>{formatCurrency(summary.totalCMV)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#2dd4bf', fontSize: '0.75rem' }}>Lucro Realizado</small>
-                  <strong style={{ color: '#2dd4bf', fontSize: '0.85rem' }}>{formatCurrency(summary.totalProfit)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <small style={{ color: '#f6d78b', fontSize: '0.75rem' }}>Margem Bruta %</small>
-                  <strong style={{ color: '#f6d78b', fontSize: '0.85rem' }}>
-                    {summary.totalSold > 0 ? ((summary.totalProfit / summary.totalSold) * 100).toFixed(1) : '0.0'}%
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Linha 1: Estoque Global (Preço de Custo) */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
-              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estoque Global (Atelier)</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>Peças Cadastradas</small>
-                  <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{summary.globalStockItems} un.</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#fb7185', fontSize: '0.75rem' }}>Custo Total (Investido)</small>
-                  <strong style={{ color: '#fb7185', fontSize: '0.85rem' }}>{formatCurrency(summary.globalCostValue)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#2dd4bf', fontSize: '0.75rem' }}>Valor Venda Potencial</small>
-                  <strong style={{ color: '#2dd4bf', fontSize: '0.85rem' }}>{formatCurrency(summary.globalSaleValue)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <small style={{ color: '#f6d78b', fontSize: '0.75rem' }}>Margem Teórica %</small>
-                  <strong style={{ color: '#f6d78b', fontSize: '0.85rem' }}>
-                    {summary.globalSaleValue > 0 ? (((summary.globalSaleValue - summary.globalCostValue) / summary.globalSaleValue) * 100).toFixed(1) : '0.0'}%
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Linha 2: Curva ABC - Top 5 Mais Vendidos */}
-            <div className="admin-mini-chart" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Curva ABC - Top 5 Mais Vendidos</span>
-              {!summary.topProducts || summary.topProducts.length === 0 ? (
-                <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '20px 0' }}>Sem movimentações no período.</div>
-              ) : (
-                <div style={{ display: 'grid', gap: '4px' }}>
-                  {summary.topProducts.map((product, index) => {
-                    const maxQty = Math.max(...summary.topProducts.map((p) => p.quantity), 1)
-                    return (
-                      <div key={product.productCode} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: index < summary.topProducts.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
-                        {/* Indicador de Ranking Premium */}
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center', 
-                          width: '24px', 
-                          height: '24px', 
-                          borderRadius: '6px', 
-                          background: index === 0 ? 'rgba(215, 173, 85, 0.15)' : 'rgba(255, 255, 255, 0.04)', 
-                          border: index === 0 ? '1px solid rgba(215, 173, 85, 0.3)' : '1px solid rgba(255,255,255,0.06)',
-                          color: index === 0 ? '#f6d78b' : '#aeb8c8',
-                          fontSize: '0.72rem',
-                          fontWeight: 700
-                        }}>
-                          {index + 1}
-                        </div>
-
-                        {/* Informação do Produto */}
-                        <div style={{ display: 'flex', flexDirection: 'column', width: '130px', minWidth: '0' }}>
-                          <strong style={{ color: '#fff', fontSize: '0.76rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {product.productName}
-                          </strong>
-                          <span style={{ color: '#7b8493', fontSize: '0.62rem', fontFamily: 'monospace' }}>{product.productCode}</span>
-                        </div>
-
-                        {/* Trilha e Barra de Progresso Elegantes */}
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                          <div style={{ width: '100%', height: '6px', background: '#090b0e', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.02)' }}>
-                            <div style={{ 
-                              height: '100%', 
-                              borderRadius: 'inherit',
-                              background: index === 0 
-                                ? 'linear-gradient(90deg, #d7ad55, #f6d78b)' 
-                                : 'linear-gradient(90deg, rgba(215, 173, 85, 0.6), rgba(246, 215, 139, 0.7))', 
-                              width: `${Math.max(6, (product.quantity / maxQty) * 100)}%` 
-                            }} />
-                          </div>
-                        </div>
-
-                        {/* Métricas alinhadas à direita */}
-                        <div style={{ display: 'flex', flexDirection: 'column', width: '90px', textAlign: 'right' }}>
-                          <strong style={{ color: '#fff', fontSize: '0.76rem', fontWeight: 600 }}>{product.quantity} un.</strong>
-                          <span style={{ color: '#2dd4bf', fontSize: '0.66rem', fontWeight: 500 }}>{formatCurrency(product.totalRevenue)}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Linha 2: Divisão de Recebíveis */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
-              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recebíveis da Carteira</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>Em aberto</small>
+                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Em aberto</small>
                   <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{formatCurrency(receivables.openAmount)}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
@@ -530,22 +404,22 @@ export function AdminDashboardPage() {
                   <strong style={{ color: '#fb7185', fontSize: '0.85rem' }}>{formatCurrency(receivables.overdueAmount)}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <small style={{ color: '#f6d78b', fontSize: '0.75rem' }}>Próximos 7 dias</small>
-                  <strong style={{ color: '#f6d78b', fontSize: '0.85rem' }}>{formatCurrency(receivables.dueNext7DaysAmount)}</strong>
+                  <small style={{ color: 'var(--gold-strong)', fontSize: '0.75rem' }}>Próximos 7 dias</small>
+                  <strong style={{ color: 'var(--gold-strong)', fontSize: '0.85rem' }}>{formatCurrency(receivables.dueNext7DaysAmount)}</strong>
                 </div>
               </div>
             </div>
 
-            {/* Linha 2: Métricas de BI Vendas */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
-              <span style={{ color: '#f6d78b', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>BI de Operações</span>
+            {/* Métricas de BI Vendas */}
+            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
+              <span style={{ color: 'var(--gold-strong)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>BI de Operações</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>Total de Vendas</small>
+                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Total de Vendas</small>
                   <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{summary.saleCount} un.</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#aeb8c8', fontSize: '0.75rem' }}>Ticket Médio</small>
+                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Ticket Médio</small>
                   <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{formatCurrency(summary.averageTicket)}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -564,7 +438,7 @@ export function AdminDashboardPage() {
               <CalendarDays size={22} style={{ color: '#d7ad55' }} />
               <div>
                 <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Calendário de recebimentos</h2>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Clique em uma data iluminada para filtrar os recebíveis agendados para aquele dia.</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Clique em uma data iluminada para filtrar os recebíveis agendados para aquele dia.</p>
               </div>
             </div>
             
@@ -581,7 +455,7 @@ export function AdminDashboardPage() {
             </div>
           </header>
 
-          <div className="calendar-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '0.72rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900, marginBottom: '10px' }}>
+          <div className="calendar-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900, marginBottom: '10px' }}>
             {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((day) => <span key={day}>{day}</span>)}
           </div>
           
@@ -619,7 +493,7 @@ export function AdminDashboardPage() {
                 >
                   <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{day.day || ''}</span>
                   {total ? (
-                    <small style={{ fontSize: '0.62rem', color: '#f6d78b', fontWeight: 'bold', display: 'block', width: '100%', borderTop: '1px solid rgba(215,173,85,0.15)', paddingTop: '4px', marginTop: '4px' }}>
+                    <small style={{ fontSize: '0.62rem', color: 'var(--gold-strong)', fontWeight: 'bold', display: 'block', width: '100%', borderTop: '1px solid rgba(215,173,85,0.15)', paddingTop: '4px', marginTop: '4px' }}>
                       {total.count} nota(s) — {formatCurrency(total.amount)}
                     </small>
                   ) : null}
@@ -636,21 +510,21 @@ export function AdminDashboardPage() {
           <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
             <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontWeight: 500 }}>Faturamento por Pagamento</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Resumo de vendas efetuadas e baixas ocorridas no período.</p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Resumo de vendas efetuadas e baixas ocorridas no período.</p>
             </header>
 
             <div className="admin-payment-list" style={{ display: 'grid', gap: '10px' }}>
               {paymentMethods.length === 0 ? (
-                <div style={{ color: '#7b8493', fontSize: '0.8rem', padding: '20px 0' }}>Nenhuma venda ou recebimento neste período.</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '20px 0' }}>Nenhuma venda ou recebimento neste período.</div>
               ) : (
                 paymentMethods.map((payment) => (
-                  <article key={payment.paymentMethod} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <article key={payment.paymentMethod} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{paymentLabels[payment.paymentMethod]}</strong>
-                      <small style={{ color: '#7b8493', fontSize: '0.72rem' }}>{payment.saleCount} venda(s) — {payment.receiptCount} baixa(s)</small>
+                      <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{formatPaymentMethod(payment.paymentMethod)}</strong>
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>{payment.saleCount} venda(s) — {payment.receiptCount} baixa(s)</small>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <strong style={{ color: '#f6d78b', fontSize: '0.95rem', display: 'block' }}>{formatCurrency(payment.soldAmount)}</strong>
+                      <strong style={{ color: 'var(--gold-strong)', fontSize: '0.95rem', display: 'block' }}>{formatCurrency(payment.soldAmount)}</strong>
                       <small style={{ color: '#2dd4bf', fontSize: '0.72rem' }}>Recebido: {formatCurrency(payment.receivedAmount)}</small>
                     </div>
                   </article>
@@ -663,18 +537,18 @@ export function AdminDashboardPage() {
           <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
             <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontWeight: 500 }}>Concentração de Devedores</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Maiores saldos a receber vinculados a clientes.</p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Maiores saldos a receber vinculados a clientes.</p>
             </header>
 
             <div className="admin-top-customers" style={{ display: 'grid', gap: '10px' }}>
               {receivables.topCustomers.length === 0 ? (
-                <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Nenhum saldo pendente a receber de clientes.</div>
+                <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhum saldo pendente a receber de clientes.</div>
               ) : (
                 topCustomersPagination.pageItems.map((customer) => (
-                  <div key={customer.customerId} style={{ background: '#0d1016', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={customer.customerId} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{customer.customerName}</strong>
-                      <small style={{ color: '#7b8493', fontSize: '0.72rem' }}>Possui {customer.openInstallments} parcela(s) em aberto</small>
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>Possui {customer.openInstallments} parcela(s) em aberto</small>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <strong style={{ color: '#fb7185', fontSize: '#0.95rem' }}>{formatCurrency(customer.openAmount)}</strong>
@@ -691,16 +565,16 @@ export function AdminDashboardPage() {
         <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
           <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '18px' }}>
             <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Histórico de parcelas no período</h2>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#aeb8c8' }}>Todas as parcelas com vencimento agendado para o intervalo filtrado.</p>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Todas as parcelas com vencimento agendado para o intervalo filtrado.</p>
           </header>
 
           {isLoading ? (
             <div className="product-empty">Atualizando listagem de parcelas...</div>
           ) : receivables.items.length === 0 ? (
-            <div className="product-empty" style={{ background: '#0d1016', borderRadius: '16px', padding: '40px' }}>Nenhuma parcela de promissória pendente no período.</div>
+            <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhuma parcela de promissória pendente no período.</div>
           ) : (
             <div className="admin-receivable-table" style={{ display: 'grid', gap: '8px' }}>
-              <div className="admin-receivable-head" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '10px 18px', background: '#0d1016', borderRadius: '8px', fontSize: '0.65rem', color: '#7b8493', textTransform: 'uppercase', fontWeight: 900 }}>
+              <div className="admin-receivable-head" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '10px 18px', background: 'var(--surface-dark)', borderRadius: '8px', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>
                 <span>Cliente</span>
                 <span>Venda</span>
                 <span>Parcela</span>
@@ -711,15 +585,15 @@ export function AdminDashboardPage() {
               
               <div style={{ display: 'grid', gap: '8px' }}>
                 {receivableItemsPagination.pageItems.map((item) => (
-                  <article key={item.noteId} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '12px 18px', background: '#0d1016', border: '1px solid rgba(226,232,240,0.04)', borderRadius: '10px', fontSize: '0.82rem', alignItems: 'center' }}>
+                  <article key={item.noteId} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '12px 18px', background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.04)', borderRadius: '10px', fontSize: '0.82rem', alignItems: 'center' }}>
                     <span style={{ color: '#fff', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.customerName}</span>
-                    <span style={{ color: '#aeb8c8' }}>#{item.saleId}</span>
-                    <span style={{ color: '#aeb8c8' }}>{item.installmentNumber}/{item.totalInstallments}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>#{item.saleId}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{item.installmentNumber}/{item.totalInstallments}</span>
                     <span style={{ color: '#fff' }}>{new Date(`${item.dueDate}T00:00:00`).toLocaleDateString('pt-BR')}</span>
                     <span style={{ color: item.status === 'OVERDUE' ? '#fb7185' : item.status === 'PAID' ? '#2dd4bf' : '#f6d78b' }}>
                       {statusLabels[item.status]}
                     </span>
-                    <strong style={{ color: '#f6d78b', textAlign: 'right' }}>{formatCurrency(item.amount)}</strong>
+                    <strong style={{ color: 'var(--gold-strong)', textAlign: 'right' }}>{formatCurrency(item.amount)}</strong>
                   </article>
                 ))}
               </div>
@@ -732,3 +606,6 @@ export function AdminDashboardPage() {
     </main>
   )
 }
+
+
+

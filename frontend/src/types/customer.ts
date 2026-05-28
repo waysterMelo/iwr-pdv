@@ -65,6 +65,14 @@ export type CustomerPromissoryNote = {
   payments: import('./promissoryNote').PromissoryNotePayment[]
 }
 
+export type CustomerProfileInsight = {
+  code: string
+  severity: 'INFO' | 'SUCCESS' | 'WARNING' | 'DANGER'
+  title: string
+  message: string
+  recommendedAction: string
+}
+
 export type CustomerProfile = {
   customer: Customer
   saleCount: number
@@ -85,4 +93,5 @@ export type CustomerProfile = {
   sales: import('./sale').Sale[]
   cancelledSales: import('./sale').Sale[]
   promissoryNotes: CustomerPromissoryNote[]
+  insights: CustomerProfileInsight[]
 }
