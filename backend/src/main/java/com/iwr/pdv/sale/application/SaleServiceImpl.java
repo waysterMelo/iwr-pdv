@@ -109,6 +109,7 @@ public class SaleServiceImpl implements SaleService {
         sale.setTotalAmount(sale.getSubtotalAmount().subtract(sale.getDiscountAmount()));
         applyPaymentAmounts(sale, request.amountReceived());
         validatePromissoryInstallments(sale, request.promissoryInstallments());
+        validateCreditLimit(customer, sale);
 
         Sale savedSale = saleRepository.save(sale);
         if (savedSale.getPaymentMethod() == PaymentMethod.PROMISSORY_NOTE) {
@@ -616,6 +617,38 @@ public class SaleServiceImpl implements SaleService {
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;");
+    }
+
+    private void validateCreditLimit(Customer customer, Sale sale) {
+        if (sale.getPaymentMethod() != PaymentMethod.PROMISSORY_NOTE) {
+            return;
+        }
+        if (customer == null) {
+            return;
+        }
+        BigDecimal creditLimit = customer.getCreditLimit();
+        if (creditLimit == null || creditLimit.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        List<PromissoryNote> openNotes = promissoryNoteRepository.findByCustomerIdOrderByDueDateDesc(customer.getId())
+                .stream()
+                .filter(note -> java.util.Set.of(PromissoryNoteStatus.PENDING, PromissoryNoteStatus.PARTIALLY_PAID, PromissoryNoteStatus.OVERDUE)
+                        .contains(note.getStatus()))
+                .toList();
+
+        BigDecimal openAmount = openNotes.stream()
+                .map(note -> {
+                    BigDecimal paid = note.getPaidAmount() == null ? BigDecimal.ZERO : note.getPaidAmount();
+                    BigDecimal remaining = note.getAmount().subtract(paid);
+                    return remaining.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : remaining;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalWithNewSale = openAmount.add(sale.getTotalAmount());
+        if (totalWithNewSale.compareTo(creditLimit) > 0) {
+            throw new BusinessRuleException("Venda nao autorizada: o valor total de debitos (R$ " + totalWithNewSale + ") excede o limite de credito de R$ " + creditLimit + ".");
+        }
     }
 
     private record SaleLine(Long productId, int quantity, BigDecimal unitPrice) {

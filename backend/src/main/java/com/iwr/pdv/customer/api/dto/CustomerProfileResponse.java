@@ -26,4 +26,12 @@ public record CustomerProfileResponse(
         List<CustomerPromissoryNoteResponse> promissoryNotes,
         List<CustomerProfileInsightResponse> insights
 ) {
+    public CustomerProfileResponse {
+        purchasedItems = purchasedItems != null ? List.copyOf(purchasedItems) : java.util.Collections.emptyList();
+        latestSales = latestSales != null ? List.copyOf(latestSales) : java.util.Collections.emptyList();
+        sales = sales != null ? List.copyOf(sales) : java.util.Collections.emptyList();
+        cancelledSales = cancelledSales != null ? List.copyOf(cancelledSales) : java.util.Collections.emptyList();
+        promissoryNotes = promissoryNotes != null ? List.copyOf(promissoryNotes) : java.util.Collections.emptyList();
+        insights = insights != null ? List.copyOf(insights) : java.util.Collections.emptyList();
+    }
 }

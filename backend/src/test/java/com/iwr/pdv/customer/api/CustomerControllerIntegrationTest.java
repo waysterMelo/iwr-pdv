@@ -287,6 +287,107 @@ class CustomerControllerIntegrationTest {
                 });
     }
 
+    @Test
+    void shouldFailSaleWhenCreditLimitIsExceeded() throws Exception {
+        Product product = productRepository.save(buildProduct("Camiseta Teste", "LIM-001", new BigDecimal("50.00"), 100));
+        Customer customer = buildCustomer("Cliente Limite Credito");
+        customer.setCreditLimit(new BigDecimal("100.00"));
+        customer = customerRepository.save(customer);
+
+        LocalDate today = LocalDate.now(clock);
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", adminAuthHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "items": [{"productId": %d, "quantity": 1}],
+                                  "paymentMethod": "PROMISSORY_NOTE",
+                                  "discountAmount": 0,
+                                  "customerId": %d,
+                                  "promissoryInstallments": [
+                                    {"dueDate": "%s", "amount": 50.00}
+                                  ]
+                                }
+                                """.formatted(product.getId(), customer.getId(), today.plusDays(30))))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/sales")
+                        .header("Authorization", adminAuthHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "items": [{"productId": %d, "quantity": 2}],
+                                  "paymentMethod": "PROMISSORY_NOTE",
+                                  "discountAmount": 0,
+                                  "customerId": %d,
+                                  "promissoryInstallments": [
+                                    {"dueDate": "%s", "amount": 100.00}
+                                  ]
+                                }
+                                """.formatted(product.getId(), customer.getId(), today.plusDays(30))))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void shouldReturnEmptyListsAndZeroInsightsForNewCustomer() throws Exception {
+        Customer customer = customerRepository.save(buildCustomer("Cliente Novo Sem Historico"));
+
+        mockMvc.perform(get("/api/customers/{customerId}/profile", customer.getId())
+                        .header("Authorization", adminAuthHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saleCount").value(0))
+                .andExpect(jsonPath("$.completedSaleCount").value(0))
+                .andExpect(jsonPath("$.cancelledSaleCount").value(0))
+                .andExpect(jsonPath("$.totalPurchasedAmount").value(0))
+                .andExpect(jsonPath("$.sales").isEmpty())
+                .andExpect(jsonPath("$.promissoryNotes").isEmpty())
+                .andExpect(jsonPath("$.insights[0].code").value("NO_HISTORY"));
+    }
+
+    @Test
+    void shouldReflectFinancialRiskImmediatelyWhenOverdueNoteExists() throws Exception {
+        Product product = productRepository.save(buildProduct("Produto Risco", "RIS-001", new BigDecimal("20.00"), 100));
+        Customer customer = customerRepository.save(buildCustomer("Cliente Risco Financeiro"));
+
+        createPromissorySale(product.getId(), customer.getId());
+
+        PromissoryNote note = promissoryNoteRepository.findAll()
+                .stream()
+                .filter(n -> n.getCustomer().getId().equals(customer.getId()))
+                .findFirst()
+                .orElseThrow();
+        note.setDueDate(LocalDate.now(clock).minusDays(10));
+        note.setStatus(PromissoryNoteStatus.PENDING);
+        promissoryNoteRepository.saveAndFlush(note);
+
+        mockMvc.perform(get("/api/customers/{customerId}/profile", customer.getId())
+                        .header("Authorization", adminAuthHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.insights[?(@.code == 'OVERDUE_BALANCE')].severity").value("WARNING"));
+    }
+
+    @Test
+    void shouldMeasurePerformanceUnderMassiveCustomerData() throws Exception {
+        Product product = productRepository.save(buildProduct("Produto Lote", "LOT-001", new BigDecimal("10.00"), 1000));
+        Customer customer = customerRepository.save(buildCustomer("Cliente Volumetria"));
+
+        for (int i = 0; i < 55; i++) {
+            createCashSale(product.getId(), customer.getId(), 1);
+        }
+
+        long start = System.currentTimeMillis();
+
+        mockMvc.perform(get("/api/customers/{customerId}/profile", customer.getId())
+                        .header("Authorization", adminAuthHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sales.length()").value(55));
+
+        long duration = System.currentTimeMillis() - start;
+        System.out.println("Tempo de execucao do perfil completo: " + duration + "ms");
+        
+        org.junit.jupiter.api.Assertions.assertTrue(duration < 200, "A latencia nao deve passar de 200ms");
+    }
+
     private void cleanDatabase() {
         paymentRepository.deleteAll();
         stockMovementRepository.deleteAll();

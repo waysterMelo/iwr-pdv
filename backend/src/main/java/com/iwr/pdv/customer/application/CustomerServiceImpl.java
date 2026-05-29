@@ -130,11 +130,18 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional
     public CustomerProfileResponse profile(Long customerId) {
         refreshOverdueStatuses();
-        Customer customer = customerRepository.findById(customerId)
+        Customer customer = customerRepository.findProfileWithSalesById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found for id " + customerId + "."));
-        List<Sale> sales = saleRepository.findByCustomerIdOrderBySoldAtDesc(customerId);
-        List<PromissoryNote> notes = promissoryNoteRepository.findByCustomerIdOrderByDueDateDesc(customerId);
-        Map<Long, List<PromissoryNotePaymentResponse>> paymentsByNoteId = paymentsByNoteId(customerId);
+        
+        customerRepository.findProfileWithNotesById(customerId);
+        
+        List<Sale> sales = customer.getSales().stream()
+                .sorted(Comparator.comparing(Sale::getSoldAt).reversed())
+                .toList();
+        List<PromissoryNote> notes = customer.getPromissoryNotes().stream()
+                .sorted(Comparator.comparing(PromissoryNote::getDueDate).reversed())
+                .toList();
+
         List<Sale> completedSales = sales.stream()
                 .filter(sale -> sale.getStatus() == SaleStatus.COMPLETED)
                 .toList();
@@ -201,7 +208,7 @@ public class CustomerServiceImpl implements CustomerService {
                 sales.stream().map(saleMapper::toResponse).toList(),
                 cancelledSales.stream().map(saleMapper::toResponse).toList(),
                 notes.stream()
-                        .map(note -> toCustomerPromissoryNoteResponse(note, paymentsByNoteId))
+                        .map(this::toCustomerPromissoryNoteResponse)
                         .toList(),
                 buildProfileInsights(
                         customer,
@@ -567,21 +574,13 @@ public class CustomerServiceImpl implements CustomerService {
         return new CustomerProfileInsightResponse(code, severity, title, message, recommendedAction);
     }
 
-    private Map<Long, List<PromissoryNotePaymentResponse>> paymentsByNoteId(Long customerId) {
-        return promissoryNotePaymentRepository.findByNoteCustomerIdOrderByPaidAtDesc(customerId)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        payment -> payment.getNote().getId(),
-                        LinkedHashMap::new,
-                        Collectors.mapping(promissoryNoteMapper::toPaymentResponse, Collectors.toList())
-                ));
-    }
-
-    private CustomerPromissoryNoteResponse toCustomerPromissoryNoteResponse(
-            PromissoryNote note,
-            Map<Long, List<PromissoryNotePaymentResponse>> paymentsByNoteId
-    ) {
+    private CustomerPromissoryNoteResponse toCustomerPromissoryNoteResponse(PromissoryNote note) {
         PromissoryNoteResponse response = promissoryNoteMapper.toResponse(note);
+        List<PromissoryNotePaymentResponse> payments = note.getPayments().stream()
+                .sorted(Comparator.comparing(com.iwr.pdv.promissorynote.domain.PromissoryNotePayment::getPaidAt).reversed())
+                .map(promissoryNoteMapper::toPaymentResponse)
+                .toList();
+
         return new CustomerPromissoryNoteResponse(
                 response.id(),
                 response.saleId(),
@@ -600,7 +599,7 @@ public class CustomerServiceImpl implements CustomerService {
                 response.createdAt(),
                 response.updatedAt(),
                 response.saleItems(),
-                paymentsByNoteId.getOrDefault(response.id(), List.of())
+                payments
         );
     }
 

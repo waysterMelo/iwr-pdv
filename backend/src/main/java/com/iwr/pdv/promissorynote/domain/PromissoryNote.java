@@ -80,6 +80,8 @@ public class PromissoryNote {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @jakarta.persistence.OneToMany(mappedBy = "note", cascade = jakarta.persistence.CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
+    private java.util.Set<com.iwr.pdv.promissorynote.domain.PromissoryNotePayment> payments = new java.util.HashSet<>();
 
     public Long getId() {
         return id;
@@ -201,4 +203,11 @@ public class PromissoryNote {
         this.updatedAt = updatedAt;
     }
 
+    public java.util.Set<com.iwr.pdv.promissorynote.domain.PromissoryNotePayment> getPayments() {
+        return payments;
+    }
+
+    public void setPayments(java.util.Set<com.iwr.pdv.promissorynote.domain.PromissoryNotePayment> payments) {
+        this.payments = payments;
+    }
 }

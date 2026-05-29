@@ -333,21 +333,39 @@
 .search-input {
   background: #0d1016 !important;
   color: #f8fafc !important;
+  border: 1px solid rgba(226, 232, 240, 0.12) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease !important;
+}
+
+.customer-premium-search-input:focus-within {
+  border-color: rgba(215, 173, 85, 0.8) !important;
+  box-shadow: 0 0 0 4px rgba(215, 173, 85, 0.22) !important;
+  background: #11151f !important;
 }
 
 .customer-premium-search-input svg,
 .search-input + svg,
 .search-input ~ svg {
-  color: #d7ad55 !important;
+  color: #f6d78b !important;
   opacity: 1 !important;
+  transition: color 160ms ease !important;
+}
+
+.customer-premium-search-input:focus-within svg {
+  color: #ffe9ad !important;
 }
 
 .customer-premium-search-input input::placeholder,
 .search-input::placeholder,
 .field-group input::placeholder,
 .field-group textarea::placeholder {
-  color: #94a3b8 !important;
-  opacity: 1 !important;
+  color: #cbd5e1 !important;
+  opacity: 0.82 !important;
+  transition: opacity 160ms ease !important;
+}
+
+.customer-premium-search-input:focus-within input::placeholder {
+  opacity: 0.55 !important;
 }
 
 .customer-premium-search-input button {

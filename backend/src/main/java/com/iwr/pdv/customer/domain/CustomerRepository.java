@@ -21,4 +21,16 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByCpf(String cpf);
 
     Optional<Customer> findByEmailIgnoreCase(String email);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT c FROM Customer c " +
+           "LEFT JOIN FETCH c.sales s " +
+           "LEFT JOIN FETCH s.items " +
+           "WHERE c.id = :id")
+    Optional<Customer> findProfileWithSalesById(@org.springframework.data.repository.query.Param("id") Long id);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT c FROM Customer c " +
+           "LEFT JOIN FETCH c.promissoryNotes n " +
+           "LEFT JOIN FETCH n.payments " +
+           "WHERE c.id = :id")
+    Optional<Customer> findProfileWithNotesById(@org.springframework.data.repository.query.Param("id") Long id);
 }

@@ -1064,7 +1064,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                 <h2 style={{ fontSize: '1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Filtros da carteira</h2>
               </header>
 
-              <form className="customer-premium-search" onSubmit={handleFilterSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto auto', gap: '12px', alignItems: 'end' }}>
+              <form className="customer-premium-search" onSubmit={handleFilterSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr auto auto', gap: '12px', alignItems: 'end' }}>
                 <div className="field-group">
                   <label htmlFor="filterStatus">Status</label>
                   <select
@@ -1370,16 +1370,18 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                       </div>
                     </div>
 
-                    <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div className="field-group">
-                        <label htmlFor="interestRateInput">Juros % (ao dia)</label>
-                        <PercentInput
-                          id="interestRateInput"
-                          value={interestRate}
-                          onChange={(val) => setInterestRate(val)}
-                          style={{ minHeight: '38px', borderRadius: '8px', padding: '0 8px', fontSize: '0.75rem' }}
-                        />
-                      </div>
+                    <div className="customer-premium-form-grid" style={{ gridTemplateColumns: diasAtraso > 0 ? '1fr 1fr' : '1fr', gap: '10px' }}>
+                      {diasAtraso > 0 && (
+                        <div className="field-group">
+                          <label htmlFor="interestRateInput">Juros % (ao dia)</label>
+                          <PercentInput
+                            id="interestRateInput"
+                            value={interestRate}
+                            onChange={(val) => setInterestRate(val)}
+                            style={{ minHeight: '38px', borderRadius: '8px', padding: '0 8px', fontSize: '0.75rem' }}
+                          />
+                        </div>
+                      )}
 
                       <div className="field-group">
                         <label htmlFor="payAmount">Valor da Baixa R$</label>
@@ -1392,13 +1394,15 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
                       </div>
                     </div>
 
-                    <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px', background: 'rgba(215, 173, 85, 0.04)', border: '1px solid rgba(215, 173, 85, 0.1)', padding: '12px', borderRadius: '8px', marginTop: '4px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>Valor Juros</span>
-                        <strong style={{ fontSize: '1rem', color: montanteJuros > 0 ? '#fb7185' : '#aeb8c8' }}>
-                          {formatCurrency(montanteJuros)}
-                        </strong>
-                      </div>
+                    <div className="customer-premium-form-grid" style={{ gridTemplateColumns: diasAtraso > 0 ? '1fr 1fr' : '1fr', gap: '10px', background: 'rgba(215, 173, 85, 0.04)', border: '1px solid rgba(215, 173, 85, 0.1)', padding: '12px', borderRadius: '8px', marginTop: '4px' }}>
+                      {diasAtraso > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>Valor Juros</span>
+                          <strong style={{ fontSize: '1rem', color: montanteJuros > 0 ? '#fb7185' : '#aeb8c8' }}>
+                            {formatCurrency(montanteJuros)}
+                          </strong>
+                        </div>
+                      )}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right' }}>
                         <span style={{ fontSize: '0.62rem', color: 'var(--gold-strong)', textTransform: 'uppercase', fontWeight: 900 }}>Total a Baixar</span>
                         <strong style={{ fontSize: '1.1rem', color: '#2dd4bf' }}>

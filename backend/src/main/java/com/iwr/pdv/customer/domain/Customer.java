@@ -72,6 +72,12 @@ public class Customer {
     @Column(name = "credit_limit")
     private BigDecimal creditLimit;
 
+    @jakarta.persistence.OneToMany(mappedBy = "customer", cascade = jakarta.persistence.CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
+    private java.util.Set<com.iwr.pdv.sale.domain.Sale> sales = new java.util.HashSet<>();
+
+    @jakarta.persistence.OneToMany(mappedBy = "customer", cascade = jakarta.persistence.CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
+    private java.util.Set<com.iwr.pdv.promissorynote.domain.PromissoryNote> promissoryNotes = new java.util.HashSet<>();
+
     public Long getId() {
         return id;
     }
@@ -222,5 +228,21 @@ public class Customer {
 
     public void setCreditLimit(BigDecimal creditLimit) {
         this.creditLimit = creditLimit;
+    }
+
+    public java.util.Set<com.iwr.pdv.sale.domain.Sale> getSales() {
+        return sales;
+    }
+
+    public void setSales(java.util.Set<com.iwr.pdv.sale.domain.Sale> sales) {
+        this.sales = sales;
+    }
+
+    public java.util.Set<com.iwr.pdv.promissorynote.domain.PromissoryNote> getPromissoryNotes() {
+        return promissoryNotes;
+    }
+
+    public void setPromissoryNotes(java.util.Set<com.iwr.pdv.promissorynote.domain.PromissoryNote> promissoryNotes) {
+        this.promissoryNotes = promissoryNotes;
     }
 }
