@@ -1,0 +1,97 @@
+/* Global typography system
+ * Matches the Admin Dashboard typography across the whole project.
+ * Uses Inter when available, with safe system fallbacks.
+ */
+
+:root {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+html,
+body,
+#root {
+  font-family: var(--font-sans) !important;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+button,
+input,
+select,
+textarea,
+label,
+table,
+th,
+td {
+  font-family: var(--font-sans) !important;
+}
+
+.app-layout,
+.workspace,
+.app-shell,
+.app-container,
+.customer-premium-container,
+.customer-premium-shell,
+.product-shell,
+.sales-history-shell,
+.admin-dashboard-shell,
+.relationship-client-panel,
+.promissory-shell,
+.loyalty-shell,
+.audit-shell,
+.user-management-shell,
+.login-shell,
+.mobile-layout {
+  font-family: var(--font-sans) !important;
+}
+
+.app-layout *:not(svg):not(path),
+.workspace *:not(svg):not(path),
+.app-shell *:not(svg):not(path),
+.app-container *:not(svg):not(path),
+.customer-premium-container *:not(svg):not(path),
+.customer-premium-shell *:not(svg):not(path),
+.product-shell *:not(svg):not(path),
+.sales-history-shell *:not(svg):not(path),
+.admin-dashboard-shell *:not(svg):not(path),
+.relationship-client-panel *:not(svg):not(path),
+.promissory-shell *:not(svg):not(path),
+.loyalty-shell *:not(svg):not(path),
+.audit-shell *:not(svg):not(path),
+.user-management-shell *:not(svg):not(path),
+.login-shell *:not(svg):not(path),
+.mobile-layout *:not(svg):not(path) {
+  font-family: var(--font-sans) !important;
+}
+
+code,
+pre,
+kbd,
+samp,
+.mono,
+.font-mono,
+[class*="mono"],
+[class*="code"] {
+  font-family: var(--font-mono) !important;
+}
+
+button,
+input,
+select,
+textarea {
+  letter-spacing: inherit;
+}
+
+button,
+.nav-button,
+.side-nav-button,
+.side-nav-dropdown-trigger,
+.customer-premium-primary-button,
+.customer-premium-secondary-button,
+.admx-btn {
+  font-family: var(--font-sans) !important;
+}
