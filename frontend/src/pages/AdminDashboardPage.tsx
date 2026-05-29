@@ -509,10 +509,10 @@ export function AdminDashboardPage() {
             </header>
 
             <div className="admx-top-customers">
-              {topCustomersPagination.items.length === 0 ? (
+              {topCustomersPagination.pageItems.length === 0 ? (
                 <div className="admx-muted-state">Nenhum cliente em aberto no período.</div>
               ) : (
-                topCustomersPagination.items.map((customer) => (
+                topCustomersPagination.pageItems.map((customer) => (
                   <div className="admx-customer-line" key={customer.customerId}>
                     <div>
                       <span>{customer.customerName}</span>
@@ -570,12 +570,12 @@ export function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {receivableItemsPagination.items.length === 0 ? (
+                {receivableItemsPagination.pageItems.length === 0 ? (
                   <tr>
                     <td colSpan={6}>Nenhum recebível encontrado.</td>
                   </tr>
                 ) : (
-                  receivableItemsPagination.items.map((item) => (
+                  receivableItemsPagination.pageItems.map((item) => (
                     <tr key={item.noteId}>
                       <td>{item.customerName}</td>
                       <td>{formatDate(item.dueDate)}</td>
