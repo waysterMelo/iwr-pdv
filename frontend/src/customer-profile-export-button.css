@@ -1,0 +1,33 @@
+/* Strong Excel export button for Clientes > Consulta completa */
+
+.relationship-client-panel .relationship-client-header button:last-of-type,
+.relationship-client-panel header button:last-of-type {
+  background: linear-gradient(135deg, #00c46a, #008f55) !important;
+  border: 1px solid #38f29d !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px rgba(0, 196, 106, 0.28), 0 12px 28px rgba(0, 0, 0, 0.24) !important;
+  opacity: 1 !important;
+}
+
+.relationship-client-panel .relationship-client-header button:last-of-type svg,
+.relationship-client-panel header button:last-of-type svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.22)) !important;
+}
+
+.relationship-client-panel .relationship-client-header button:last-of-type:hover,
+.relationship-client-panel header button:last-of-type:hover {
+  background: linear-gradient(135deg, #19e884, #00a760) !important;
+  border-color: #8affc4 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 24px rgba(0, 255, 136, 0.38), 0 14px 32px rgba(0, 0, 0, 0.28) !important;
+  transform: translateY(-1px) !important;
+}
+
+.relationship-client-panel .relationship-client-header button:last-of-type:hover svg,
+.relationship-client-panel header button:last-of-type:hover svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
