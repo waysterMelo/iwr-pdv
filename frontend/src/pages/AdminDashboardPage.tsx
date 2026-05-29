@@ -134,6 +134,16 @@ const emptyReceivables: AdminDashboardReceivables = {
   items: [],
 }
 
+function normalizeReceivables(value: AdminDashboardReceivables | null | undefined): AdminDashboardReceivables {
+  return {
+    ...emptyReceivables,
+    ...(value ?? {}),
+    topCustomers: Array.isArray(value?.topCustomers) ? value.topCustomers : [],
+    calendarDays: Array.isArray(value?.calendarDays) ? value.calendarDays : [],
+    items: Array.isArray(value?.items) ? value.items : [],
+  }
+}
+
 export function AdminDashboardPage() {
   const { notify } = useAppMessage()
   const [filters, setFilters] = useState<AdminDashboardFilters>(() => todayFilters())
@@ -155,12 +165,14 @@ export function AdminDashboardPage() {
         getAdminDashboardPaymentMethods(nextFilters),
         getAdminDashboardReceivables(nextFilters, nextCalendarMonth),
       ])
-      setSummary(nextSummary)
-      setPaymentMethods(nextPaymentMethods)
-      setReceivables(nextReceivables)
+      setSummary(nextSummary ?? emptySummary(nextFilters))
+      setPaymentMethods(Array.isArray(nextPaymentMethods) ? nextPaymentMethods : [])
+      setReceivables(normalizeReceivables(nextReceivables))
       setErrorMessage(null)
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Não foi possível carregar o painel administrativo.'))
+      setPaymentMethods([])
+      setReceivables(emptyReceivables)
     } finally {
       setIsLoading(false)
     }
@@ -173,6 +185,9 @@ export function AdminDashboardPage() {
 
     return () => window.clearTimeout(timeoutId)
   }, [calendarMonth, filters, loadDashboard])
+
+  const safePaymentMethods = Array.isArray(paymentMethods) ? paymentMethods : []
+  const safeReceivables = normalizeReceivables(receivables)
 
   const receivedRatio = useMemo(() => {
     if (summary.totalSold <= 0) return '0%'
@@ -188,26 +203,26 @@ export function AdminDashboardPage() {
 
   const receivableDayTotals = useMemo(() => {
     const totals = new Map<string, { count: number; amount: number }>()
-    receivables.calendarDays.forEach((day) => {
+    safeReceivables.calendarDays.forEach((day) => {
       totals.set(day.date, { count: day.count, amount: day.amount })
     })
     return totals
-  }, [receivables.calendarDays])
+  }, [safeReceivables.calendarDays])
 
   const maxPaymentAmount = useMemo(
-    () => Math.max(...paymentMethods.map((payment) => payment.receivedAmount), 1),
-    [paymentMethods],
+    () => Math.max(...safePaymentMethods.map((payment) => payment.receivedAmount), 1),
+    [safePaymentMethods],
   )
 
   const filteredItems = useMemo(() => {
-    if (!searchTerm.trim()) return receivables.items
+    if (!searchTerm.trim()) return safeReceivables.items
     const lower = searchTerm.toLowerCase()
-    return receivables.items.filter((item) => {
+    return safeReceivables.items.filter((item) => {
       return item.customerName.toLowerCase().includes(lower) || String(item.saleId).toLowerCase().includes(lower)
     })
-  }, [receivables.items, searchTerm])
+  }, [safeReceivables.items, searchTerm])
 
-  const topCustomersPagination = usePagination(receivables.topCustomers, 6)
+  const topCustomersPagination = usePagination(safeReceivables.topCustomers, 6)
   const receivableItemsPagination = usePagination(filteredItems, 10)
 
   function applyPreset(preset: 'today' | 'yesterday' | 'week' | 'month') {
@@ -387,10 +402,10 @@ export function AdminDashboardPage() {
           <div className="admx-bi-grid">
             <article className="admx-mini-chart">
               <span className="admx-mini-title">Faturamento por Forma</span>
-              {paymentMethods.length === 0 ? (
+              {safePaymentMethods.length === 0 ? (
                 <div className="admx-muted-state">Sem movimentações no período.</div>
               ) : (
-                paymentMethods.map((payment) => {
+                safePaymentMethods.map((payment) => {
                   const isPhysical = payment.paymentMethod === 'CASH' || payment.paymentMethod === 'DEBIT'
                   const barColor = isPhysical
                     ? 'linear-gradient(90deg, #f6d78b, #ffe9ad)'
@@ -417,9 +432,9 @@ export function AdminDashboardPage() {
             <article className="admx-mini-chart">
               <span className="admx-mini-title">Recebíveis da Carteira</span>
               <div className="admx-split-list">
-                <div className="admx-split-line"><small>Em aberto</small><strong>{formatCurrency(receivables.openAmount)}</strong></div>
-                <div className="admx-split-line"><small style={{ color: '#fb7185' }}>Vencido</small><strong style={{ color: '#fb7185' }}>{formatCurrency(receivables.overdueAmount)}</strong></div>
-                <div className="admx-split-line"><small style={{ color: '#ffe9ad' }}>Próximos 7 dias</small><strong style={{ color: '#ffe9ad' }}>{formatCurrency(receivables.dueNext7DaysAmount)}</strong></div>
+                <div className="admx-split-line"><small>Em aberto</small><strong>{formatCurrency(safeReceivables.openAmount)}</strong></div>
+                <div className="admx-split-line"><small style={{ color: '#fb7185' }}>Vencido</small><strong style={{ color: '#fb7185' }}>{formatCurrency(safeReceivables.overdueAmount)}</strong></div>
+                <div className="admx-split-line"><small style={{ color: '#ffe9ad' }}>Próximos 7 dias</small><strong style={{ color: '#ffe9ad' }}>{formatCurrency(safeReceivables.dueNext7DaysAmount)}</strong></div>
               </div>
             </article>
 
