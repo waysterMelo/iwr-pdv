@@ -1,0 +1,100 @@
+/* Workspace width normalization
+ * Makes every module use the available content column like the Admin Dashboard.
+ * Sidebar remains untouched.
+ */
+
+:root {
+  --workspace-x-padding: 32px;
+  --workspace-bottom-padding: 48px;
+}
+
+.workspace {
+  min-width: 0 !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.workspace-header {
+  padding-left: var(--workspace-x-padding) !important;
+  padding-right: var(--workspace-x-padding) !important;
+}
+
+.workspace > .app-shell,
+.workspace .app-shell,
+.workspace > main.app-shell,
+.workspace > section.app-shell {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: var(--workspace-x-padding) !important;
+  padding-right: var(--workspace-x-padding) !important;
+  padding-bottom: var(--workspace-bottom-padding) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.workspace .app-container,
+.workspace .customer-premium-container,
+.workspace .checkout-container,
+.workspace .history-container,
+.workspace .product-container,
+.workspace .promissory-container,
+.workspace .loyalty-container,
+.workspace .audit-container,
+.workspace .users-container,
+.workspace .admx-dashboard {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Pages that should still keep readable internal cards, but not a narrow page shell. */
+.workspace .customer-premium-shell,
+.workspace .product-management-shell,
+.workspace .product-edit-shell,
+.workspace .promissory-notes-shell,
+.workspace .sales-history-shell,
+.workspace .loyalty-page,
+.workspace .relationship-calendar-shell,
+.workspace .customer-directory-panel,
+.workspace .admin-dashboard-shell,
+.workspace .audit-shell,
+.workspace .user-management-shell {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Prevent old centered cards from creating huge left/right blank zones. */
+.workspace .hero-panel,
+.workspace .customer-premium-hero,
+.workspace .customer-premium-list-panel,
+.workspace .customer-premium-form-panel,
+.workspace .product-form-panel,
+.workspace .product-list-panel,
+.workspace .category-panel,
+.workspace .promissory-delinquency-panel,
+.workspace .relationship-client-panel,
+.workspace .admx-panel,
+.workspace .admx-banner,
+.workspace .admx-target {
+  max-width: none !important;
+}
+
+/* Keep the customer complete profile slightly controlled only when explicitly designed that way. */
+.workspace .relationship-client-panel {
+  width: 100% !important;
+}
+
+@media (max-width: 1180px) {
+  :root {
+    --workspace-x-padding: 18px;
+    --workspace-bottom-padding: 40px;
+  }
+}
+
+@media (max-width: 680px) {
+  :root {
+    --workspace-x-padding: 12px;
+    --workspace-bottom-padding: 32px;
+  }
+}
