@@ -19,6 +19,63 @@
   --pdv-button-border: rgba(226, 232, 240, 0.16);
   --pdv-danger: #fca5a5;
   --pdv-success: #6ee7b7;
+
+  /* customer-profile-polish.css variables */
+  --cc-bg: #080a0f;
+  --cc-panel: #0d1118;
+  --cc-panel-2: #111722;
+  --cc-panel-3: #151c28;
+  --cc-line: rgba(226, 232, 240, 0.10);
+  --cc-line-strong: rgba(226, 232, 240, 0.18);
+  --cc-gold: #d8b15e;
+  --cc-gold-soft: #f5d98f;
+  --cc-gold-ink: #15100a;
+  --cc-text: #f8fafc;
+  --cc-text-2: rgba(226, 232, 240, 0.78);
+  --cc-text-3: rgba(226, 232, 240, 0.56);
+  --cc-green: #34d399;
+  --cc-red: #fb7185;
+  --cc-blue: #93c5fd;
+
+  /* customer-profile-contrast-boost.css variables */
+  --boost-gold: #ffd875;
+  --boost-gold-2: #f6c85f;
+  --boost-text: #f8fafc;
+  --boost-muted: #d7deeb;
+  --boost-green: #22e39f;
+  --boost-red: #ff6f91;
+  --boost-blue: #93c5fd;
+
+  /* pdv-visual-rebalance.css variables */
+  --pdv-gold-bg: linear-gradient(135deg, #ffe9ad 0%, #d8b15e 58%, #a97217 100%);
+  --pdv-gold-ink: #1a1a1a;
+  --pdv-gold-muted: rgba(31, 25, 15, .74);
+  --pdv-dark-1: #0d1017;
+  --pdv-dark-2: #151922;
+  --pdv-border: rgba(226, 232, 240, 0.14);
+  --pdv-gold-border: rgba(216, 177, 94, 0.52);
+  --pdv-text: #f8fafc;
+  --pdv-soft: rgba(226, 232, 240, 0.72);
+  --pdv-muted: rgba(226, 232, 240, 0.48);
+
+  /* ui-polish.css variables */
+  --color-white: #ffffff;
+  --color-text: #f8fafc;
+  --color-text-strong: #ffffff;
+  --color-muted: rgba(226, 232, 240, 0.72);
+  --color-faint: rgba(226, 232, 240, 0.54);
+  --border-soft: rgba(255, 255, 255, 0.12);
+  --border-medium: rgba(255, 255, 255, 0.18);
+  --surface-1: rgba(13, 13, 16, 0.94);
+  --surface-2: rgba(20, 20, 24, 0.92);
+  --surface-3: rgba(255, 255, 255, 0.06);
+  --radius-card: 24px;
+  --radius-panel: 20px;
+  --radius-input: 14px;
+  --radius-button: 14px;
+  --shadow-card: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --shadow-soft: 0 14px 44px rgba(0, 0, 0, 0.28);
+  --focus-ring: 0 0 0 4px rgba(198, 161, 91, 0.18);
 }
 
 /* Reusable accessibility guard for bright metallic, gold and beige surfaces. */
@@ -473,3 +530,1707 @@
     min-height: 86px;
   }
 }
+
+
+/* ==========================================================================
+   ESTILOS PREMIUM CONSOLIDADOS DOS PATCHES DE DESIGN
+   ========================================================================== */
+
+/* --- Conteúdo de: ui-polish.css --- */
+/*
+ * UI polish layer
+ * Loaded after the legacy App.css to normalize tokens, contrast and component density
+ * without changing business logic or recreating the sidebar.
+ */
+
+
+
+body {
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(198, 161, 91, 0.10), transparent 30%),
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.04), transparent 26%),
+    linear-gradient(135deg, #09090b 0%, #0f0f12 48%, #080809 100%);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.workspace {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024), transparent 220px),
+    transparent;
+}
+
+.workspace-header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  height: 78px;
+  padding: 0 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+  background: rgba(10, 10, 11, 0.78);
+  backdrop-filter: blur(18px);
+}
+
+.workspace-current {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  text-align: right;
+}
+
+.workspace-current strong {
+  color: var(--color-text-strong);
+  letter-spacing: -0.03em;
+}
+
+.app-shell {
+  padding: 28px 32px 40px;
+}
+
+.app-container {
+  gap: 24px;
+}
+
+.hero-panel,
+.checkout-hero-panel {
+  padding-bottom: 24px;
+}
+
+.hero-panel h1,
+.checkout-hero-panel h1 {
+  color: var(--color-text-strong);
+  text-wrap: balance;
+}
+
+.hero-panel p,
+.checkout-hero-panel p,
+.product-form-panel p,
+.product-list-panel p,
+.section-header p,
+.login-copy p {
+  color: var(--color-muted);
+}
+
+.product-form-panel,
+.product-list-panel,
+.category-panel,
+.scanner-panel,
+.cart-panel,
+.checkout-footer-panel,
+.stat-card,
+.product-card,
+.cart-item,
+.login-card,
+.customer-premium-form-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)),
+    var(--surface-1) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.product-form-panel,
+.product-list-panel,
+.category-panel,
+.scanner-panel,
+.cart-panel,
+.checkout-footer-panel {
+  padding: 26px;
+}
+
+.section-header {
+  margin-bottom: 20px;
+}
+
+.section-header h2,
+.product-card h3 {
+  color: var(--color-text-strong);
+  letter-spacing: -0.035em;
+}
+
+.field-group label,
+.scanner-form label,
+.brand-caption,
+.operator-card span,
+.workspace-header span,
+.eyebrow,
+.metric-pill span,
+.stat-card span,
+.product-card-grid span,
+.cart-item-main span,
+.cart-item-main small,
+.cart-price span,
+.checkout-footer-panel span,
+.sale-history-item span,
+.sale-history-item small,
+.product-qr-copy span {
+  color: var(--color-muted);
+}
+
+.field-hint {
+  color: var(--color-faint);
+}
+
+.field-group input,
+.field-group select,
+.field-group textarea,
+.search-input,
+.scanner-row input,
+.cart-quantity input {
+  height: 48px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-input);
+  background: rgba(0, 0, 0, 0.38);
+  color: var(--color-text-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.field-group textarea {
+  min-height: 96px;
+  height: auto;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+.field-group input::placeholder,
+.field-group textarea::placeholder,
+.search-input::placeholder,
+.scanner-row input::placeholder {
+  color: rgba(226, 232, 240, 0.42);
+}
+
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus,
+.search-input:focus,
+.scanner-row input:focus,
+.cart-quantity input:focus {
+  border-color: rgba(198, 161, 91, 0.82);
+  box-shadow: var(--focus-ring), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.action-button,
+.secondary-button,
+.icon-button,
+.icon-link,
+.logout-button,
+.nav-button,
+.mobile-link-button,
+.mobile-sell-button {
+  border-radius: var(--radius-button);
+}
+
+.action-button {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-hover));
+  color: #09090b;
+  box-shadow: 0 16px 42px rgba(198, 161, 91, 0.22);
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+.secondary-button,
+.icon-button,
+.icon-link {
+  border-color: var(--border-medium);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-strong);
+}
+
+.secondary-button:hover,
+.icon-button:hover,
+.icon-link:hover {
+  border-color: rgba(198, 161, 91, 0.62);
+  background: rgba(198, 161, 91, 0.12);
+  color: var(--color-text-strong);
+}
+
+.feedback-message {
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  border-left-width: 4px;
+  color: var(--color-text-strong);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.feedback-message--error {
+  border-color: rgba(248, 113, 113, 0.58);
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.20);
+}
+
+.feedback-message--success {
+  border-color: rgba(52, 211, 153, 0.58);
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.18);
+}
+
+.feedback-message--warning {
+  border-color: rgba(198, 161, 91, 0.70);
+  color: #fde68a;
+  background: rgba(120, 53, 15, 0.18);
+}
+
+.inventory-toolbar,
+.product-selection-bar,
+.pagination-bar,
+.inventory-result-bar {
+  border-radius: var(--radius-panel);
+}
+
+.inventory-toolbar {
+  border-color: var(--border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.024)),
+    var(--surface-2);
+}
+
+.product-selection-bar {
+  border-color: rgba(198, 161, 91, 0.46);
+  background:
+    linear-gradient(135deg, rgba(198, 161, 91, 0.18), rgba(255, 255, 255, 0.055)),
+    rgba(12, 12, 14, 0.96);
+}
+
+.category-card {
+  border-color: var(--border-soft);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.032)),
+    rgba(14, 14, 17, 0.96);
+  color: var(--color-text-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+.category-card:hover,
+.category-card--active {
+  border-color: rgba(198, 161, 91, 0.62);
+  box-shadow: 0 18px 48px rgba(198, 161, 91, 0.14);
+}
+
+.category-icon {
+  border-color: rgba(198, 161, 91, 0.48);
+  border-radius: 14px;
+  background: rgba(198, 161, 91, 0.14);
+  color: var(--color-gold-soft);
+}
+
+.category-card small {
+  color: var(--color-muted);
+}
+
+.product-card,
+.cart-item,
+.sale-history-item,
+.batch-row,
+.batch-timeline span {
+  border-radius: 18px;
+  border-color: var(--border-soft);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.product-card:hover,
+.cart-item:hover,
+.sale-history-item:hover {
+  border-color: rgba(198, 161, 91, 0.34);
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.metric-pill,
+.stat-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.024)),
+    rgba(12, 12, 14, 0.94);
+}
+
+.metric-pill strong,
+.stat-card strong,
+.checkout-summary strong {
+  color: var(--color-text-strong);
+}
+
+.checkout-summary {
+  border-radius: var(--radius-card);
+  background:
+    radial-gradient(circle at 82% 18%, rgba(198, 161, 91, 0.18), transparent 32%),
+    linear-gradient(135deg, #0c0c0e, #151519);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-card);
+}
+
+.product-empty {
+  border-radius: var(--radius-panel);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-muted);
+}
+
+/* Checkout / PDV refinement */
+.customer-premium-shell {
+  padding-top: 24px !important;
+}
+
+.sales-checkout-grid {
+  gap: 26px !important;
+}
+
+.sales-checkout-grid > div,
+.sales-checkout-grid > section {
+  min-width: 0;
+}
+
+.sales-checkout-grid .customer-premium-form-panel {
+  overflow: hidden;
+  padding: 24px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.068), rgba(255, 255, 255, 0.028)),
+    radial-gradient(circle at 92% 0%, rgba(198, 161, 91, 0.10), transparent 34%),
+    rgba(13, 14, 18, 0.96) !important;
+  border: 1px solid rgba(226, 232, 240, 0.13) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.34) !important;
+}
+
+.sales-checkout-grid .customer-premium-form-panel > header {
+  min-height: 58px;
+  padding-bottom: 16px !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.105) !important;
+}
+
+.sales-checkout-grid .customer-premium-form-panel > header svg {
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  border: 1px solid rgba(198, 161, 91, 0.22);
+  border-radius: 14px;
+  background: rgba(198, 161, 91, 0.10);
+  color: #f6d78b !important;
+}
+
+.sales-checkout-grid .customer-premium-form-panel h2 {
+  color: #ffffff !important;
+  font-family: var(--font-sans) !important;
+  font-size: 1.02rem !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.02em;
+}
+
+.sales-checkout-grid .customer-premium-form-panel p {
+  color: rgba(226, 232, 240, 0.68) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45;
+}
+
+.sales-checkout-grid .customer-premium-form-panel button[style*="height: 140px"] {
+  height: 168px !important;
+  border: 1px solid rgba(198, 161, 91, 0.34) !important;
+  border-radius: 22px !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(198, 161, 91, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(8, 11, 18, 0.96), rgba(6, 8, 13, 0.98)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035), 0 18px 48px rgba(0, 0, 0, 0.28);
+  color: rgba(226, 232, 240, 0.74) !important;
+}
+
+.sales-checkout-grid .customer-premium-form-panel button[style*="height: 140px"]:hover {
+  transform: translateY(-2px);
+  border-color: rgba(246, 215, 139, 0.74) !important;
+  box-shadow: 0 20px 58px rgba(198, 161, 91, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.sales-checkout-grid .customer-premium-form-panel button[style*="height: 140px"] svg {
+  width: 54px;
+  height: 54px;
+  padding: 11px;
+  border: 1px solid rgba(198, 161, 91, 0.30);
+  border-radius: 18px;
+  background: rgba(198, 161, 91, 0.10);
+  color: #f6d78b !important;
+}
+
+.sales-checkout-grid .customer-premium-form-panel button[style*="height: 140px"] span {
+  color: rgba(248, 250, 252, 0.80) !important;
+}
+
+.customer-premium-form-grid {
+  gap: 14px !important;
+}
+
+.sales-checkout-grid .field-group label {
+  color: rgba(226, 232, 240, 0.68) !important;
+  letter-spacing: 0.16em !important;
+}
+
+.sales-checkout-grid .field-group input,
+.sales-checkout-grid .field-group select {
+  height: 50px !important;
+  border: 1px solid rgba(226, 232, 240, 0.13) !important;
+  border-radius: 15px !important;
+  background: rgba(4, 6, 10, 0.58) !important;
+  color: #ffffff !important;
+}
+
+.sales-checkout-grid .field-group strong {
+  color: #5eead4 !important;
+  font-family: var(--font-sans) !important;
+}
+
+.sales-summary-totals {
+  gap: 10px !important;
+  padding: 12px !important;
+  border: 1px solid rgba(198, 161, 91, 0.16) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(180deg, rgba(198, 161, 91, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(6, 8, 13, 0.78) !important;
+}
+
+.sales-summary-totals > div {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.sales-summary-totals span {
+  color: rgba(226, 232, 240, 0.62) !important;
+  letter-spacing: 0.14em !important;
+}
+
+.sales-summary-totals strong {
+  color: #ffffff !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 900 !important;
+}
+
+.sales-summary-totals > div:last-child strong {
+  color: #f6d78b !important;
+}
+
+.sales-checkout-grid .product-empty {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(198, 161, 91, 0.26) !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(198, 161, 91, 0.10), transparent 36%),
+    rgba(4, 6, 10, 0.60) !important;
+  color: rgba(226, 232, 240, 0.64) !important;
+}
+
+.sales-checkout-grid .cart-list {
+  gap: 10px !important;
+}
+
+.sales-checkout-grid .cart-item {
+  padding: 13px !important;
+  border: 1px solid rgba(226, 232, 240, 0.105) !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.026)),
+    rgba(5, 7, 11, 0.78) !important;
+}
+
+.sales-checkout-grid .cart-item:hover {
+  border-color: rgba(198, 161, 91, 0.36) !important;
+  background: rgba(198, 161, 91, 0.07) !important;
+}
+
+.sales-checkout-grid .cart-item-main span {
+  border: 1px solid rgba(198, 161, 91, 0.18);
+  background: rgba(198, 161, 91, 0.10) !important;
+  color: #f6d78b !important;
+}
+
+.sales-checkout-grid .cart-item-main strong {
+  color: #ffffff !important;
+  font-weight: 850 !important;
+}
+
+.sales-checkout-grid .cart-item-main small,
+.sales-checkout-grid .cart-price span {
+  color: rgba(226, 232, 240, 0.58) !important;
+}
+
+.sales-checkout-grid .cart-price strong {
+  color: #f6d78b !important;
+}
+
+.checkout-footer-panel {
+  position: sticky !important;
+  bottom: 18px;
+  z-index: 6;
+  border: 1px solid rgba(198, 161, 91, 0.20) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(135deg, rgba(198, 161, 91, 0.12), rgba(255, 255, 255, 0.045)),
+    rgba(10, 11, 15, 0.92) !important;
+  box-shadow: 0 24px 78px rgba(0, 0, 0, 0.42) !important;
+  backdrop-filter: blur(18px);
+}
+
+/* Generic table normalization for data-heavy pages */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--color-text-strong);
+}
+
+thead th {
+  color: var(--color-muted);
+  font-size: 0.70rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+tbody td {
+  color: rgba(248, 250, 252, 0.86);
+}
+
+tbody tr {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+tbody tr:hover {
+  background: rgba(198, 161, 91, 0.08);
+}
+
+@media (max-width: 1280px) {
+  .app-shell {
+    padding: 22px 24px 34px;
+  }
+
+  .product-form-panel,
+  .product-list-panel,
+  .category-panel,
+  .scanner-panel,
+  .cart-panel,
+  .checkout-footer-panel {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-header {
+    height: 68px;
+    padding: 0 18px;
+  }
+
+  .app-shell {
+    padding: 18px 16px 96px;
+  }
+
+  .hero-panel h1,
+  .checkout-hero-panel h1 {
+    font-size: clamp(2.4rem, 12vw, 3.4rem);
+  }
+
+  .form-grid,
+  .content-grid,
+  .hero-header,
+  .checkout-hero-panel,
+  .sales-checkout-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .inventory-toolbar,
+  .sales-summary-totals,
+  .customer-premium-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .checkout-footer-panel {
+    position: static !important;
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+}
+
+/* --- Conteúdo de: pdv-visual-rebalance.css --- */
+/* Final PDV visual rebalance.
+ * Keeps gold for money and final CTA. Operational buttons remain dark.
+ */
+
+
+
+.metric-card--gold,
+.metric-card--gold-surface,
+.page-header__metric--gold-surface,
+.customer-premium-target-card {
+  color: var(--pdv-gold-ink) !important;
+  text-shadow: none !important;
+}
+
+.metric-card--gold :is(.metric-card__label, .metric-card__value, .metric-card__hint, svg),
+.metric-card--gold-surface :is(.metric-card__label, .metric-card__value, .metric-card__hint, svg),
+.page-header__metric--gold-surface :is(span, strong),
+.customer-premium-target-card :is(span, small, strong) {
+  color: var(--pdv-gold-ink) !important;
+  text-shadow: none !important;
+}
+
+.metric-card--gold :is(.metric-card__label, .metric-card__hint),
+.metric-card--gold-surface :is(.metric-card__label, .metric-card__hint),
+.page-header__metric--gold-surface span,
+.customer-premium-target-card :is(span, small) {
+  color: var(--pdv-gold-muted) !important;
+}
+
+/* Quick action bar: Nova venda no escuro, Buscar produto destacado, Imprimir discreto */
+.quick-actions {
+  align-items: center !important;
+  padding: 14px !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)), var(--pdv-dark-1) !important;
+  border-color: var(--pdv-border) !important;
+  box-shadow: 0 16px 46px rgba(0,0,0,.24) !important;
+}
+
+.quick-actions button {
+  min-height: 44px !important;
+  padding: 0 22px !important;
+  border-radius: 13px !important;
+  font-size: .70rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .12em !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.quick-actions button:nth-child(1) {
+  border: 1px solid rgba(216,177,94,.32) !important;
+  background: linear-gradient(180deg, rgba(216,177,94,.10), rgba(255,255,255,.018)), #11141c !important;
+  color: #f7df9d !important;
+}
+
+.quick-actions button:nth-child(2) {
+  border: 1px solid rgba(226,232,240,.12) !important;
+  background: rgba(255,255,255,.026) !important;
+  color: rgba(226,232,240,.52) !important;
+}
+
+.quick-actions button:nth-child(3) {
+  border: 1px solid rgba(216,177,94,.50) !important;
+  background: linear-gradient(180deg, rgba(216,177,94,.13), rgba(255,255,255,.02)), #11141c !important;
+  color: #ffe9ad !important;
+}
+
+.quick-actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,235,180,.72) !important;
+  background: linear-gradient(180deg, rgba(216,177,94,.20), rgba(255,255,255,.04)), #171a23 !important;
+  color: #ffe9ad !important;
+}
+
+.quick-actions button:disabled,
+.customer-premium-shell button:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  filter: none !important;
+  color: rgba(226,232,240,.38) !important;
+}
+
+/* Finalizar venda desabilitado: visual claro de indisponivel, sem parecer quebrado */
+.checkout-footer-panel .customer-premium-primary-button:disabled,
+.customer-premium-primary-button:disabled {
+  border-color: rgba(226,232,240,.13) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)), #151720 !important;
+  color: rgba(248,250,252,.46) !important;
+  box-shadow: none !important;
+}
+
+/* Finalizar venda ativo continua sendo o CTA principal */
+.checkout-footer-panel .customer-premium-primary-button:not(:disabled) {
+  border: 1px solid rgba(255,235,180,.80) !important;
+  background: var(--pdv-gold-bg) !important;
+  color: var(--pdv-gold-ink) !important;
+  box-shadow: 0 16px 42px rgba(183,127,22,.24) !important;
+}
+
+/* Total Geral em card gold: texto escuro e forte */
+.sales-summary-totals > div:last-child span,
+.sales-summary-totals > div:last-child strong,
+.sales-summary-totals > div:last-child [style] {
+  color: #141006 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.sales-summary-totals > div:last-child span {
+  font-weight: 950 !important;
+  letter-spacing: .16em !important;
+}
+
+.sales-summary-totals > div:last-child strong {
+  font-size: 1.35rem !important;
+  font-weight: 950 !important;
+}
+
+/* Scanner modal: volta para base escura tecnica, com detalhe gold */
+.customer-premium-modal-backdrop {
+  background: radial-gradient(circle at 50% 18%, rgba(216,177,94,.10), transparent 34%), rgba(0,0,0,.76) !important;
+  backdrop-filter: blur(10px);
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] {
+  width: min(430px, calc(100vw - 32px)) !important;
+  padding: 28px !important;
+  border: 1px solid rgba(216,177,94,.38) !important;
+  border-radius: 28px !important;
+  background: radial-gradient(circle at 50% -10%, rgba(216,177,94,.14), transparent 38%), linear-gradient(180deg, #151922 0%, #0d1017 100%) !important;
+  color: var(--pdv-text) !important;
+  box-shadow: 0 34px 110px rgba(0,0,0,.62), 0 18px 58px rgba(183,127,22,.12) !important;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] h2 {
+  color: var(--pdv-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 1.08rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.02em;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] > div[style*="height: 140px"] {
+  height: 152px !important;
+  border: 1px solid rgba(216,177,94,.20) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, rgba(7,10,18,.98), rgba(5,7,13,.99)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 18px 48px rgba(0,0,0,.28);
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] p {
+  max-width: 330px;
+  margin-inline: auto !important;
+  color: var(--pdv-soft) !important;
+  font-size: .82rem !important;
+  line-height: 1.55;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] p strong {
+  color: #ffe9ad !important;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] .customer-premium-secondary-button {
+  min-height: 42px !important;
+  border-color: rgba(226,232,240,.14) !important;
+  background: rgba(255,255,255,.035) !important;
+  color: var(--pdv-soft) !important;
+}
+
+.customer-premium-modal-backdrop .customer-premium-edit-modal[style*="width: 400px"] .customer-premium-secondary-button:hover {
+  border-color: rgba(216,177,94,.42) !important;
+  background: rgba(216,177,94,.10) !important;
+  color: #ffe9ad !important;
+}
+
+/* Text contrast in checkout panels */
+.sales-checkout-grid h2,
+.sales-checkout-grid h3 {
+  color: var(--pdv-text) !important;
+}
+
+.sales-checkout-grid p {
+  color: var(--pdv-soft) !important;
+}
+
+.sales-checkout-grid .field-group label,
+.sales-checkout-grid .cart-item-main small,
+.sales-checkout-grid .cart-price span {
+  color: var(--pdv-muted) !important;
+}
+
+@media (max-width: 900px) {
+  .quick-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .quick-actions button {
+    width: 100%;
+  }
+}
+
+/* --- Conteúdo de: customer-profile-polish.css --- */
+/* Customer complete profile redesign
+ * Design goal: executive dark UI, clear hierarchy, controlled gold accents.
+ * This file is loaded last and intentionally overrides inline styles from CustomerManagementPage.
+ */
+
+
+
+/* Central workspace: use the available screen instead of a narrow boxed layout */
+.workspace .app-shell:has(.relationship-client-panel) {
+  padding: 18px 28px 42px !important;
+}
+
+.customer-premium-container:has(.relationship-client-panel) {
+  width: 100% !important;
+  max-width: 1520px !important;
+  margin: 0 auto !important;
+  gap: 14px !important;
+}
+
+.content-grid:has(.relationship-client-panel) {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Remove serif/legacy visual conflict inside the central screen */
+.relationship-client-panel,
+.relationship-client-panel *:not(svg):not(path) {
+  font-family: var(--font-sans, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif) !important;
+}
+
+/* Page container */
+.relationship-client-panel {
+  width: 100% !important;
+  max-width: none !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(216, 177, 94, 0.055), transparent 30%),
+    linear-gradient(180deg, rgba(255,255,255,0.033), rgba(255,255,255,0.012)),
+    var(--cc-bg) !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 24px !important;
+  padding: 22px !important;
+  color: var(--cc-text) !important;
+  box-shadow: 0 28px 92px rgba(0,0,0,.44) !important;
+}
+
+.relationship-client-header {
+  padding-bottom: 18px !important;
+  border-bottom: 1px solid var(--cc-line) !important;
+}
+
+.relationship-client-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  background: rgba(216,177,94,.12) !important;
+  border: 1px solid rgba(216,177,94,.22) !important;
+  color: var(--cc-gold-soft) !important;
+  border-radius: 14px !important;
+}
+
+.relationship-client-title h2 {
+  color: var(--cc-text) !important;
+  font-size: 1.30rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.relationship-client-title p {
+  color: var(--cc-text-2) !important;
+  font-size: .84rem !important;
+}
+
+/* Top buttons */
+.relationship-client-header button {
+  min-height: 42px !important;
+  padding: 0 18px !important;
+  border-radius: 13px !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .09em !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.relationship-client-header button:first-of-type {
+  background: linear-gradient(135deg, #ffe9ad 0%, #d8b15e 62%, #a97217 100%) !important;
+  border: 1px solid rgba(255,235,180,.78) !important;
+  color: var(--cc-gold-ink) !important;
+}
+
+.relationship-client-header button:first-of-type svg {
+  color: var(--cc-gold-ink) !important;
+}
+
+.relationship-client-header button:last-of-type {
+  background: rgba(52,211,153,.08) !important;
+  border: 1px solid rgba(52,211,153,.38) !important;
+  color: #86efac !important;
+}
+
+.relationship-client-header button:last-of-type svg {
+  color: #86efac !important;
+}
+
+/* Search and filter areas: compact operational surfaces */
+.customer-profile-search,
+.customer-profile-filter-grid {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.014)),
+    var(--cc-panel) !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 46px rgba(0,0,0,.24) !important;
+}
+
+.customer-profile-search {
+  padding: 16px !important;
+  margin: 16px 0 !important;
+}
+
+.customer-profile-filter-grid {
+  padding: 16px !important;
+  gap: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.customer-profile-search .field-group label,
+.customer-profile-filter-grid .field-group label {
+  color: var(--cc-text-2) !important;
+  font-size: .68rem !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+.customer-profile-search input,
+.customer-profile-search select,
+.customer-profile-filter-grid input,
+.customer-profile-filter-grid select {
+  height: 42px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(226,232,240,.14) !important;
+  background: rgba(4,7,12,.82) !important;
+  color: var(--cc-text) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.customer-profile-search input::placeholder,
+.customer-profile-filter-grid input::placeholder {
+  color: rgba(226,232,240,.42) !important;
+}
+
+.customer-profile-search input:focus,
+.customer-profile-search select:focus,
+.customer-profile-filter-grid input:focus,
+.customer-profile-filter-grid select:focus {
+  border-color: rgba(216,177,94,.68) !important;
+  box-shadow: 0 0 0 4px rgba(216,177,94,.13) !important;
+}
+
+.customer-profile-checkboxes {
+  align-items: end !important;
+}
+
+.customer-profile-checkboxes label {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+  color: var(--cc-text-2) !important;
+  font-weight: 900 !important;
+}
+
+.customer-profile-checkboxes input {
+  width: 16px !important;
+  height: 16px !important;
+  accent-color: var(--cc-gold);
+}
+
+.customer-profile-filter-grid .customer-premium-secondary-button {
+  min-height: 42px !important;
+  border: 1px solid rgba(216,177,94,.30) !important;
+  background: rgba(216,177,94,.08) !important;
+  color: var(--cc-gold-soft) !important;
+  border-radius: 12px !important;
+  font-weight: 950 !important;
+}
+
+/* Content grid after filters: tighter and more dashboard-like */
+.relationship-client-panel > div[style*="display: grid"][style*="gap: 20px"] {
+  gap: 14px !important;
+}
+
+/* Selected customer identity card */
+.relationship-client-panel .cart-item:first-of-type {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(216,177,94,.060), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,.052), rgba(255,255,255,.018)),
+    var(--cc-panel-2) !important;
+  border: 1px solid var(--cc-line-strong) !important;
+  border-radius: 22px !important;
+  padding: 20px !important;
+  box-shadow: 0 18px 58px rgba(0,0,0,.30) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type h3 {
+  color: var(--cc-text) !important;
+  font-size: 1.38rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type small,
+.relationship-client-panel .cart-item:first-of-type small span,
+.relationship-client-panel .cart-item:first-of-type p {
+  color: var(--cc-text-2) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:first-child > div:first-child > span:first-child {
+  background: rgba(255,255,255,.055) !important;
+  border: 1px solid var(--cc-line) !important;
+  color: var(--cc-text-2) !important;
+}
+
+/* Financial values inside identity card */
+.relationship-client-panel .cart-item:first-of-type > div:last-child {
+  gap: 10px !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong {
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--cc-line) !important;
+  background: rgba(255,255,255,.035) !important;
+  font-size: 1.08rem !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong span {
+  color: var(--cc-text-3) !important;
+  margin-top: 4px;
+  font-size: .65rem !important;
+  font-weight: 900 !important;
+}
+
+/* Credit limit bar */
+.relationship-client-panel article[style*="Limite"] {
+  background: var(--cc-panel-2) !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 18px !important;
+}
+
+/* KPI cards */
+.promissory-mini-grid {
+  gap: 10px !important;
+}
+
+.promissory-mini-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)),
+    #0f1623 !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 16px !important;
+  padding: 15px !important;
+  box-shadow: 0 14px 38px rgba(0,0,0,.22) !important;
+}
+
+.promissory-mini-card:hover {
+  border-color: rgba(216,177,94,.28) !important;
+  background:
+    linear-gradient(180deg, rgba(216,177,94,.050), rgba(255,255,255,.018)),
+    #0f1623 !important;
+}
+
+.promissory-mini-card svg {
+  color: var(--cc-gold-soft) !important;
+}
+
+.promissory-mini-card span {
+  color: var(--cc-text-2) !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+}
+
+.promissory-mini-card strong {
+  color: var(--cc-text) !important;
+  font-weight: 950 !important;
+}
+
+.promissory-mini-card small {
+  color: var(--cc-text-3) !important;
+  font-weight: 800 !important;
+}
+
+/* Navigation tabs */
+.customer-profile-tabs {
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 16px !important;
+  padding: 6px !important;
+}
+
+.customer-profile-tabs button {
+  min-height: 40px !important;
+  padding: 0 18px !important;
+  border-radius: 12px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--cc-text-2) !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+  box-shadow: none !important;
+}
+
+.customer-profile-tabs .customer-premium-primary-button {
+  background: linear-gradient(135deg, #ffe9ad 0%, #d8b15e 62%, #a97217 100%) !important;
+  border-color: rgba(255,235,180,.78) !important;
+  color: var(--cc-gold-ink) !important;
+  box-shadow: 0 12px 30px rgba(183,127,22,.16) !important;
+}
+
+.customer-profile-tabs .customer-premium-secondary-button:hover {
+  background: rgba(216,177,94,.09) !important;
+  border-color: rgba(216,177,94,.26) !important;
+  color: var(--cc-gold-soft) !important;
+}
+
+/* Summary area: use wider two-column grid and reduce bulky cards */
+.relationship-client-panel div[style*="repeat(auto-fit, minmax(320px, 1fr))"] {
+  grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr) !important;
+  gap: 14px !important;
+}
+
+.relationship-client-panel div[style*="flex-direction: column"] {
+  gap: 14px !important;
+}
+
+/* Summary panels and tables inside tabs */
+.relationship-client-panel section,
+.relationship-client-panel article:not(.cart-item):not(.promissory-mini-card) {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.040), rgba(255,255,255,.015)),
+    var(--cc-panel) !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 14px 42px rgba(0,0,0,.22) !important;
+}
+
+.relationship-client-panel h3 {
+  color: var(--cc-text) !important;
+  font-size: .96rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -.02em;
+}
+
+.relationship-client-panel textarea {
+  background: rgba(4,7,12,.82) !important;
+  border: 1px solid rgba(216,177,94,.24) !important;
+  border-radius: 14px !important;
+  color: var(--cc-text) !important;
+}
+
+.relationship-client-panel table {
+  border-spacing: 0 8px !important;
+}
+
+.relationship-client-panel thead th {
+  color: var(--cc-text-3) !important;
+}
+
+.relationship-client-panel tbody tr {
+  background: rgba(255,255,255,.035) !important;
+}
+
+.relationship-client-panel tbody td {
+  color: var(--cc-text-2) !important;
+  border-top: 1px solid var(--cc-line);
+  border-bottom: 1px solid var(--cc-line);
+}
+
+@media (min-width: 1440px) {
+  .customer-premium-container:has(.relationship-client-panel) {
+    max-width: 1680px !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .relationship-client-panel div[style*="repeat(auto-fit, minmax(320px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace .app-shell:has(.relationship-client-panel) {
+    padding: 14px 14px 88px !important;
+  }
+
+  .relationship-client-panel {
+    padding: 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .customer-profile-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .customer-profile-checkboxes,
+  .customer-profile-filter-grid .field-group[style*="span 2"] {
+    grid-column: auto !important;
+  }
+
+  .relationship-client-panel .cart-item:first-of-type > div:last-child {
+    grid-template-columns: 1fr !important;
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .customer-profile-tabs button {
+    flex: 1 1 100%;
+  }
+}
+
+/* --- Conteúdo de: customer-profile-contrast-boost.css --- */
+/* Stronger contrast layer for Clientes > Consulta completa */
+
+
+
+/* Date inputs: stronger calendar icon and readable date text */
+.relationship-client-panel input[type="date"],
+.customer-profile-filter-grid input[type="date"],
+.customer-profile-search input[type="date"] {
+  color-scheme: dark !important;
+  color: var(--boost-text) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1 !important;
+  cursor: pointer !important;
+  filter: invert(82%) sepia(86%) saturate(520%) hue-rotate(358deg) brightness(105%) contrast(101%) drop-shadow(0 0 5px rgba(255, 216, 117, 0.46)) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(88%) sepia(95%) saturate(700%) hue-rotate(350deg) brightness(112%) contrast(108%) drop-shadow(0 0 8px rgba(255, 216, 117, 0.74)) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit,
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: var(--boost-text) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-text {
+  color: rgba(255, 216, 117, 0.72) !important;
+}
+
+/* Generic form icon color inside filter/search blocks */
+.customer-profile-filter-grid svg,
+.customer-profile-search svg,
+.relationship-client-panel .field-group svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 216, 117, 0.35));
+}
+
+/* Inputs and labels stronger */
+.customer-profile-search .field-group label,
+.customer-profile-filter-grid .field-group label {
+  color: #ffe9ad !important;
+  text-shadow: 0 0 10px rgba(255, 216, 117, 0.18);
+}
+
+.customer-profile-search input,
+.customer-profile-search select,
+.customer-profile-filter-grid input,
+.customer-profile-filter-grid select {
+  color: var(--boost-text) !important;
+  border-color: rgba(255, 216, 117, 0.24) !important;
+  font-weight: 820 !important;
+}
+
+.customer-profile-search input::placeholder,
+.customer-profile-filter-grid input::placeholder {
+  color: rgba(215, 222, 235, 0.78) !important;
+  font-weight: 760 !important;
+}
+
+/* Contact row: phone/email/date/address icons and values more visible */
+.relationship-client-panel .cart-item:first-of-type small,
+.relationship-client-panel .cart-item:first-of-type small span,
+.relationship-client-panel .cart-item:first-of-type p {
+  color: var(--boost-muted) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type small svg,
+.relationship-client-panel .cart-item:first-of-type p svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 216, 117, 0.42));
+}
+
+.relationship-client-panel .cart-item:first-of-type h3 {
+  color: #ffffff !important;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+/* Badges: stronger contrast */
+.relationship-client-panel .cart-item:first-of-type span[style*="font-family: monospace"] {
+  color: #dce6f6 !important;
+  background: rgba(255, 255, 255, 0.075) !important;
+  border-color: rgba(226, 232, 240, 0.20) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="2dd4bf"],
+.relationship-client-panel .cart-item:first-of-type span[style*="45,212,191"] {
+  color: var(--boost-green) !important;
+  background: rgba(34, 227, 159, 0.16) !important;
+  border-color: rgba(34, 227, 159, 0.42) !important;
+  text-shadow: 0 0 10px rgba(34, 227, 159, 0.24);
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="818cf8"],
+.relationship-client-panel .cart-item:first-of-type span[style*="99,102,241"] {
+  color: #aeb8ff !important;
+  background: rgba(129, 140, 248, 0.18) !important;
+  border-color: rgba(129, 140, 248, 0.42) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="var(--gold-strong)"],
+.relationship-client-panel .cart-item:first-of-type span[style*="215,173,85"] {
+  color: var(--boost-gold) !important;
+  background: rgba(255, 216, 117, 0.16) !important;
+  border-color: rgba(255, 216, 117, 0.42) !important;
+}
+
+/* Money cards: labels and values with stronger semantic colors */
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(1) {
+  color: var(--boost-gold) !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(2) {
+  color: var(--boost-red) !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(3) {
+  color: #ff9dad !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(4) {
+  color: var(--boost-green) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong span {
+  color: rgba(215, 222, 235, 0.82) !important;
+}
+
+/* KPI icons and text */
+.promissory-mini-card svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  background: rgba(255, 216, 117, 0.14) !important;
+  border-color: rgba(255, 216, 117, 0.34) !important;
+  filter: drop-shadow(0 0 7px rgba(255, 216, 117, 0.28));
+}
+
+.promissory-mini-card span {
+  color: #e2e8f0 !important;
+}
+
+.promissory-mini-card small {
+  color: rgba(215, 222, 235, 0.78) !important;
+}
+
+/* Checkbox square stronger */
+/* Stronger contrast layer for Clientes > Consulta completa */
+
+
+
+/* Date inputs: stronger calendar icon and readable date text */
+.relationship-client-panel input[type="date"],
+.customer-profile-filter-grid input[type="date"],
+.customer-profile-search input[type="date"] {
+  color-scheme: dark !important;
+  color: var(--boost-text) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1 !important;
+  cursor: pointer !important;
+  filter: invert(82%) sepia(86%) saturate(520%) hue-rotate(358deg) brightness(105%) contrast(101%) drop-shadow(0 0 5px rgba(255, 216, 117, 0.46)) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-filter-grid input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.customer-profile-search input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(88%) sepia(95%) saturate(700%) hue-rotate(350deg) brightness(112%) contrast(108%) drop-shadow(0 0 8px rgba(255, 216, 117, 0.74)) !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit,
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: var(--boost-text) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-filter-grid input[type="date"]::-webkit-datetime-edit-text,
+.customer-profile-search input[type="date"]::-webkit-datetime-edit-text {
+  color: rgba(255, 216, 117, 0.72) !important;
+}
+
+/* Generic form icon color inside filter/search blocks */
+.customer-profile-filter-grid svg,
+.customer-profile-search svg,
+.relationship-client-panel .field-group svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 216, 117, 0.35));
+}
+
+/* Inputs and labels stronger */
+.customer-profile-search .field-group label,
+.customer-profile-filter-grid .field-group label {
+  color: #ffe9ad !important;
+  text-shadow: 0 0 10px rgba(255, 216, 117, 0.18);
+}
+
+.customer-profile-search input,
+.customer-profile-search select,
+.customer-profile-filter-grid input,
+.customer-profile-filter-grid select {
+  color: var(--boost-text) !important;
+  border-color: rgba(255, 216, 117, 0.24) !important;
+  font-weight: 820 !important;
+}
+
+.customer-profile-search input::placeholder,
+.customer-profile-filter-grid input::placeholder {
+  color: rgba(215, 222, 235, 0.78) !important;
+  font-weight: 760 !important;
+}
+
+/* Contact row: phone/email/date/address icons and values more visible */
+.relationship-client-panel .cart-item:first-of-type small,
+.relationship-client-panel .cart-item:first-of-type small span,
+.relationship-client-panel .cart-item:first-of-type p {
+  color: var(--boost-muted) !important;
+  font-weight: 850 !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type small svg,
+.relationship-client-panel .cart-item:first-of-type p svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 216, 117, 0.42));
+}
+
+.relationship-client-panel .cart-item:first-of-type h3 {
+  color: #ffffff !important;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+/* Badges: stronger contrast */
+.relationship-client-panel .cart-item:first-of-type span[style*="font-family: monospace"] {
+  color: #dce6f6 !important;
+  background: rgba(255, 255, 255, 0.075) !important;
+  border-color: rgba(226, 232, 240, 0.20) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="2dd4bf"],
+.relationship-client-panel .cart-item:first-of-type span[style*="45,212,191"] {
+  color: var(--boost-green) !important;
+  background: rgba(34, 227, 159, 0.16) !important;
+  border-color: rgba(34, 227, 159, 0.42) !important;
+  text-shadow: 0 0 10px rgba(34, 227, 159, 0.24);
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="818cf8"],
+.relationship-client-panel .cart-item:first-of-type span[style*="99,102,241"] {
+  color: #aeb8ff !important;
+  background: rgba(129, 140, 248, 0.18) !important;
+  border-color: rgba(129, 140, 248, 0.42) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type span[style*="var(--gold-strong)"],
+.relationship-client-panel .cart-item:first-of-type span[style*="215,173,85"] {
+  color: var(--boost-gold) !important;
+  background: rgba(255, 216, 117, 0.16) !important;
+  border-color: rgba(255, 216, 117, 0.42) !important;
+}
+
+/* Money cards: labels and values with stronger semantic colors */
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(1) {
+  color: var(--boost-gold) !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(2) {
+  color: var(--boost-red) !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(3) {
+  color: #ff9dad !important;
+}
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong:nth-child(4) {
+  color: var(--boost-green) !important;
+}
+
+.relationship-client-panel .cart-item:first-of-type > div:last-child strong span {
+  color: rgba(215, 222, 235, 0.82) !important;
+}
+
+/* KPI icons and text */
+.promissory-mini-card svg {
+  color: var(--boost-gold) !important;
+  stroke: var(--boost-gold) !important;
+  background: rgba(255, 216, 117, 0.14) !important;
+  border-color: rgba(255, 216, 117, 0.34) !important;
+  filter: drop-shadow(0 0 7px rgba(255, 216, 117, 0.28));
+}
+
+.promissory-mini-card span {
+  color: #e2e8f0 !important;
+}
+
+.promissory-mini-card small {
+  color: rgba(215, 222, 235, 0.78) !important;
+}
+
+/* Checkbox square stronger */
+.customer-profile-checkboxes input {
+  accent-color: var(--boost-gold) !important;
+  filter: drop-shadow(0 0 4px rgba(255, 216, 117, 0.36));
+}
+
+.customer-profile-checkboxes label {
+  color: #ffe9ad !important;
+  border-color: rgba(255, 216, 117, 0.26) !important;
+}
+
+/* --- Isolamento de Contraste para Áreas Dark (Evita Vazamento de Letras Escuras) --- */
+
+/* Totais do Carrinho no Checkout (Fundo Escuro) */
+.sales-summary-totals {
+  background: var(--surface-dark) !important;
+}
+
+.sales-summary-totals > div {
+  background: rgba(255, 255, 255, 0.035) !important;
+}
+
+.sales-summary-totals > div span {
+  color: #AEB8C8 !important; /* Cinza claro de alto contraste */
+  opacity: 1 !important;
+}
+
+.sales-summary-totals > div strong {
+  color: #F5C77E !important; /* Dourado vivo brilhante */
+  text-shadow: 0 0 10px rgba(245, 199, 126, 0.25) !important;
+}
+
+/* Forçar visual limpo e legível do Total Geral (último div) sobre fundo escuro */
+.sales-summary-totals > div:last-child {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(245, 199, 126, 0.2) !important;
+}
+
+.sales-summary-totals > div:last-child span,
+.sales-summary-totals > div:last-child [style] {
+  color: #ffffff !important; /* Branco fosco de alto contraste */
+  opacity: 1 !important;
+}
+
+.sales-summary-totals > div:last-child strong {
+  color: #F5C77E !important; /* Dourado vivo brilhante */
+  text-shadow: 0 0 12px rgba(245, 199, 126, 0.4) !important;
+}
+
+/* Botões de Ação Principais em Áreas Escuras / Formulários de Busca e Filtros (Marrom-Café / Dark) */
+.customer-premium-search button.customer-premium-primary-button,
+.history-filter-form button.customer-premium-primary-button,
+.promissory-notes-filter-form button.customer-premium-primary-button,
+.sales-history-filter-panel button.customer-premium-primary-button,
+.customer-premium-form-panel button.customer-premium-primary-button,
+form button.customer-premium-primary-button {
+  color: #F5C77E !important; /* Dourado vivo brilhante */
+  background: #231d14 !important; /* Marrom-café ou marrom escuro */
+  border: 1px solid rgba(245, 199, 126, 0.3) !important;
+  text-shadow: 0 0 8px rgba(245, 199, 126, 0.2) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+.customer-premium-search button.customer-premium-primary-button:hover,
+.history-filter-form button.customer-premium-primary-button:hover,
+.promissory-notes-filter-form button.customer-premium-primary-button:hover,
+.sales-history-filter-panel button.customer-premium-primary-button:hover,
+.customer-premium-form-panel button.customer-premium-primary-button:hover,
+form button.customer-premium-primary-button:hover {
+  background: #2e261a !important;
+  border-color: rgba(245, 199, 126, 0.5) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(245, 199, 126, 0.15) !important;
+}
+
+/* --- Isolamento de Contraste para Página Cadastrar Cliente (Fundo Claro / Textos Negros) --- */
+
+.customer-premium-shell .customer-entry-panel {
+  color: #15110a !important;
+}
+
+.customer-premium-shell .customer-entry-panel h1,
+.customer-premium-shell .customer-entry-panel h2,
+.customer-premium-shell .customer-entry-panel h3,
+.customer-premium-shell .customer-entry-panel h4,
+.customer-premium-shell .customer-entry-panel p,
+.customer-premium-shell .customer-entry-panel span,
+.customer-premium-shell .customer-entry-panel label,
+.customer-premium-shell .customer-entry-panel .field-group label {
+  color: #15110a !important;
+}
+
+.customer-premium-shell .customer-entry-panel input::placeholder,
+.customer-premium-shell .customer-entry-panel textarea::placeholder {
+  color: rgba(255, 255, 255, 0.62) !important;
+  opacity: 1 !important;
+}
+
+.customer-premium-shell .customer-entry-panel input,
+.customer-premium-shell .customer-entry-panel select,
+.customer-premium-shell .customer-entry-panel textarea {
+  background: rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(215, 173, 85, 0.3) !important;
+  color: #ffffff !important;
+}
+
+/* --- Ícone de Seleção e Análise em Preto --- */
+.relationship-client-icon,
+.relationship-client-icon svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+

@@ -139,6 +139,7 @@ export function AdminDashboardPage() {
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => todayFilters().startDate)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const loadDashboard = useCallback(async (nextFilters: AdminDashboardFilters, nextCalendarMonth: string) => {
     setIsLoading(true)
@@ -187,7 +188,19 @@ export function AdminDashboardPage() {
     [paymentMethods],
   )
   const topCustomersPagination = usePagination(receivables.topCustomers, 6)
-  const receivableItemsPagination = usePagination(receivables.items, 10)
+
+  const filteredItems = useMemo(() => {
+    if (!searchTerm.trim()) return receivables.items
+    const lower = searchTerm.toLowerCase()
+    return receivables.items.filter((item) => {
+      return (
+        item.customerName.toLowerCase().includes(lower) ||
+        String(item.saleId).toLowerCase().includes(lower)
+      )
+    })
+  }, [receivables.items, searchTerm])
+
+  const receivableItemsPagination = usePagination(filteredItems, 10)
 
   function applyPreset(preset: 'today' | 'yesterday' | 'week' | 'month') {
     const nextFilters = presetFilters(preset)
@@ -244,14 +257,14 @@ export function AdminDashboardPage() {
             <p>Acompanhe em tempo real as vendas, faturamento, parcelas de promissórias e recebimentos consolidados.</p>
           </section>
 
-          <section className="customer-premium-target-card">
+          <section className="customer-premium-target-card" style={{ background: 'var(--gold-card-bg)' }}>
             <div>
-              <span>Índice de Recebimento</span>
-              <small>Efetividade de Cobrança</small>
+              <span style={{ color: '#16110A', opacity: 0.85 }}>Índice de Recebimento</span>
+              <small style={{ color: '#16110A', opacity: 0.7 }}>Efetividade de Cobrança</small>
             </div>
-            <strong style={{ color: '#2dd4bf' }}>{receivedRatio}</strong>
-            <div className="customer-premium-progress">
-              <span style={{ width: receivedRatio, background: 'linear-gradient(90deg, #2dd4bf, #8ff2e7)' }} />
+            <strong style={{ color: '#16110A', fontWeight: 800 }}>{receivedRatio}</strong>
+            <div className="customer-premium-progress" style={{ background: 'rgba(22, 17, 10, 0.15)' }}>
+              <span style={{ width: receivedRatio, background: '#16110A' }} />
             </div>
           </section>
         </div>
@@ -298,12 +311,12 @@ export function AdminDashboardPage() {
 
         {/* Métricas Principais (Grid 4 Colunas) */}
         <div className="customer-premium-metrics">
-          <article style={{ border: '1px solid rgba(215, 173, 85, 0.4)', background: 'linear-gradient(180deg, rgba(215,173,85,0.04), rgba(0,0,0,0))' }}>
+          <article className="gold-readable-surface" style={{ background: 'var(--gold-card-bg)', border: '1px solid #d7ad55', padding: '20px', borderRadius: '16px' }}>
             <div>
-              <span>Faturamento total</span>
-              <strong style={{ color: 'var(--gold-strong)' }}>{formatCurrency(summary.totalSold)}</strong>
+              <span style={{ color: '#16110A', opacity: 0.85, fontWeight: 600 }}>Faturamento total</span>
+              <strong style={{ color: '#16110A', fontSize: '1.75rem', fontWeight: 800 }}>{formatCurrency(summary.totalSold)}</strong>
             </div>
-            <TrendingUp size={19} aria-hidden="true" style={{ color: '#d7ad55', background: 'rgba(215, 173, 85, 0.1)' }} />
+            <TrendingUp size={19} aria-hidden="true" style={{ color: '#16110A', background: 'rgba(22, 17, 10, 0.12)' }} />
           </article>
 
           <article style={{ border: '1px solid rgba(45, 212, 191, 0.4)', background: 'linear-gradient(180deg, rgba(45,212,191,0.04), rgba(0,0,0,0))' }}>
@@ -378,21 +391,28 @@ export function AdminDashboardPage() {
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '20px 0' }}>Sem movimentações no período.</div>
               ) : (
                 <div style={{ display: 'grid', gap: '10px' }}>
-                  {paymentMethods.map((payment) => (
-                    <div className="admin-chart-row" key={payment.paymentMethod} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <small style={{ width: '80px', color: 'var(--text-secondary)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{formatPaymentMethod(payment.paymentMethod)}</small>
-                      <div style={{ flex: 1, height: '8px', background: '#11141a', borderRadius: '4px', overflow: 'hidden' }}>
-                        <i style={{ 
-                          display: 'block', 
-                          height: '100%', 
-                          borderRadius: 'inherit',
-                          background: 'linear-gradient(90deg, #d7ad55, #f6d78b)', 
-                          width: `${Math.max(6, (payment.receivedAmount / maxPaymentAmount) * 100)}%` 
-                        }} />
+                  {paymentMethods.map((payment) => {
+                    const isPhysical = payment.paymentMethod === 'CASH' || payment.paymentMethod === 'DEBIT'
+                    const barColor = isPhysical 
+                      ? 'linear-gradient(90deg, #f6d78b, #ffe9ad)' // Dourado Claro (Atelier Físico)
+                      : 'linear-gradient(90deg, #b77a1a, #d7ad55)' // Dourado Escuro Brilhante (Atelier Online)
+                    
+                    return (
+                      <div className="admin-chart-row" key={payment.paymentMethod} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <small style={{ width: '80px', color: 'var(--text-secondary)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{formatPaymentMethod(payment.paymentMethod)}</small>
+                        <div style={{ flex: 1, height: '8px', background: '#11141a', borderRadius: '4px', overflow: 'hidden' }}>
+                          <i style={{ 
+                            display: 'block', 
+                            height: '100%', 
+                            borderRadius: 'inherit',
+                            background: barColor, 
+                            width: `${Math.max(6, (payment.receivedAmount / maxPaymentAmount) * 100)}%` 
+                          }} />
+                        </div>
+                        <strong style={{ width: '90px', textAlign: 'right', color: '#fff', fontSize: '0.78rem' }}>{formatCurrency(payment.receivedAmount)}</strong>
                       </div>
-                      <strong style={{ width: '90px', textAlign: 'right', color: '#fff', fontSize: '0.78rem' }}>{formatCurrency(payment.receivedAmount)}</strong>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -469,15 +489,33 @@ export function AdminDashboardPage() {
             {calendarDays.map((day, index) => {
               const total = day.date ? receivableDayTotals.get(day.date) : undefined
               const isSelected = day.date === selectedCalendarDate
+              const todayStr = toIsoDate(new Date())
+              const isToday = day.date === todayStr
               
-              // Efeito de Halo Dourado Iluminando dias com recebíveis
+              // Efeito de Halo Dourado Iluminando dias com recebíveis e Destaque do Dia Atual
               const dayStyle: React.CSSProperties = {
                 minHeight: '64px',
-                background: isSelected ? 'rgba(215, 173, 85, 0.22)' : total ? 'rgba(215, 173, 85, 0.06)' : '#0d1016',
-                border: isSelected ? '1px solid #d7ad55' : total ? '1px solid rgba(215, 173, 85, 0.3)' : '1px solid rgba(226, 232, 240, 0.04)',
-                boxShadow: total && !isSelected ? '0 0 10px rgba(215, 173, 85, 0.08)' : undefined,
+                background: isSelected 
+                  ? 'rgba(215, 173, 85, 0.25)' 
+                  : isToday 
+                    ? 'rgba(45, 212, 191, 0.15)' 
+                    : total 
+                      ? 'rgba(215, 173, 85, 0.06)' 
+                      : '#0d1016',
+                border: isSelected 
+                  ? '2px solid #d7ad55' 
+                  : isToday 
+                    ? '2px solid #2dd4bf' 
+                    : total 
+                      ? '1px solid rgba(215, 173, 85, 0.3)' 
+                      : '1px solid rgba(226, 232, 240, 0.04)',
+                boxShadow: isToday 
+                  ? '0 0 12px rgba(45, 212, 191, 0.15)' 
+                  : total && !isSelected 
+                    ? '0 0 10px rgba(215, 173, 85, 0.08)' 
+                    : undefined,
                 borderRadius: '8px',
-                color: day.muted ? '#7b8493' : '#fff',
+                color: day.muted ? '#7b8493' : isToday ? '#2dd4bf' : '#fff',
                 cursor: day.muted ? 'default' : 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -497,7 +535,12 @@ export function AdminDashboardPage() {
                   onClick={() => selectCalendarDate(day.date)}
                   style={dayStyle}
                 >
-                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{day.day || ''}</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    {day.day || ''}
+                    {isToday && (
+                      <span style={{ fontSize: '0.55rem', background: '#2dd4bf', color: '#0d1016', padding: '1px 4px', borderRadius: '4px', fontWeight: 900 }}>HOJE</span>
+                    )}
+                  </span>
                   {total ? (
                     <small style={{ fontSize: '0.62rem', color: 'var(--gold-strong)', fontWeight: 'bold', display: 'block', width: '100%', borderTop: '1px solid rgba(215,173,85,0.15)', paddingTop: '4px', marginTop: '4px' }}>
                       {total.count} nota(s) — {formatCurrency(total.amount)}
@@ -569,15 +612,43 @@ export function AdminDashboardPage() {
 
         {/* Tabela de Recebíveis do Período */}
         <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
-          <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '18px' }}>
-            <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Histórico de parcelas no período</h2>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Todas as parcelas com vencimento agendado para o intervalo filtrado.</p>
+          <style>{`
+            .admin-receivable-table .pagination-controls span,
+            .admin-receivable-table .pagination-controls strong,
+            .admin-top-customers .pagination-controls span,
+            .admin-top-customers .pagination-controls strong {
+              color: #94a3b8 !important;
+            }
+          `}</style>
+          
+          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '18px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Histórico de parcelas no período</h2>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Todas as parcelas com vencimento agendado para o intervalo filtrado.</p>
+            </div>
+            <div className="field-group" style={{ margin: 0, width: '100%', maxWidth: '380px' }}>
+              <input
+                type="text"
+                placeholder="Buscar por cliente ou venda..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  colorScheme: 'dark',
+                  height: '38px',
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  borderRadius: '8px',
+                  fontSize: '0.8rem',
+                  padding: '0 12px',
+                  width: '100%'
+                }}
+              />
+            </div>
           </header>
 
           {isLoading ? (
             <div className="product-empty">Atualizando listagem de parcelas...</div>
-          ) : receivables.items.length === 0 ? (
-            <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhuma parcela de promissória pendente no período.</div>
+          ) : filteredItems.length === 0 ? (
+            <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhuma parcela correspondente aos critérios.</div>
           ) : (
             <div className="admin-receivable-table" style={{ display: 'grid', gap: '8px' }}>
               <div className="admin-receivable-head" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '10px 18px', background: 'var(--surface-dark)', borderRadius: '8px', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>
@@ -612,6 +683,3 @@ export function AdminDashboardPage() {
     </main>
   )
 }
-
-
-

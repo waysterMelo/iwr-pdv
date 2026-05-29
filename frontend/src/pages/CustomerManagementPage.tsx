@@ -1332,7 +1332,7 @@ export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId
               {isProfileLoading ? (
                 <div className="product-empty">Carregando perfil do cliente...</div>
               ) : !customerProfile ? (
-                <div className="product-empty" style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '40px', border: '1px solid rgba(215, 173, 85, 0.35)', color: 'var(--gold-strong)' }}>Selecione um cliente para visualizar o perfil completo.</div>
+                <div className="product-empty" style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '40px', border: '1px solid rgba(215, 173, 85, 0.35)', color: '#fff' }}>Selecione um cliente para visualizar o perfil completo.</div>
               ) : (
                 <div style={{ display: 'grid', gap: '20px' }}>
                   {/* Perfil e Scores */}
