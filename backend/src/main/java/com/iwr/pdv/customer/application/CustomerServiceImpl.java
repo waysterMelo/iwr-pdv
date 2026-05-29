@@ -230,13 +230,20 @@ public class CustomerServiceImpl implements CustomerService {
 
         StringBuilder csv = new StringBuilder();
         csv.append("Dados do Cliente\n");
-        csv.append("Nome;CPF;Telefone;Email;Endereco;Status\n");
+        csv.append("Nome;CPF;Telefone;Email;Endereco;Rua;Numero;Bairro;Complemento;Cidade;UF;CEP;Status\n");
         CustomerResponse customer = profile.customer();
         csv.append(csvCell(customer.name())).append(';')
                 .append(csvCell(customer.cpf())).append(';')
                 .append(csvCell(customer.phone())).append(';')
                 .append(csvCell(customer.email())).append(';')
                 .append(csvCell(customer.address())).append(';')
+                .append(csvCell(customer.addressStreet())).append(';')
+                .append(csvCell(customer.addressNumber())).append(';')
+                .append(csvCell(customer.addressNeighborhood())).append(';')
+                .append(csvCell(customer.addressComplement())).append(';')
+                .append(csvCell(customer.addressCity())).append(';')
+                .append(csvCell(customer.addressState())).append(';')
+                .append(csvCell(customer.addressZipCode())).append(';')
                 .append(customer.active() ? "Ativo" : "Inativo")
                 .append("\n\n");
 
@@ -342,7 +349,14 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setCpf(normalize(request.cpf()));
         customer.setPhone(normalize(request.phone()));
         customer.setEmail(normalize(request.email()));
-        customer.setAddress(normalize(request.address()));
+        customer.setAddressStreet(normalize(request.addressStreet()));
+        customer.setAddressNumber(normalize(request.addressNumber()));
+        customer.setAddressNeighborhood(normalize(request.addressNeighborhood()));
+        customer.setAddressComplement(normalize(request.addressComplement()));
+        customer.setAddressCity(normalize(request.addressCity()));
+        customer.setAddressState(normalize(request.addressState()) == null ? null : normalize(request.addressState()).toUpperCase());
+        customer.setAddressZipCode(normalize(request.addressZipCode()));
+        customer.setAddress(normalize(request.address()) == null ? buildAddress(request) : normalize(request.address()));
         customer.setBirthDate(request.birthDate());
         customer.setActive(request.active() == null || request.active());
         customer.setObservations(request.observations() != null ? request.observations().trim() : null);
@@ -375,6 +389,35 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return value.trim();
+    }
+
+    private String buildAddress(CustomerRequest request) {
+        List<String> parts = new java.util.ArrayList<>();
+        String street = normalize(request.addressStreet());
+        String number = normalize(request.addressNumber());
+        String neighborhood = normalize(request.addressNeighborhood());
+        String city = normalize(request.addressCity());
+        String state = normalize(request.addressState());
+
+        if (street != null && number != null) {
+            parts.add(street + ", " + number);
+        } else if (street != null) {
+            parts.add(street);
+        } else if (number != null) {
+            parts.add("Nº " + number);
+        }
+        if (neighborhood != null) {
+            parts.add(neighborhood);
+        }
+        if (city != null && state != null) {
+            parts.add(city + "/" + state.toUpperCase());
+        } else if (city != null) {
+            parts.add(city);
+        } else if (state != null) {
+            parts.add(state.toUpperCase());
+        }
+
+        return parts.isEmpty() ? null : String.join(" - ", parts);
     }
 
     private boolean isOpenNote(PromissoryNote note) {

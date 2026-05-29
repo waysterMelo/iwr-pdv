@@ -170,7 +170,7 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
   };
 
   return (
-    <main className="app-shell customer-premium-shell loyalty-page">
+    <main className="app-shell customer-premium-shell loyalty-page relationship-calendar-shell">
       <div className="app-container customer-premium-container">
         <PageHeader
           eyebrow="Clientes"

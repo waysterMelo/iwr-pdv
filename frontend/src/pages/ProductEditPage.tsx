@@ -181,7 +181,7 @@ export function ProductEditPage({ productId, onBack, onSaved }: ProductEditPageP
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell product-edit-shell">
       <div className="app-container product-edit-container">
         <section className="hero-panel product-edit-hero">
           <header className="hero-header">

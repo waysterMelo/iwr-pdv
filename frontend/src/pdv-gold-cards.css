@@ -5,8 +5,10 @@
 :root {
   --gold-card-bg: linear-gradient(135deg, #f6dfa0 0%, #d8b15e 48%, #b77a1a 100%);
   --gold-card-bg-soft: linear-gradient(135deg, #ffe9ad 0%, #d9b45f 58%, #a97217 100%);
-  --gold-card-ink: #11100d;
-  --gold-card-muted: rgba(17, 16, 13, 0.70);
+  --gold-card-ink: #1a1a1a;
+  --gold-card-ink-strong: #1f190f;
+  --gold-card-ink-soft: #262626;
+  --gold-card-muted: rgba(31, 25, 15, 0.74);
   --gold-card-line: rgba(17, 16, 13, 0.16);
   --gold-card-shadow: 0 24px 70px rgba(183, 127, 22, 0.24);
   --pdv-text-main: #f8fafc;
@@ -17,6 +19,47 @@
   --pdv-button-border: rgba(226, 232, 240, 0.16);
   --pdv-danger: #fca5a5;
   --pdv-success: #6ee7b7;
+}
+
+/* Reusable accessibility guard for bright metallic, gold and beige surfaces. */
+.gold-surface,
+.gold-readable-surface,
+.metric-card--gold-surface,
+.page-header__metric--gold-surface,
+.customer-premium-target-card,
+.sales-summary-totals > div:last-child,
+.checkout-footer-panel > div:first-child {
+  color: var(--gold-card-ink) !important;
+  text-shadow: none !important;
+}
+
+.gold-surface :is(h1, h2, h3, h4, p, span, small, strong, label, a, button),
+.gold-readable-surface :is(h1, h2, h3, h4, p, span, small, strong, label, a, button),
+.metric-card--gold-surface :is(.metric-card__label, .metric-card__value, .metric-card__hint, svg),
+.page-header__metric--gold-surface :is(span, strong),
+.customer-premium-target-card :is(span, small, strong),
+.sales-summary-totals > div:last-child :is(span, small, strong),
+.checkout-footer-panel > div:first-child :is(span, small, strong) {
+  color: var(--gold-card-ink) !important;
+  text-shadow: none !important;
+}
+
+.gold-surface :is(p, small, label),
+.gold-readable-surface :is(p, small, label),
+.metric-card--gold-surface .metric-card__label,
+.metric-card--gold-surface .metric-card__hint,
+.page-header__metric--gold-surface span,
+.customer-premium-target-card :is(span, small),
+.sales-summary-totals > div:last-child span,
+.checkout-footer-panel > div:first-child span {
+  color: var(--gold-card-muted) !important;
+}
+
+.metric-card--gold-surface :is(.metric-card__value, strong),
+.page-header__metric--gold-surface strong,
+.gold-surface :is(h1, h2, h3, h4, strong),
+.gold-readable-surface :is(h1, h2, h3, h4, strong) {
+  font-weight: 800 !important;
 }
 
 /* General PDV text tuning */
@@ -81,6 +124,50 @@
 
 .customer-premium-target-card strong {
   color: var(--gold-card-ink) !important;
+  text-shadow: none !important;
+}
+
+.metric-card--gold {
+  border-color: rgba(91, 58, 10, 0.22) !important;
+  background: var(--gold-card-bg-soft) !important;
+  color: var(--gold-card-ink) !important;
+}
+
+.metric-card--gold :is(.metric-card__label, .metric-card__value, .metric-card__hint, svg) {
+  color: var(--gold-card-ink) !important;
+  text-shadow: none !important;
+}
+
+.metric-card--gold .metric-card__label,
+.metric-card--gold .metric-card__hint {
+  color: var(--gold-card-muted) !important;
+}
+
+.page-header__metric--gold-surface {
+  border-color: rgba(91, 58, 10, 0.22) !important;
+  background: var(--gold-card-bg-soft) !important;
+}
+
+.page-header__metric--gold-surface .page-header__progress {
+  background: rgba(17, 16, 13, 0.18) !important;
+}
+
+.page-header__metric--gold-surface .page-header__progress-bar {
+  background: #1f190f !important;
+}
+
+.customer-premium-card {
+  color: var(--gold-card-ink) !important;
+}
+
+.customer-premium-card :is(h3, h4, strong) {
+  color: var(--gold-card-ink-strong) !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
+
+.customer-premium-card :is(p, span, small, label) {
+  color: var(--gold-card-ink-soft) !important;
   text-shadow: none !important;
 }
 

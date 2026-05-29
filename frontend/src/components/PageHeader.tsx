@@ -22,7 +22,7 @@ export function PageHeader({ eyebrow, title, subtitle, metricLabel, metricValue,
         <p>{subtitle}</p>
       </div>
       {metricLabel && metricValue ? (
-        <div className="page-header__metric">
+        <div className="page-header__metric page-header__metric--gold-surface">
           <span>{metricLabel}</span>
           <strong>{metricValue}</strong>
           <div className="page-header__progress">

@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import { BarChart3, ChevronDown, ClipboardList, FileSpreadsheet, Gift, History, Package, PlusCircle, ReceiptText, Search, ShieldCheck, Tags, UserPlus, Users } from 'lucide-react'
 import './App.css'
 import './ui-polish.css'
+import './final-refinement.css'
 
 import { LoginPage } from './pages/LoginPage'
 import { getCurrentUser, logout } from './services/authService'

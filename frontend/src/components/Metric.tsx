@@ -11,8 +11,10 @@ type MetricProps = {
 }
 
 export function Metric({ label, value, hint, tone = 'default', icon: Icon }: MetricProps) {
+  const surfaceClassName = tone === 'gold' ? 'metric-card--gold-surface' : ''
+
   return (
-    <div className={`metric-card metric-card--${tone}`}>
+    <div className={`metric-card metric-card--${tone} ${surfaceClassName}`.trim()}>
       <div className="metric-card__glow" />
       <span className="metric-card__label">
         {Icon ? <Icon size={16} strokeWidth={2.4} aria-hidden="true" /> : null}

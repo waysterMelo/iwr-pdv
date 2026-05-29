@@ -1,0 +1,373 @@
+/* Final scoped refinement for client, product, promissory, loyalty and admin screens. */
+
+:root {
+  --ops-bg: #080b12;
+  --ops-panel: #0f1520;
+  --ops-panel-2: #141c2a;
+  --ops-line: rgba(226, 232, 240, 0.14);
+  --ops-line-strong: rgba(216, 177, 94, 0.36);
+  --ops-text: #f8fafc;
+  --ops-soft: #cbd5e1;
+  --ops-muted: #94a3b8;
+  --ops-gold: #d8b15e;
+  --ops-gold-soft: #ffe9ad;
+  --ops-green: #34d399;
+  --ops-red: #fb7185;
+}
+
+.structured-address-grid,
+.category-picker-row,
+.category-inline-create {
+  display: grid;
+  gap: 10px;
+}
+
+.structured-address-grid {
+  grid-template-columns: minmax(220px, 2fr) minmax(92px, 0.6fr) minmax(160px, 1.1fr);
+}
+
+.structured-address-grid input:nth-child(4) {
+  grid-column: span 2;
+}
+
+.structured-address-grid input:nth-child(7) {
+  max-width: 180px;
+}
+
+.category-picker-row {
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: stretch;
+}
+
+.category-add-button {
+  min-height: 48px;
+  border: 1px solid var(--ops-line-strong);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(216, 177, 94, .16), rgba(255, 255, 255, .035)), #10141d;
+  color: var(--ops-gold-soft);
+  cursor: pointer;
+}
+
+.category-inline-create {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 10px;
+  border: 1px solid rgba(216, 177, 94, .22);
+  border-radius: 12px;
+  background: rgba(8, 11, 18, .78);
+}
+
+.category-inline-create button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 235, 180, .72);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ffe9ad, #d8b15e);
+  color: #15100a;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.customer-directory-panel .customer-premium-search {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 1fr) auto auto;
+  align-items: end !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)), var(--ops-panel) !important;
+  border: 1px solid var(--ops-line-strong) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.28) !important;
+}
+
+.customer-directory-panel .customer-premium-card,
+.relationship-calendar-shell .customer-premium-card {
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(248,239,214,.88)) !important;
+  color: #211609 !important;
+}
+
+.customer-directory-panel .customer-premium-card :is(h3, strong, span, small),
+.relationship-calendar-shell .customer-premium-card :is(h3, strong, span, small) {
+  color: #211609 !important;
+}
+
+.customer-directory-panel .customer-premium-contact-box,
+.relationship-calendar-shell .customer-premium-contact-box {
+  background: rgba(33, 22, 9, .06) !important;
+  border: 1px solid rgba(33, 22, 9, .11) !important;
+}
+
+.loyalty-page .customer-premium-hero,
+.loyalty-page > .customer-premium-container > .customer-premium-metrics {
+  display: none !important;
+}
+
+.loyalty-page .customer-premium-edit-modal {
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(247,237,210,.98)) !important;
+  color: #211609 !important;
+}
+
+.loyalty-page .customer-premium-edit-modal :is(h2, p, label, strong) {
+  color: #211609 !important;
+}
+
+.loyalty-message-textarea {
+  background: #fffaf0 !important;
+  border: 1px solid rgba(91, 58, 10, .24) !important;
+  color: #211609 !important;
+}
+
+.product-management-shell .customer-premium-form-panel,
+.product-management-shell .customer-premium-list-panel,
+.product-edit-shell .product-form-panel,
+.product-edit-shell .product-list-panel,
+.promissory-notes-shell .customer-premium-form-panel,
+.promissory-notes-shell .customer-premium-list-panel,
+.admin-dashboard-shell .customer-premium-form-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,.052), rgba(255,255,255,.018)), var(--ops-panel) !important;
+  border: 1px solid var(--ops-line) !important;
+  color: var(--ops-text) !important;
+  box-shadow: 0 22px 72px rgba(0,0,0,.34) !important;
+}
+
+.product-management-shell :is(h2, h3, strong),
+.product-edit-shell :is(h1, h2, h3, strong),
+.promissory-notes-shell :is(h2, h3, strong),
+.admin-dashboard-shell :is(h2, h3, strong) {
+  color: var(--ops-text) !important;
+}
+
+.product-management-shell :is(p, span, small, label),
+.product-edit-shell :is(p, span, small, label),
+.promissory-notes-shell :is(p, span, small, label),
+.admin-dashboard-shell :is(p, span, small, label) {
+  color: var(--ops-soft) !important;
+}
+
+.product-management-shell .customer-premium-card,
+.promissory-notes-shell .customer-premium-list-panel [style*="#0d1016"],
+.promissory-notes-shell .customer-premium-form-panel [style*="#0d1016"],
+.admin-dashboard-shell .admin-mini-chart,
+.admin-dashboard-shell .admin-payment-list article,
+.admin-dashboard-shell .admin-top-customers > div,
+.admin-dashboard-shell .admin-receivable-table article,
+.admin-dashboard-shell .admin-receivable-head {
+  background: linear-gradient(180deg, rgba(255,255,255,.050), rgba(255,255,255,.018)), #0b1018 !important;
+  border: 1px solid rgba(226,232,240,.11) !important;
+  color: var(--ops-text) !important;
+}
+
+.product-management-shell .customer-premium-card :is(h3, strong),
+.promissory-notes-shell [style*="#0d1016"] :is(strong, h2, h3),
+.admin-dashboard-shell :is(.admin-mini-chart, .admin-payment-list, .admin-top-customers, .admin-receivable-table) :is(strong, h2, h3, span) {
+  color: var(--ops-text) !important;
+}
+
+.product-management-shell .customer-premium-card :is(span, small, p),
+.promissory-notes-shell [style*="#0d1016"] :is(span, small, p),
+.admin-dashboard-shell :is(.admin-mini-chart, .admin-payment-list, .admin-top-customers, .admin-receivable-table) :is(small, p) {
+  color: var(--ops-soft) !important;
+}
+
+.promissory-notes-shell .collection-calendar-grid button,
+.admin-dashboard-shell .collection-calendar-grid button {
+  background: #0b1018 !important;
+  border-color: rgba(226,232,240,.12) !important;
+  color: var(--ops-text) !important;
+}
+
+.promissory-notes-shell .collection-calendar-grid button:not(:disabled):has(small),
+.admin-dashboard-shell .collection-calendar-grid button:not(:disabled):has(small),
+.promissory-notes-shell .collection-calendar-grid button[style*="215, 173, 85"],
+.admin-dashboard-shell .collection-calendar-grid button[style*="215, 173, 85"] {
+  background: rgba(216, 177, 94, .12) !important;
+  border-color: rgba(216, 177, 94, .42) !important;
+  box-shadow: 0 0 0 1px rgba(216,177,94,.08) inset !important;
+}
+
+.admin-dashboard-shell .admin-bi-grid,
+.admin-dashboard-shell .admin-dashboard-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+}
+
+.admin-dashboard-shell .admin-receivable-head,
+.admin-dashboard-shell .admin-receivable-table article {
+  grid-template-columns: minmax(180px, 2fr) repeat(5, minmax(92px, 1fr)) !important;
+  overflow: hidden;
+}
+
+.customer-copy-message-button {
+  min-width: 112px;
+}
+
+/* Sales history uses gold panels; keep every readable text on those surfaces dark. */
+.sales-history-shell .customer-premium-list-panel,
+.sales-history-shell .sale-history-item,
+.sales-history-shell .sale-detail-summary-card,
+.sales-history-shell .product-empty {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(255, 255, 255, .5), transparent 30%),
+    linear-gradient(135deg, #f8dc91 0%, #d8ad53 52%, #b97e24 100%) !important;
+  border-color: rgba(91, 58, 10, .22) !important;
+  color: #16120a !important;
+  text-shadow: none !important;
+}
+
+.sales-history-shell .sale-history-item,
+.sales-history-shell .sale-detail-summary-card,
+.sales-history-shell .product-empty {
+  background: rgba(255, 250, 235, .76) !important;
+}
+
+.sales-history-shell .customer-premium-list-panel :is(h1, h2, h3, h4, p, span, small, strong, label, summary, a, button),
+.sales-history-shell .sale-detail-summary-card :is(span, small, strong),
+.sales-history-shell .sale-history-item :is(span, small, strong) {
+  color: #16120a !important;
+  text-shadow: none !important;
+}
+
+.sales-history-shell .customer-premium-list-panel :is(p, small),
+.sales-history-shell .sale-detail-summary-card small,
+.sales-history-shell .sale-history-item small {
+  color: #4b3a16 !important;
+}
+
+.sales-history-shell .customer-premium-secondary-button {
+  background: rgba(255, 250, 235, .64) !important;
+  border: 1px solid rgba(91, 58, 10, .24) !important;
+  color: #16120a !important;
+}
+
+.sales-history-shell .sales-history-filter-panel .field-group {
+  color: #16120a !important;
+}
+
+.sales-history-shell .customer-premium-primary-button {
+  background: #211609 !important;
+  border: 1px solid rgba(33, 22, 9, .88) !important;
+  color: #fffaf0 !important;
+}
+
+.sales-history-shell .customer-premium-primary-button :is(span, strong, svg) {
+  color: #fffaf0 !important;
+}
+
+.sales-history-shell .feedback-message--error,
+.sales-history-shell .feedback-message--error :is(strong, div) {
+  color: #991b1b !important;
+}
+
+.customer-premium-target-card :is(span, small, strong) {
+  color: #11100d !important;
+  text-shadow: none !important;
+}
+
+.customer-premium-target-card small {
+  color: rgba(17, 16, 13, .70) !important;
+}
+
+.customer-directory-panel > header :is(h2, h3, p, span, small, strong),
+.relationship-calendar-shell .customer-premium-list-panel > header :is(h2, h3, p, span, small, strong),
+.promissory-delinquency-panel > header :is(h2, h3, p, span, small, strong) {
+  color: #16120a !important;
+  text-shadow: none !important;
+}
+
+.promissory-delinquency-panel {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(255, 255, 255, .5), transparent 30%),
+    linear-gradient(135deg, #f8dc91 0%, #d8ad53 52%, #b97e24 100%) !important;
+  border-color: rgba(91, 58, 10, .22) !important;
+}
+
+.promissory-notes-shell .customer-premium-primary-button {
+  color: #11100d !important;
+  text-shadow: none !important;
+}
+
+.promissory-notes-shell .customer-premium-primary-button svg {
+  color: #11100d !important;
+}
+
+.promissory-notes-shell .customer-premium-search .customer-premium-primary-button:not(:disabled),
+.promissory-notes-shell form .customer-premium-primary-button:not(:disabled) {
+  color: #11100d !important;
+}
+
+.promissory-notes-shell .customer-premium-search .customer-premium-primary-button:not(:disabled) svg,
+.promissory-notes-shell form .customer-premium-primary-button:not(:disabled) svg {
+  color: #11100d !important;
+}
+
+.customer-directory-panel :is(.product-empty, .customer-premium-list-footer, .customer-premium-list-footer span, .customer-premium-list-footer strong),
+.relationship-client-panel :is(.product-empty, .customer-premium-list-footer, .customer-premium-list-footer span, .customer-premium-list-footer strong),
+.relationship-calendar-shell .customer-premium-list-panel :is(.product-empty, .customer-premium-list-footer, .customer-premium-list-footer span, .customer-premium-list-footer strong) {
+  color: #1a1a1a !important;
+  text-shadow: none !important;
+}
+
+.metric-card--gold-surface,
+.page-header__metric--gold-surface,
+.customer-premium-target-card,
+.sales-summary-totals > div:last-child,
+.checkout-footer-panel > div:first-child {
+  color: #1a1a1a !important;
+  text-shadow: none !important;
+}
+
+.metric-card--gold-surface :is(.metric-card__label, .metric-card__value, .metric-card__hint, svg),
+.page-header__metric--gold-surface :is(span, strong),
+.customer-premium-target-card :is(span, small, strong),
+.sales-summary-totals > div:last-child :is(span, small, strong),
+.checkout-footer-panel > div:first-child :is(span, small, strong) {
+  color: #1a1a1a !important;
+  text-shadow: none !important;
+}
+
+.metric-card--gold-surface :is(.metric-card__label, .metric-card__hint),
+.page-header__metric--gold-surface span,
+.customer-premium-target-card :is(span, small),
+.sales-summary-totals > div:last-child span,
+.checkout-footer-panel > div:first-child span {
+  color: rgba(31, 25, 15, .74) !important;
+}
+
+.customer-premium-search-input,
+.search-input {
+  background: #0d1016 !important;
+  color: #f8fafc !important;
+}
+
+.customer-premium-search-input svg,
+.search-input + svg,
+.search-input ~ svg {
+  color: #d7ad55 !important;
+  opacity: 1 !important;
+}
+
+.customer-premium-search-input input::placeholder,
+.search-input::placeholder,
+.field-group input::placeholder,
+.field-group textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.customer-premium-search-input button {
+  min-height: 34px !important;
+  min-width: 42px !important;
+  padding: 0 12px !important;
+}
+
+@media (max-width: 900px) {
+  .structured-address-grid,
+  .category-inline-create,
+  .customer-directory-panel .customer-premium-search,
+  .admin-dashboard-shell .admin-receivable-head,
+  .admin-dashboard-shell .admin-receivable-table article {
+    grid-template-columns: 1fr !important;
+  }
+
+  .structured-address-grid input:nth-child(4),
+  .structured-address-grid input:nth-child(7) {
+    grid-column: auto;
+    max-width: none;
+  }
+}

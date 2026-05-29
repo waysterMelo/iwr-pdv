@@ -230,7 +230,7 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <main className="app-shell customer-premium-shell">
+    <main className="app-shell customer-premium-shell admin-dashboard-shell">
       <div className="app-container customer-premium-container">
         
         {/* Banner do Topo */}

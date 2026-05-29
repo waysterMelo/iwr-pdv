@@ -113,7 +113,7 @@ export function SalesHistoryPage() {
   }
 
   return (
-    <main className="app-shell customer-premium-shell">
+    <main className="app-shell customer-premium-shell sales-history-shell">
       <div className="app-container customer-premium-container">
         
         {/* Banner do Topo */}

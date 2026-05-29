@@ -275,8 +275,8 @@ class PromissoryNoteControllerIntegrationTest {
 
         mockMvc.perform(get("/api/promissory-notes/calendar-days")
                         .header("Authorization", authHeader)
-                        .param("startDate", today.withDayOfMonth(1).toString())
-                        .param("endDate", today.withDayOfMonth(today.lengthOfMonth()).toString()))
+                        .param("startDate", dueDate.withDayOfMonth(1).toString())
+                        .param("endDate", dueDate.withDayOfMonth(dueDate.lengthOfMonth()).toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].date").value(dueDate.toString()))

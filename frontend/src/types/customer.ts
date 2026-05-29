@@ -5,6 +5,13 @@ export type Customer = {
   phone: string | null
   email: string | null
   address: string | null
+  addressStreet: string | null
+  addressNumber: string | null
+  addressNeighborhood: string | null
+  addressComplement: string | null
+  addressCity: string | null
+  addressState: string | null
+  addressZipCode: string | null
   birthDate: string | null
   active: boolean
   createdAt: string
@@ -19,6 +26,13 @@ export type CustomerPayload = {
   phone?: string
   email?: string
   address?: string
+  addressStreet?: string
+  addressNumber?: string
+  addressNeighborhood?: string
+  addressComplement?: string
+  addressCity?: string
+  addressState?: string
+  addressZipCode?: string
   birthDate?: string
   active?: boolean
   observations?: string

@@ -7,6 +7,7 @@ import {
   CircleSlash,
   Edit3,
   Package,
+  Plus,
   Printer,
   Shirt,
   ShoppingBag,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react'
 import {
   createProduct,
+  createProductCategory,
   getBulkLabelsUrl,
   getProductCategories,
   getProductPage,
@@ -188,6 +190,9 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null)
   const [formSuccessMessage, setFormSuccessMessage] = useState<string | null>(null)
   const [listErrorMessage, setListErrorMessage] = useState<string | null>(null)
+  const [isCategoryCreatorOpen, setIsCategoryCreatorOpen] = useState(false)
+  const [categoryDraftName, setCategoryDraftName] = useState('')
+  const [isSavingCategory, setIsSavingCategory] = useState(false)
   const [isProductsLoading, setIsProductsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [busyProductId, setBusyProductId] = useState<number | null>(null)
@@ -357,6 +362,31 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
     }
   }
 
+  async function handleCreateCategory() {
+    const name = categoryDraftName.trim()
+    if (!name) {
+      setFormErrorMessage('Informe o nome da nova categoria.')
+      return
+    }
+
+    setIsSavingCategory(true)
+    try {
+      const category = await createProductCategory({ name, icon: 'tag' })
+      setCategories((current) => [...current.filter((item) => item.id !== category.id), category].sort((a, b) => a.name.localeCompare(b.name)))
+      setForm((current) => ({ ...current, categoryId: String(category.id) }))
+      setCategoryDraftName('')
+      setIsCategoryCreatorOpen(false)
+      setFormErrorMessage(null)
+      notify({ type: 'success', title: 'Categoria cadastrada', message: `Categoria ${category.name} criada e selecionada.` })
+    } catch (error) {
+      const message = getErrorMessage(error, 'Nao foi possivel cadastrar a categoria.')
+      setFormErrorMessage(message)
+      notify({ type: 'error', title: 'Erro ao criar categoria', message })
+    } finally {
+      setIsSavingCategory(false)
+    }
+  }
+
   async function handleToggleActivation(product: Product) {
     setBusyProductId(product.id)
 
@@ -416,7 +446,7 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
   }
 
   return (
-    <main className="app-shell customer-premium-shell">
+    <main className="app-shell customer-premium-shell product-management-shell">
       <div className="app-container customer-premium-container">
         
         {/* Banner do Topo */}
@@ -509,19 +539,42 @@ export function ProductManagementPage({ onEditProduct, mode = 'list' }: ProductM
 
                   <div className="field-group">
                     <label htmlFor="categoryId">Categoria</label>
-                    <select
-                      id="categoryId"
-                      value={form.categoryId}
-                      onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
-                      required
-                    >
-                      <option value="">Escolha a categoria</option>
-                      {categories.map((category) => (
-                        <option value={category.id} key={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="category-picker-row">
+                      <select
+                        id="categoryId"
+                        value={form.categoryId}
+                        onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
+                        required
+                      >
+                        <option value="">Escolha a categoria</option>
+                        {categories.map((category) => (
+                          <option value={category.id} key={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="category-add-button"
+                        type="button"
+                        onClick={() => setIsCategoryCreatorOpen((current) => !current)}
+                        aria-label="Cadastrar nova categoria"
+                        title="Cadastrar nova categoria"
+                      >
+                        <Plus size={18} aria-hidden="true" />
+                      </button>
+                    </div>
+                    {isCategoryCreatorOpen ? (
+                      <div className="category-inline-create">
+                        <input
+                          value={categoryDraftName}
+                          onChange={(event) => setCategoryDraftName(event.target.value)}
+                          placeholder="Nome da nova categoria"
+                        />
+                        <button type="button" onClick={() => void handleCreateCategory()} disabled={isSavingCategory}>
+                          {isSavingCategory ? 'Salvando...' : 'Salvar'}
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="field-group">

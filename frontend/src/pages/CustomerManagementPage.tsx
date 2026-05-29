@@ -21,6 +21,13 @@ const initialForm: CustomerPayload = {
   phone: '',
   email: '',
   address: '',
+  addressStreet: '',
+  addressNumber: '',
+  addressNeighborhood: '',
+  addressComplement: '',
+  addressCity: '',
+  addressState: '',
+  addressZipCode: '',
   birthDate: '',
   active: true,
   observations: '',
@@ -34,6 +41,13 @@ function toForm(customer: Customer): CustomerPayload {
     phone: customer.phone ?? '',
     email: customer.email ?? '',
     address: customer.address ?? '',
+    addressStreet: customer.addressStreet ?? '',
+    addressNumber: customer.addressNumber ?? '',
+    addressNeighborhood: customer.addressNeighborhood ?? '',
+    addressComplement: customer.addressComplement ?? '',
+    addressCity: customer.addressCity ?? '',
+    addressState: customer.addressState ?? '',
+    addressZipCode: customer.addressZipCode ?? '',
     birthDate: customer.birthDate ?? '',
     active: customer.active,
     observations: customer.observations ?? '',
@@ -264,105 +278,7 @@ export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId
     
     return scores
   }, [customerProfile, overdueProfileNotes, completedSaleCount, averageTicketAmount, totalPurchasedAmount])
-  const fallbackProfileInsights = useMemo<CustomerProfileInsight[]>(() => {
-    if (!customerProfile) return []
-
-    const insights: CustomerProfileInsight[] = []
-    const latestSale = profileSales[0]
-    const daysSinceLatestSale = latestSale
-      ? Math.floor((Date.now() - new Date(latestSale.soldAt).getTime()) / (1000 * 60 * 60 * 24))
-      : null
-    const maxOverdueDays = overdueProfileNotes.length > 0
-      ? Math.max(...overdueProfileNotes.map((note) => note.daysOverdue || 0))
-      : 0
-
-    if (overdueProfileNotes.length > 0) {
-      insights.push({
-        code: 'OVERDUE_BALANCE_FALLBACK',
-        severity: 'WARNING',
-        title: 'Parcelas vencidas',
-        message: `${overdueProfileNotes.length} parcela(s) vencida(s), somando ${formatCurrency(overduePromissoryAmount)}. Maior atraso: ${maxOverdueDays} dia(s).`,
-        recommendedAction: 'Priorize cobranca antes de liberar nova venda a prazo.',
-      })
-    }
-
-    if (maxOverdueDays > 30) {
-      insights.push({
-        code: 'CREDIT_SUSPENSION_RECOMMENDED_FALLBACK',
-        severity: 'DANGER',
-        title: 'Risco alto de credito',
-        message: 'Existe atraso superior a 30 dias no historico financeiro do cliente.',
-        recommendedAction: 'Suspenda novas vendas a prazo ate negociar ou receber a pendencia.',
-      })
-    }
-
-    if (openPromissoryAmount > 0 && daysSinceLatestSale !== null && daysSinceLatestSale < 10) {
-      insights.push({
-        code: 'RECENT_OPEN_BALANCE_FALLBACK',
-        severity: 'WARNING',
-        title: 'Debito ativo recente',
-        message: `Cliente comprou ha ${daysSinceLatestSale} dia(s) e ainda possui ${formatCurrency(openPromissoryAmount)} em aberto.`,
-        recommendedAction: 'Confirme o combinado de pagamento antes de uma nova venda.',
-      })
-    }
-
-    if (daysSinceLatestSale !== null && daysSinceLatestSale > 60) {
-      insights.push({
-        code: 'COMMERCIAL_REACTIVATION_FALLBACK',
-        severity: 'INFO',
-        title: 'Cliente inativo',
-        message: `Sem compras registradas ha ${daysSinceLatestSale} dia(s).`,
-        recommendedAction: 'Enviar contato de reativacao com oferta ou novidade relevante.',
-      })
-    }
-
-    if (customerProfile.customer.birthDate) {
-      const birthDate = new Date(customerProfile.customer.birthDate)
-      const today = new Date()
-      if (birthDate.getMonth() === today.getMonth()) {
-        insights.push({
-          code: 'BIRTHDAY_MONTH_FALLBACK',
-          severity: 'INFO',
-          title: 'Aniversario no mes',
-          message: 'Cliente faz aniversario neste mes.',
-          recommendedAction: 'Ofereca uma condicao especial para fortalecer o relacionamento.',
-        })
-      }
-    }
-
-    if (customerProfile.customer.creditLimit && openPromissoryAmount > customerProfile.customer.creditLimit) {
-      insights.push({
-        code: 'CREDIT_LIMIT_EXCEEDED_FALLBACK',
-        severity: 'DANGER',
-        title: 'Limite de credito excedido',
-        message: `${formatCurrency(openPromissoryAmount)} em aberto para limite de ${formatCurrency(customerProfile.customer.creditLimit)}.`,
-        recommendedAction: 'Receba parte do saldo ou ajuste o limite antes de vender a prazo.',
-      })
-    }
-
-    if (overdueProfileNotes.length === 0 && openPromissoryAmount === 0 && completedSaleCount > 0) {
-      insights.push({
-        code: 'GOOD_PAYER_FALLBACK',
-        severity: 'SUCCESS',
-        title: 'Bom pagador',
-        message: 'Cliente sem pendencias em aberto e com compras concluidas.',
-        recommendedAction: 'Perfil apto para relacionamento comercial normal.',
-      })
-    }
-
-    if (insights.length === 0) {
-      insights.push({
-        code: 'NO_HISTORY_FALLBACK',
-        severity: 'INFO',
-        title: 'Historico insuficiente',
-        message: 'Ainda nao ha volume suficiente para gerar alertas financeiros.',
-        recommendedAction: 'Acompanhe as proximas compras para classificar o perfil.',
-      })
-    }
-
-    return insights
-  }, [customerProfile, completedSaleCount, openPromissoryAmount, overdueProfileNotes, overduePromissoryAmount, profileSales])
-  const profileInsights = customerProfile?.insights?.length ? customerProfile.insights : fallbackProfileInsights
+  const profileInsights = customerProfile?.insights ?? []
 
   const consolidatedWhatsappMessage = useMemo(() => {
     if (!customerProfile) return ''
@@ -775,6 +691,13 @@ export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId
         phone: form.phone?.trim() || undefined,
         email: form.email?.trim() || undefined,
         address: form.address?.trim() || undefined,
+        addressStreet: form.addressStreet?.trim() || undefined,
+        addressNumber: form.addressNumber?.trim() || undefined,
+        addressNeighborhood: form.addressNeighborhood?.trim() || undefined,
+        addressComplement: form.addressComplement?.trim() || undefined,
+        addressCity: form.addressCity?.trim() || undefined,
+        addressState: form.addressState?.trim().toUpperCase() || undefined,
+        addressZipCode: form.addressZipCode?.trim() || undefined,
         birthDate: form.birthDate || undefined,
         observations: form.observations?.trim() || undefined,
         creditLimit: form.creditLimit !== undefined && form.creditLimit !== null ? Number(form.creditLimit) : undefined,
@@ -1005,11 +928,20 @@ export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId
                   </div>
                   <div className="field-group field-group--full">
                     <label htmlFor="customerAddress">Endereço Residencial</label>
+                    <div className="structured-address-grid">
+                      <input id="customerAddressStreet" value={form.addressStreet ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressStreet: event.target.value }))} placeholder="Rua / avenida" />
+                      <input id="customerAddressNumber" value={form.addressNumber ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressNumber: event.target.value }))} placeholder="Numero" />
+                      <input id="customerAddressNeighborhood" value={form.addressNeighborhood ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressNeighborhood: event.target.value }))} placeholder="Bairro" />
+                      <input id="customerAddressComplement" value={form.addressComplement ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressComplement: event.target.value }))} placeholder="Complemento" />
+                      <input id="customerAddressCity" value={form.addressCity ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressCity: event.target.value }))} placeholder="Cidade" />
+                      <input id="customerAddressState" value={form.addressState ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressState: event.target.value.toUpperCase().slice(0, 2) }))} placeholder="UF" maxLength={2} />
+                      <input id="customerAddressZipCode" value={form.addressZipCode ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressZipCode: event.target.value }))} placeholder="CEP" />
+                    </div>
                     <input
                       id="customerAddress"
                       value={form.address ?? ''}
                       onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
-                      placeholder="Rua, número, bairro e cidade"
+                      placeholder="Endereco completo opcional"
                     />
                   </div>
                   <div className="field-group">
@@ -1555,7 +1487,7 @@ export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <button
                               type="button"
-                              className="customer-premium-primary-button"
+                              className="customer-premium-secondary-button customer-copy-message-button"
                               onClick={() => {
                                 navigator.clipboard.writeText(decodeURIComponent(consolidatedWhatsappMessage))
                                 notify({ type: 'success', title: 'Mensagem copiada', message: 'Mensagem de cobrança copiada para a área de transferência.' })
@@ -1563,17 +1495,17 @@ export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId
                               style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
                             >
                               <Copy size={14} />
-                              Copiar Mensagem
+                              Copiar
                             </button>
                             {customerProfile.customer.phone ? (
                               <a
                                 href={`https://wa.me/55${customerProfile.customer.phone.replace(/\D/g, '')}?text=${consolidatedWhatsappMessage}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="customer-premium-secondary-button"
-                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#25D366', color: '#fff', borderColor: '#25D366' }}
+                                className="customer-premium-primary-button"
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                               >
-                                Chamar no Whats
+                                Chamar no WhatsApp
                               </a>
                             ) : null}
                           </div>
@@ -2387,11 +2319,20 @@ export function CustomerManagementPage({ mode = 'list', initialProfileCustomerId
                 </div>
                 <div className="field-group field-group--full">
                   <label htmlFor="customerEditAddress">Endereço</label>
-                  <input
-                    id="customerEditAddress"
+                    <div className="structured-address-grid">
+                      <input id="customerEditAddressStreet" value={form.addressStreet ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressStreet: event.target.value }))} placeholder="Rua / avenida" />
+                      <input id="customerEditAddressNumber" value={form.addressNumber ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressNumber: event.target.value }))} placeholder="Numero" />
+                      <input id="customerEditAddressNeighborhood" value={form.addressNeighborhood ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressNeighborhood: event.target.value }))} placeholder="Bairro" />
+                      <input id="customerEditAddressComplement" value={form.addressComplement ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressComplement: event.target.value }))} placeholder="Complemento" />
+                      <input id="customerEditAddressCity" value={form.addressCity ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressCity: event.target.value }))} placeholder="Cidade" />
+                      <input id="customerEditAddressState" value={form.addressState ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressState: event.target.value.toUpperCase().slice(0, 2) }))} placeholder="UF" maxLength={2} />
+                      <input id="customerEditAddressZipCode" value={form.addressZipCode ?? ''} onChange={(event) => setForm((current) => ({ ...current, addressZipCode: event.target.value }))} placeholder="CEP" />
+                    </div>
+                    <input
+                      id="customerEditAddress"
                     value={form.address ?? ''}
                     onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
-                    placeholder="Rua, número, bairro"
+                    placeholder="Endereco completo opcional"
                   />
                 </div>
                 <div className="field-group">

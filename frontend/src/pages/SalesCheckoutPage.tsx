@@ -20,6 +20,13 @@ type CustomerFormState = {
   phone: string
   email: string
   address: string
+  addressStreet: string
+  addressNumber: string
+  addressNeighborhood: string
+  addressComplement: string
+  addressCity: string
+  addressState: string
+  addressZipCode: string
 }
 
 type InstallmentDraft = {
@@ -33,6 +40,13 @@ const initialCustomerForm: CustomerFormState = {
   phone: '',
   email: '',
   address: '',
+  addressStreet: '',
+  addressNumber: '',
+  addressNeighborhood: '',
+  addressComplement: '',
+  addressCity: '',
+  addressState: '',
+  addressZipCode: '',
 }
 
 function toDateInputValue(date: Date) {
@@ -191,6 +205,13 @@ export function SalesCheckoutPage() {
         phone: customerForm.phone.trim() || undefined,
         email: customerForm.email.trim() || undefined,
         address: customerForm.address.trim() || undefined,
+        addressStreet: customerForm.addressStreet.trim() || undefined,
+        addressNumber: customerForm.addressNumber.trim() || undefined,
+        addressNeighborhood: customerForm.addressNeighborhood.trim() || undefined,
+        addressComplement: customerForm.addressComplement.trim() || undefined,
+        addressCity: customerForm.addressCity.trim() || undefined,
+        addressState: customerForm.addressState.trim().toUpperCase() || undefined,
+        addressZipCode: customerForm.addressZipCode.trim() || undefined,
         active: true,
       })
       setCustomers((current) => [customer, ...current.filter((item) => item.id !== customer.id)])
@@ -530,11 +551,20 @@ export function SalesCheckoutPage() {
                           <div className="customer-premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
                             <div className="field-group">
                               <label htmlFor="newCustomerAddress">Endereço Residencial</label>
+                              <div className="structured-address-grid">
+                                <input id="newCustomerAddressStreet" value={customerForm.addressStreet} onChange={(event) => setCustomerForm((current) => ({ ...current, addressStreet: event.target.value }))} placeholder="Rua / avenida" />
+                                <input id="newCustomerAddressNumber" value={customerForm.addressNumber} onChange={(event) => setCustomerForm((current) => ({ ...current, addressNumber: event.target.value }))} placeholder="Numero" />
+                                <input id="newCustomerAddressNeighborhood" value={customerForm.addressNeighborhood} onChange={(event) => setCustomerForm((current) => ({ ...current, addressNeighborhood: event.target.value }))} placeholder="Bairro" />
+                                <input id="newCustomerAddressComplement" value={customerForm.addressComplement} onChange={(event) => setCustomerForm((current) => ({ ...current, addressComplement: event.target.value }))} placeholder="Complemento" />
+                                <input id="newCustomerAddressCity" value={customerForm.addressCity} onChange={(event) => setCustomerForm((current) => ({ ...current, addressCity: event.target.value }))} placeholder="Cidade" />
+                                <input id="newCustomerAddressState" value={customerForm.addressState} onChange={(event) => setCustomerForm((current) => ({ ...current, addressState: event.target.value.toUpperCase().slice(0, 2) }))} placeholder="UF" maxLength={2} />
+                                <input id="newCustomerAddressZipCode" value={customerForm.addressZipCode} onChange={(event) => setCustomerForm((current) => ({ ...current, addressZipCode: event.target.value }))} placeholder="CEP" />
+                              </div>
                               <input
                                 id="newCustomerAddress"
                                 value={customerForm.address}
                                 onChange={(event) => setCustomerForm((current) => ({ ...current, address: event.target.value }))}
-                                placeholder="Rua, número, bairro..."
+                                placeholder="Endereco completo opcional"
                               />
                             </div>
                           </div>

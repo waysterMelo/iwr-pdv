@@ -33,6 +33,27 @@ public class Customer {
     @Column(length = 240)
     private String address;
 
+    @Column(name = "address_street", length = 140)
+    private String addressStreet;
+
+    @Column(name = "address_number", length = 30)
+    private String addressNumber;
+
+    @Column(name = "address_neighborhood", length = 100)
+    private String addressNeighborhood;
+
+    @Column(name = "address_complement", length = 120)
+    private String addressComplement;
+
+    @Column(name = "address_city", length = 100)
+    private String addressCity;
+
+    @Column(name = "address_state", length = 2)
+    private String addressState;
+
+    @Column(name = "address_zip_code", length = 20)
+    private String addressZipCode;
+
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
@@ -97,6 +118,62 @@ public class Customer {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getAddressStreet() {
+        return addressStreet;
+    }
+
+    public void setAddressStreet(String addressStreet) {
+        this.addressStreet = addressStreet;
+    }
+
+    public String getAddressNumber() {
+        return addressNumber;
+    }
+
+    public void setAddressNumber(String addressNumber) {
+        this.addressNumber = addressNumber;
+    }
+
+    public String getAddressNeighborhood() {
+        return addressNeighborhood;
+    }
+
+    public void setAddressNeighborhood(String addressNeighborhood) {
+        this.addressNeighborhood = addressNeighborhood;
+    }
+
+    public String getAddressComplement() {
+        return addressComplement;
+    }
+
+    public void setAddressComplement(String addressComplement) {
+        this.addressComplement = addressComplement;
+    }
+
+    public String getAddressCity() {
+        return addressCity;
+    }
+
+    public void setAddressCity(String addressCity) {
+        this.addressCity = addressCity;
+    }
+
+    public String getAddressState() {
+        return addressState;
+    }
+
+    public void setAddressState(String addressState) {
+        this.addressState = addressState;
+    }
+
+    public String getAddressZipCode() {
+        return addressZipCode;
+    }
+
+    public void setAddressZipCode(String addressZipCode) {
+        this.addressZipCode = addressZipCode;
     }
 
     public LocalDate getBirthDate() {

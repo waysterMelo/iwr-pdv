@@ -32,6 +32,11 @@ export type ProductCategory = {
   active: boolean
 }
 
+export type ProductCategoryPayload = {
+  name: string
+  icon?: string
+}
+
 export type ProductActivationPayload = {
   active: boolean
 }

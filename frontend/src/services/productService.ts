@@ -2,6 +2,7 @@ import type {
   Product,
   ProductActivationPayload,
   ProductCategory,
+  ProductCategoryPayload,
   ProductPage,
   ProductPageFilters,
   ProductPayload,
@@ -57,6 +58,10 @@ export async function getProductPage(filters: ProductPageFilters, page: number, 
 
 export async function getProductCategories(signal?: AbortSignal) {
   return get<ProductCategory[]>('/api/product-categories', { signal })
+}
+
+export async function createProductCategory(payload: ProductCategoryPayload) {
+  return post<ProductCategory>('/api/product-categories', payload)
 }
 
 export async function getProductById(productId: number, signal?: AbortSignal) {

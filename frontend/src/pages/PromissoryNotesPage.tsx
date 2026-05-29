@@ -902,7 +902,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
           </div>
 
           {/* Grid de Inadimplência */}
-          <section className="customer-premium-list-panel" style={{ padding: '24px' }}>
+          <section className="customer-premium-list-panel promissory-delinquency-panel" style={{ padding: '24px' }}>
             <header style={{ marginBottom: '20px' }}>
               <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Divisão de Atrasos por Período</h2>
               <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Veja a quantidade de notas promissórias e valores totais pendentes agrupados por faixas de dias.</p>
@@ -950,7 +950,7 @@ export function PromissoryNotesPage({ mode, onModeChange }: PromissoryNotesPageP
 
   /* TELA 1: CARTEIRA DE COBRANÇA (WALLET) - TELA PRINCIPAL */
   return (
-    <main className="app-shell customer-premium-shell">
+    <main className="app-shell customer-premium-shell promissory-notes-shell">
       <div className="app-container customer-premium-container">
         
         {/* Banner do Topo */}
