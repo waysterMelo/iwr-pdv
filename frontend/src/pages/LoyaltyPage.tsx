@@ -1,7 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Cake, CalendarDays, Gift, Sparkles, X, MessageSquare, Copy, UserCheck, Phone, Mail, Search } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  Cake,
+  CalendarDays,
+  Clock,
+  Copy,
+  Gift,
+  HeartHandshake,
+  Mail,
+  MessageSquare,
+  Phone,
+  Search,
+  Sparkles,
+  UserCheck,
+} from 'lucide-react'
 import { PaginationControls } from '../components/PaginationControls'
-import { PageHeader } from '../components/PageHeader'
 import { getCustomerBirthdays } from '../services/customerService'
 import type { Customer } from '../types/customer'
 import { getErrorMessage } from '../utils/errors'
@@ -15,6 +29,11 @@ type BirthdayCustomer = Customer & {
 }
 
 type SelectedTemplate = 'classico' | 'promocional' | 'divertido'
+type BirthdayFilter = 'hoje' | 'proximos' | 'todos' | 'semTelefone'
+
+type LoyaltyPageProps = {
+  onViewChange?: (view: 'customer-profile', customerId?: number) => void
+}
 
 function toLocalBirthDate(value: string) {
   const [year, month, day] = value.split('-').map(Number)
@@ -52,11 +71,21 @@ function formatBirthDate(value: string) {
 function birthdayStatus(days: number) {
   if (days === 0) return 'Hoje'
   if (days === 1) return 'Amanhã'
-  return `${days} dia(s)`
+  return `${days} dias`
 }
 
-type LoyaltyPageProps = {
-  onViewChange?: (view: 'customer-profile', customerId?: number) => void
+function firstName(name: string) {
+  const [first] = name.trim().split(/\s+/)
+  return first ? first.charAt(0).toUpperCase() + first.slice(1).toLowerCase() : 'cliente'
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((piece) => piece[0]?.toUpperCase())
+    .join('') || 'C'
 }
 
 export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
@@ -64,10 +93,9 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  
-  // Controle de Filtros e Modal
-  const [aniversariosFiltro, setAniversariosFiltro] = useState<'todos' | 'hoje' | 'proximos'>('todos')
-  const [congratulateClient, setCongratulateClient] = useState<BirthdayCustomer | null>(null)
+  const [birthdayFilter, setBirthdayFilter] = useState<BirthdayFilter>('hoje')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [messageCustomer, setMessageCustomer] = useState<BirthdayCustomer | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<SelectedTemplate>('classico')
   const [customMessage, setCustomMessage] = useState('')
 
@@ -103,43 +131,58 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
   }, [customers])
 
   const todayCount = birthdayCustomers.filter((customer) => customer.daysUntilBirthday === 0).length
-  const nextSevenDaysCount = birthdayCustomers.filter((customer) => customer.daysUntilBirthday <= 7).length
+  const nextSevenDaysCount = birthdayCustomers.filter((customer) => customer.daysUntilBirthday >= 0 && customer.daysUntilBirthday <= 7).length
+  const missingPhoneCount = birthdayCustomers.filter((customer) => !customer.phone).length
 
-  // Filtragem dos clientes baseada no botão selecionado
   const filteredCustomers = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+
     return birthdayCustomers.filter((customer) => {
-      if (aniversariosFiltro === 'hoje') return customer.daysUntilBirthday === 0
-      if (aniversariosFiltro === 'proximos') return customer.daysUntilBirthday >= 0 && customer.daysUntilBirthday <= 7
-      return true
+      if (birthdayFilter === 'hoje' && customer.daysUntilBirthday !== 0) return false
+      if (birthdayFilter === 'proximos' && (customer.daysUntilBirthday < 0 || customer.daysUntilBirthday > 7)) return false
+      if (birthdayFilter === 'semTelefone' && customer.phone) return false
+
+      if (!normalizedSearch) return true
+
+      return [customer.name, customer.phone, customer.email]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedSearch))
     })
-  }, [birthdayCustomers, aniversariosFiltro])
+  }, [birthdayCustomers, birthdayFilter, searchTerm])
 
   const birthdayPagination = usePagination(filteredCustomers, 6)
+  const activeMessageCustomer = messageCustomer ?? filteredCustomers[0] ?? birthdayCustomers[0] ?? null
+  const contactProgress = birthdayCustomers.length === 0 ? 0 : Math.min((nextSevenDaysCount / birthdayCustomers.length) * 100, 100)
 
-  // Mensagens Customizadas de Felicitações para WhatsApp/Clipboard
-  const getCongratulatoryMessage = () => {
-    if (!congratulateClient) return '';
-    const nomePrimeiro = congratulateClient.name.split(' ')[0];
-    const capitalNome = nomePrimeiro.charAt(0).toUpperCase() + nomePrimeiro.slice(1);
-    
-    if (selectedTemplate === 'classico') {
-      return `Olá, ${capitalNome}! Nós do Atelier IWR desejamos a você um dia extraordinário e um feliz aniversário! É uma honra tê-lo como nosso cliente. Que este novo ciclo traga muito sucesso e sofisticação para sua vida.`;
+  const getCongratulatoryMessage = useCallback((customer: BirthdayCustomer | null, template: SelectedTemplate) => {
+    if (!customer) return ''
+
+    const name = firstName(customer.name)
+
+    if (template === 'classico') {
+      return `Olá, ${name}! Nós do Atelier IWR desejamos a você um feliz aniversário. Que este novo ciclo seja marcado por saúde, conquistas e bons momentos. É uma satisfação ter você como cliente.`
     }
-    if (selectedTemplate === 'promocional') {
-      return `Prezado ${capitalNome}, celebramos o seu dia especial! Para tornar seu aniversário ainda mais marcante, o Atelier IWR preparou um presente exclusivo: 10% de desconto em qualquer peça sob medida durante esta semana. Aguardamos sua visita para um brinde!`;
+
+    if (template === 'promocional') {
+      return `Prezado(a) ${name}, celebramos o seu dia especial! Para tornar seu aniversário ainda mais marcante, o Atelier IWR preparou uma condição especial para você durante esta semana. Será um prazer receber sua visita.`
     }
-    return `Feliz aniversário, ${capitalNome}! Que o seu dia seja repleto de sorrisos, elegância e ótimas companhias. Um abraço especial de toda a equipe IWR Atelier PDV!`;
-  };
+
+    return `Feliz aniversário, ${name}! Que o seu dia seja leve, especial e cheio de boas surpresas. Um abraço de toda a equipe IWR Atelier PDV.`
+  }, [])
 
   useEffect(() => {
-    if (congratulateClient) {
-      setCustomMessage(getCongratulatoryMessage())
-    }
-  }, [congratulateClient, selectedTemplate])
+    setCustomMessage(getCongratulatoryMessage(activeMessageCustomer, selectedTemplate))
+  }, [activeMessageCustomer, selectedTemplate, getCongratulatoryMessage])
 
-  const handleCopyMessage = () => {
-    const text = customMessage;
-    navigator.clipboard.writeText(text)
+  function handleSelectMessageCustomer(customer: BirthdayCustomer) {
+    setMessageCustomer(customer)
+    setSelectedTemplate('classico')
+  }
+
+  function handleCopyMessage() {
+    if (!customMessage) return
+
+    navigator.clipboard.writeText(customMessage)
       .then(() => {
         notify({
           type: 'success',
@@ -154,379 +197,220 @@ export function LoyaltyPage({ onViewChange }: LoyaltyPageProps) {
           message: 'Não foi possível copiar a mensagem automaticamente.',
         })
       })
-  };
+  }
 
-  const handleSendWhatsApp = () => {
-    if (!congratulateClient || !congratulateClient.phone) return;
-    const text = encodeURIComponent(customMessage);
-    const cleanPhone = congratulateClient.phone.replace(/\D/g, '');
-    window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${text}`, '_blank');
+  function handleSendWhatsApp() {
+    if (!activeMessageCustomer?.phone || !customMessage) return
+
+    const text = encodeURIComponent(customMessage)
+    const cleanPhone = activeMessageCustomer.phone.replace(/\D/g, '')
+    window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${text}`, '_blank')
     notify({
       type: 'info',
-      title: 'WhatsApp Aberto',
-      message: 'Redirecionando para o chat do cliente...',
+      title: 'WhatsApp aberto',
+      message: 'Redirecionando para o chat do cliente.',
     })
-    setCongratulateClient(null);
-  };
+  }
 
   return (
-    <main className="app-shell customer-premium-shell loyalty-page relationship-calendar-shell">
-      <div className="app-container customer-premium-container">
-        <PageHeader
-          eyebrow="Clientes"
-          title="Aniversariantes"
-          subtitle="Acompanhe datas especiais para relacionamento, ofertas e atendimento personalizado do Atelier."
-          metricLabel="Proximos 7 dias"
-          metricValue={String(nextSevenDaysCount)}
-          status="Fidelidade"
-        />
-
-        <div className="metric-grid metric-grid--3 loyalty-filter-grid" aria-label="Filtros de aniversariantes">
-          <button
-            type="button"
-            className={aniversariosFiltro === 'hoje' ? 'metric-card loyalty-filter-card loyalty-filter-card--active' : 'metric-card loyalty-filter-card'}
-            onClick={() => setAniversariosFiltro('hoje')}
-          >
-            <span className="metric-card__label"><Gift size={16} strokeWidth={2.4} aria-hidden="true" />Hoje</span>
-            <strong className="metric-card__value">{todayCount}</strong>
-            <small className="metric-card__hint">Clientes com aniversario hoje</small>
-          </button>
-
-          <button
-            type="button"
-            className={aniversariosFiltro === 'proximos' ? 'metric-card loyalty-filter-card loyalty-filter-card--active' : 'metric-card loyalty-filter-card'}
-            onClick={() => setAniversariosFiltro('proximos')}
-          >
-            <span className="metric-card__label"><CalendarDays size={16} strokeWidth={2.4} aria-hidden="true" />Proximos 7 dias</span>
-            <strong className="metric-card__value">{nextSevenDaysCount}</strong>
-            <small className="metric-card__hint">Agenda imediata de relacionamento</small>
-          </button>
-
-          <button
-            type="button"
-            className={aniversariosFiltro === 'todos' ? 'metric-card loyalty-filter-card loyalty-filter-card--active' : 'metric-card loyalty-filter-card'}
-            onClick={() => setAniversariosFiltro('todos')}
-          >
-            <span className="metric-card__label"><UserCheck size={16} strokeWidth={2.4} aria-hidden="true" />Com data cadastrada</span>
-            <strong className="metric-card__value">{birthdayCustomers.length}</strong>
-            <small className="metric-card__hint">Base completa com aniversario</small>
-          </button>
-        </div>
-        
-        {/* Banner do Topo */}
-        <div className="customer-premium-hero">
-          <section className="customer-premium-banner">
-            <div className="customer-premium-badges">
-              <span>★ FIDELIDADE</span>
-              <strong>{birthdayCustomers.length} data(s) cadastrada(s)</strong>
+    <main className="app-shell loyalty-v2-shell">
+      <section className="loyalty-v2-page">
+        <div className="loyalty-v2-hero">
+          <section className="loyalty-v2-banner">
+            <div className="loyalty-v2-badges">
+              <span>★ Fidelidade</span>
+              <strong>Agenda de relacionamento</strong>
             </div>
-            <h1>Aniversariantes de clientes</h1>
-            <p>Acompanhe datas especiais para relacionamento, ofertas e atendimento personalizado do Atelier.</p>
+            <h1>Aniversariantes</h1>
+            <p>
+              Acompanhe datas especiais, priorize contatos de hoje e envie mensagens personalizadas para fortalecer
+              o relacionamento com clientes.
+            </p>
           </section>
 
-          <section className="customer-premium-target-card">
-            <div>
-              <span>Próximos 7 Dias</span>
-              <small>Fidelidade</small>
-            </div>
-            <strong>{nextSevenDaysCount}</strong>
-            <div className="customer-premium-progress">
-              <span style={{ width: `${Math.min((nextSevenDaysCount / (birthdayCustomers.length || 1)) * 100, 100)}%` }} />
-            </div>
-          </section>
-        </div>
-
-        {/* Métricas Interativas (Grid 3 Colunas) */}
-        <div className="customer-premium-metrics">
-          <article 
-            onClick={() => setAniversariosFiltro('hoje')}
-            style={{ 
-              cursor: 'pointer',
-              borderColor: aniversariosFiltro === 'hoje' ? 'rgba(215, 173, 85, 0.65)' : 'rgba(226, 232, 240, 0.1)',
-              background: aniversariosFiltro === 'hoje' ? 'rgba(215, 173, 85, 0.08)' : undefined
-            }}
-          >
-            <div>
-              <span>Hoje</span>
-              <strong>{todayCount}</strong>
-            </div>
-            <Gift size={19} aria-hidden="true" />
-          </article>
-
-          <article 
-            onClick={() => setAniversariosFiltro('proximos')}
-            style={{ 
-              cursor: 'pointer',
-              borderColor: aniversariosFiltro === 'proximos' ? 'rgba(215, 173, 85, 0.65)' : 'rgba(226, 232, 240, 0.1)',
-              background: aniversariosFiltro === 'proximos' ? 'rgba(215, 173, 85, 0.08)' : undefined
-            }}
-          >
+          <section className="loyalty-v2-target">
             <div>
               <span>Próximos 7 dias</span>
-              <strong>{nextSevenDaysCount}</strong>
+              <small>Clientes para contato ativo</small>
             </div>
-            <CalendarDays size={19} aria-hidden="true" />
-          </article>
-
-          <article 
-            onClick={() => setAniversariosFiltro('todos')}
-            style={{ 
-              cursor: 'pointer',
-              borderColor: aniversariosFiltro === 'todos' ? 'rgba(215, 173, 85, 0.65)' : 'rgba(226, 232, 240, 0.1)',
-              background: aniversariosFiltro === 'todos' ? 'rgba(215, 173, 85, 0.08)' : undefined
-            }}
-          >
-            <div>
-              <span>Com data cadastrada</span>
-              <strong>{birthdayCustomers.length}</strong>
+            <strong>{nextSevenDaysCount}</strong>
+            <div className="loyalty-v2-progress">
+              <span style={{ width: `${contactProgress}%` }} />
             </div>
-            <UserCheck size={19} aria-hidden="true" />
-          </article>
+          </section>
         </div>
+
+        <section className="loyalty-v2-metrics" aria-label="Indicadores de aniversariantes">
+          <button type="button" className="loyalty-v2-metric loyalty-v2-metric--green" onClick={() => setBirthdayFilter('hoje')}>
+            <div><span>Aniversários hoje</span><strong>{todayCount}</strong></div>
+            <Gift size={19} aria-hidden="true" />
+          </button>
+          <button type="button" className="loyalty-v2-metric loyalty-v2-metric--gold" onClick={() => setBirthdayFilter('proximos')}>
+            <div><span>Próximos 7 dias</span><strong>{nextSevenDaysCount}</strong></div>
+            <Clock size={19} aria-hidden="true" />
+          </button>
+          <button type="button" className="loyalty-v2-metric loyalty-v2-metric--violet" onClick={() => setBirthdayFilter('todos')}>
+            <div><span>Com data cadastrada</span><strong>{birthdayCustomers.length}</strong></div>
+            <UserCheck size={19} aria-hidden="true" />
+          </button>
+          <button type="button" className="loyalty-v2-metric loyalty-v2-metric--red" onClick={() => setBirthdayFilter('semTelefone')}>
+            <div><span>Sem telefone</span><strong>{missingPhoneCount}</strong></div>
+            <AlertTriangle size={19} aria-hidden="true" />
+          </button>
+        </section>
+
+        <section className="loyalty-v2-toolbar">
+          <label className="loyalty-v2-search">
+            <Search size={18} aria-hidden="true" />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar cliente, telefone ou e-mail..."
+            />
+          </label>
+
+          <div className="loyalty-v2-filters" aria-label="Filtros rápidos">
+            <button type="button" className={birthdayFilter === 'hoje' ? 'loyalty-v2-chip loyalty-v2-chip--active' : 'loyalty-v2-chip'} onClick={() => setBirthdayFilter('hoje')}>Hoje</button>
+            <button type="button" className={birthdayFilter === 'proximos' ? 'loyalty-v2-chip loyalty-v2-chip--active' : 'loyalty-v2-chip'} onClick={() => setBirthdayFilter('proximos')}>7 dias</button>
+            <button type="button" className={birthdayFilter === 'todos' ? 'loyalty-v2-chip loyalty-v2-chip--active' : 'loyalty-v2-chip'} onClick={() => setBirthdayFilter('todos')}>Todos</button>
+            <button type="button" className={birthdayFilter === 'semTelefone' ? 'loyalty-v2-chip loyalty-v2-chip--active' : 'loyalty-v2-chip'} onClick={() => setBirthdayFilter('semTelefone')}>Sem telefone</button>
+          </div>
+        </section>
 
         {errorMessage ? <div className="feedback-message feedback-message--error">{errorMessage}</div> : null}
 
-        {/* Painel da Listagem */}
-        <section className="customer-premium-list-panel">
-          <header className="section-header" style={{ borderBottom: '1px solid rgba(33, 22, 9, 0.12)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <span aria-hidden="true" style={{ background: 'rgba(91, 58, 10, 0.12)', padding: '10px', borderRadius: '12px', color: '#5b3a0a', display: 'inline-flex' }}>
-                <Gift size={22} strokeWidth={2.4} />
-              </span>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#16120A' }}>Calendário de Relacionamento</h2>
-                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#4B3A16' }}>Clientes ordenados pelo próximo aniversário de acordo com a seleção.</p>
-              </div>
-            </div>
-          </header>
-
-          {isLoading ? (
-            <div className="product-empty">Carregando aniversariantes...</div>
-          ) : filteredCustomers.length === 0 ? (
-            <div className="product-empty" style={{ background: 'var(--surface-elevated)', color: 'var(--text-secondary)', borderRadius: '16px', padding: '40px', border: '1px solid var(--border-gold)' }}>Nenhum aniversariante cadastrado neste período.</div>
-          ) : (
-            <div className="customer-premium-card-grid" style={{ marginTop: '20px' }}>
-              {birthdayPagination.pageItems.map((customer) => {
-                const isToday = customer.daysUntilBirthday === 0;
-                const isNextWeek = customer.daysUntilBirthday > 0 && customer.daysUntilBirthday <= 7;
-                return (
-                  <article 
-                    className={isToday ? "customer-premium-card customer-premium-card--today" : "customer-premium-card"}
-                    key={customer.id}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      minHeight: '260px'
-                    }}
-                  >
-                    <div>
-                      <div className="customer-premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
-                        <div>
-                          <h3 style={{ margin: '0 0 4px', fontSize: '1.1rem', color: '#16120A', fontWeight: 600 }}>{customer.name}</h3>
-                          <span className="product-card-code" style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#5b3a0a', fontFamily: 'monospace' }}>
-                            <Cake size={12} />
-                            {formatBirthDate(customer.birthDate as string)}
-                          </span>
-                        </div>
-                        <strong className={isToday || isNextWeek ? 'customer-premium-status customer-premium-status--active' : 'customer-premium-status'} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                          {birthdayStatus(customer.daysUntilBirthday)}
-                        </strong>
-                      </div>
-                      
-                      <div className="customer-premium-contact-box" style={{ background: 'rgba(33, 22, 9, 0.05)', padding: '12px', borderRadius: '10px', display: 'grid', gap: '8px', marginBottom: '14px', border: '1px solid rgba(33, 22, 9, 0.08)' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Phone size={13} style={{ color: '#5b3a0a' }} />
-                            <span style={{ color: '#4B3A16', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>Tel</span>
-                          </div>
-                          <strong>{customer.phone ? maskPhone(customer.phone) : 'Não informado'}</strong>
-                        </div>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Mail size={13} style={{ color: '#5b3a0a' }} />
-                            <span style={{ color: '#4B3A16', fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase' }}>E-mail</span>
-                          </div>
-                          <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{customer.email || 'Não informado'}</strong>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-                      <button
-                        type="button"
-                        className="customer-premium-secondary-button"
-                        onClick={() => {
-                          setCongratulateClient(customer)
-                          setSelectedTemplate('classico')
-                        }}
-                        style={{
-                          flex: 1.2,
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '8px 12px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          borderRadius: '10px'
-                        }}
-                      >
-                        <Sparkles size={13} />
-                        Felicitar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (onViewChange) {
-                            onViewChange('customer-profile', customer.id);
-                          }
-                        }}
-                        className="customer-premium-primary-button"
-                        style={{
-                          flex: 1,
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '8px 12px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          borderRadius: '10px'
-                        }}
-                      >
-                        <Search size={13} />
-                        Ficha
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-
-          {!isLoading && filteredCustomers.length > 0 && (
-            <>
-              <PaginationControls
-                itemLabel="clientes"
-                page={birthdayPagination.page}
-                pageSize={birthdayPagination.pageSize}
-                totalItems={birthdayPagination.totalItems}
-                totalPages={birthdayPagination.totalPages}
-                onPageChange={birthdayPagination.setPage}
-              />
-              
-              <footer className="customer-premium-list-footer" style={{ marginTop: '20px' }}>
-                <span>Exibindo {birthdayPagination.pageItems.length} de {filteredCustomers.length} registros</span>
-                <strong>Fidelidade Atelier IWR</strong>
-              </footer>
-            </>
-          )}
-        </section>
-      </div>
-
-      {/* Modal Interativo de Felicitações */}
-      {congratulateClient !== null && (
-        <div className="customer-premium-modal-backdrop" role="presentation">
-          <section className="customer-premium-edit-modal" role="dialog" aria-modal="true" aria-labelledby="congratulateTitle" style={{ maxWidth: '600px' }}>
-            <header>
-              <div>
-                <h2 id="congratulateTitle">Enviar Felicitações</h2>
-                <p>Envie uma mensagem sofisticada para <strong>{congratulateClient.name}</strong>.</p>
-              </div>
-              <button type="button" onClick={() => setCongratulateClient(null)} aria-label="Fechar modal">
-                <X size={20} aria-hidden="true" />
-              </button>
-            </header>
-
-            <div style={{ padding: '24px', display: 'grid', gap: '20px' }}>
-              <div className="field-group">
-                <label style={{ color: '#5b3a0a', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
-                  Escolha o Modelo de Mensagem
-                </label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  {(['classico', 'promocional', 'divertido'] as SelectedTemplate[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setSelectedTemplate(t)}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        borderRadius: '10px',
-                        fontSize: '0.75rem',
-                        fontWeight: 900,
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        border: selectedTemplate === t ? '1px solid #211609' : '1px solid rgba(33, 22, 9, 0.12)',
-                        background: selectedTemplate === t ? 'rgba(33, 22, 9, 0.15)' : 'rgba(33, 22, 9, 0.05)',
-                        color: selectedTemplate === t ? '#211609' : 'rgba(33, 22, 9, 0.65)'
-                      }}
-                    >
-                      {t === 'classico' ? 'Clássico' : t === 'promocional' ? 'Promocional' : 'Elegante'}
-                    </button>
-                  ))}
+        <section className="loyalty-v2-content-grid">
+          <section className="loyalty-v2-panel">
+            <header className="loyalty-v2-section-head">
+              <div className="loyalty-v2-section-title">
+                <span className="loyalty-v2-section-icon"><Cake size={18} aria-hidden="true" /></span>
+                <div>
+                  <h2>Carteira de aniversariantes</h2>
+                  <p>Clientes ordenados por urgência de contato.</p>
                 </div>
               </div>
+              <span className="loyalty-v2-export-chip">{filteredCustomers.length} registro(s)</span>
+            </header>
 
-              <div className="field-group">
-                <label style={{ color: '#5b3a0a', fontWeight: 900, fontSize: '0.62rem', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
-                  Visualização da Mensagem
-                </label>
-                <textarea
-                  className="loyalty-message-textarea"
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                  style={{
-                    width: '100%',
-                    minHeight: '120px',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    fontSize: '0.85rem',
-                    lineHeight: '1.6',
-                    resize: 'none',
-                    outline: 'none'
-                  }}
+            {isLoading ? (
+              <div className="loyalty-v2-empty">Carregando aniversariantes...</div>
+            ) : filteredCustomers.length === 0 ? (
+              <div className="loyalty-v2-empty">Nenhum aniversariante encontrado para o filtro selecionado.</div>
+            ) : (
+              <div className="loyalty-v2-card-grid">
+                {birthdayPagination.pageItems.map((customer) => {
+                  const isToday = customer.daysUntilBirthday === 0
+                  const isNextWeek = customer.daysUntilBirthday > 0 && customer.daysUntilBirthday <= 7
+
+                  return (
+                    <article className="loyalty-v2-card" key={customer.id}>
+                      <div className="loyalty-v2-card-top">
+                        <div className="loyalty-v2-person">
+                          <div className="loyalty-v2-avatar">{initials(customer.name)}</div>
+                          <div>
+                            <strong>{customer.name}</strong>
+                            <small>{formatBirthDate(customer.birthDate as string)} • {customer.phone ? maskPhone(customer.phone) : 'Sem telefone'}</small>
+                          </div>
+                        </div>
+                        <span className={isToday ? 'loyalty-v2-status loyalty-v2-status--today' : isNextWeek ? 'loyalty-v2-status loyalty-v2-status--soon' : 'loyalty-v2-status'}>
+                          {birthdayStatus(customer.daysUntilBirthday)}
+                        </span>
+                      </div>
+
+                      <div className="loyalty-v2-contact">
+                        <span><Phone size={14} aria-hidden="true" /> {customer.phone ? maskPhone(customer.phone) : 'Telefone não informado'}</span>
+                        <span><Mail size={14} aria-hidden="true" /> {customer.email || 'E-mail não informado'}</span>
+                        <span><HeartHandshake size={14} aria-hidden="true" /> Oportunidade de relacionamento e fidelização.</span>
+                      </div>
+
+                      <div className="loyalty-v2-card-actions">
+                        <button type="button" className="loyalty-v2-btn loyalty-v2-btn--gold" onClick={() => handleSelectMessageCustomer(customer)}>
+                          <Sparkles size={14} aria-hidden="true" /> Mensagem
+                        </button>
+                        <button
+                          type="button"
+                          className="loyalty-v2-btn"
+                          onClick={() => {
+                            if (onViewChange) onViewChange('customer-profile', customer.id)
+                          }}
+                        >
+                          <ArrowUpRight size={14} aria-hidden="true" /> Perfil
+                        </button>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+
+            {!isLoading && filteredCustomers.length > 0 ? (
+              <div className="loyalty-v2-pagination">
+                <PaginationControls
+                  itemLabel="clientes"
+                  page={birthdayPagination.page}
+                  pageSize={birthdayPagination.pageSize}
+                  totalItems={birthdayPagination.totalItems}
+                  totalPages={birthdayPagination.totalPages}
+                  onPageChange={birthdayPagination.setPage}
                 />
               </div>
-
-              <div className="customer-premium-actions" style={{ display: 'flex', gap: '12px' }}>
-                <button 
-                  type="button" 
-                  className="customer-premium-primary-button" 
-                  onClick={handleCopyMessage}
-                  style={{ flex: 1 }}
-                >
-                  <Copy size={16} aria-hidden="true" />
-                  Copiar Texto
-                </button>
-                {congratulateClient.phone ? (
-                  <button 
-                    type="button" 
-                    className="customer-premium-primary-button" 
-                    onClick={handleSendWhatsApp}
-                    style={{ flex: 1, background: 'linear-gradient(135deg, #25D366, #128C7E)', border: '1px solid rgba(37, 211, 102, 0.4)', color: '#fff' }}
-                  >
-                    <MessageSquare size={16} aria-hidden="true" />
-                    Enviar WhatsApp
-                  </button>
-                ) : null}
-                <button 
-                  type="button" 
-                  className="customer-premium-secondary-button" 
-                  onClick={() => setCongratulateClient(null)}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
+            ) : null}
           </section>
-        </div>
-      )}
+
+          <aside className="loyalty-v2-message-panel">
+            <header className="loyalty-v2-section-head">
+              <div className="loyalty-v2-section-title">
+                <span className="loyalty-v2-section-icon"><MessageSquare size={18} aria-hidden="true" /></span>
+                <div>
+                  <h2>Mensagem rápida</h2>
+                  <p>Modelo pronto para WhatsApp.</p>
+                </div>
+              </div>
+            </header>
+
+            <div className="loyalty-v2-selected-customer">
+              <span>Cliente selecionado</span>
+              <strong>{activeMessageCustomer?.name ?? 'Nenhum cliente disponível'}</strong>
+              <small>{activeMessageCustomer?.birthDate ? formatBirthDate(activeMessageCustomer.birthDate) : 'Sem data selecionada'}</small>
+            </div>
+
+            <div className="loyalty-v2-template-tabs">
+              {(['classico', 'promocional', 'divertido'] as SelectedTemplate[]).map((template) => (
+                <button
+                  key={template}
+                  type="button"
+                  className={selectedTemplate === template ? 'loyalty-v2-template-tab loyalty-v2-template-tab--active' : 'loyalty-v2-template-tab'}
+                  onClick={() => setSelectedTemplate(template)}
+                >
+                  {template === 'classico' ? 'Clássico' : template === 'promocional' ? 'Promoção' : 'Leve'}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              className="loyalty-v2-textarea"
+              value={customMessage}
+              onChange={(event) => setCustomMessage(event.target.value)}
+              placeholder="Selecione um cliente para gerar uma mensagem."
+            />
+
+            <div className="loyalty-v2-message-actions">
+              <button type="button" className="loyalty-v2-btn loyalty-v2-btn--gold" onClick={handleCopyMessage} disabled={!customMessage}>
+                <Copy size={15} aria-hidden="true" /> Copiar
+              </button>
+              <button type="button" className="loyalty-v2-btn" onClick={handleSendWhatsApp} disabled={!activeMessageCustomer?.phone || !customMessage}>
+                <MessageSquare size={15} aria-hidden="true" /> WhatsApp
+              </button>
+            </div>
+
+            <div className="loyalty-v2-timeline">
+              <div className="loyalty-v2-timeline-row"><span>Hoje</span><div><strong>{todayCount} contato(s) prioritário(s)</strong><small>Clientes com aniversário hoje</small></div><Gift size={16} /></div>
+              <div className="loyalty-v2-timeline-row"><span>7 dias</span><div><strong>{nextSevenDaysCount} oportunidade(s)</strong><small>Campanha ativa de relacionamento</small></div><CalendarDays size={16} /></div>
+              <div className="loyalty-v2-timeline-row"><span>Base</span><div><strong>{birthdayCustomers.length} registro(s)</strong><small>Clientes com data cadastrada</small></div><UserCheck size={16} /></div>
+            </div>
+          </aside>
+        </section>
+      </section>
     </main>
   )
 }
-
-
-
