@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Banknote, BarChart3, CalendarDays, FileDown, ReceiptText, TrendingUp, WalletCards, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Banknote, BarChart3, CalendarDays, ChevronLeft, ChevronRight, FileDown, ReceiptText, TrendingUp, WalletCards } from 'lucide-react'
 import {
   downloadAdminDashboardReport,
   getAdminDashboardPaymentMethods,
@@ -18,6 +18,7 @@ import { formatPaymentMethod } from '../utils/paymentMethods'
 import { useAppMessage } from '../hooks/useAppMessage'
 import { PaginationControls } from '../components/PaginationControls'
 import { usePagination } from '../hooks/usePagination'
+import '../admin-dashboard-replica.css'
 
 const statusLabels = {
   PENDING: 'Pendente',
@@ -32,6 +33,11 @@ function toIsoDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '—'
+  return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
 }
 
 function todayFilters(): AdminDashboardFilters {
@@ -172,9 +178,14 @@ export function AdminDashboardPage() {
     if (summary.totalSold <= 0) return '0%'
     return `${Math.min(100, Math.round((summary.totalReceived / summary.totalSold) * 100))}%`
   }, [summary.totalReceived, summary.totalSold])
-  
+
+  const receivedRatioValue = useMemo(() => {
+    if (summary.totalSold <= 0) return 0
+    return Math.min(100, Math.round((summary.totalReceived / summary.totalSold) * 100))
+  }, [summary.totalReceived, summary.totalSold])
+
   const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth])
-  
+
   const receivableDayTotals = useMemo(() => {
     const totals = new Map<string, { count: number; amount: number }>()
     receivables.calendarDays.forEach((day) => {
@@ -182,24 +193,21 @@ export function AdminDashboardPage() {
     })
     return totals
   }, [receivables.calendarDays])
-  
+
   const maxPaymentAmount = useMemo(
     () => Math.max(...paymentMethods.map((payment) => payment.receivedAmount), 1),
     [paymentMethods],
   )
-  const topCustomersPagination = usePagination(receivables.topCustomers, 6)
 
   const filteredItems = useMemo(() => {
     if (!searchTerm.trim()) return receivables.items
     const lower = searchTerm.toLowerCase()
     return receivables.items.filter((item) => {
-      return (
-        item.customerName.toLowerCase().includes(lower) ||
-        String(item.saleId).toLowerCase().includes(lower)
-      )
+      return item.customerName.toLowerCase().includes(lower) || String(item.saleId).toLowerCase().includes(lower)
     })
   }, [receivables.items, searchTerm])
 
+  const topCustomersPagination = usePagination(receivables.topCustomers, 6)
   const receivableItemsPagination = usePagination(filteredItems, 10)
 
   function applyPreset(preset: 'today' | 'yesterday' | 'week' | 'month') {
@@ -244,12 +252,10 @@ export function AdminDashboardPage() {
 
   return (
     <main className="app-shell customer-premium-shell admin-dashboard-shell">
-      <div className="app-container customer-premium-container">
-        
-        {/* Banner do Topo */}
-        <div className="customer-premium-hero">
-          <section className="customer-premium-banner">
-            <div className="customer-premium-badges">
+      <div className="app-container customer-premium-container admx-dashboard">
+        <div className="admx-hero">
+          <section className="admx-banner">
+            <div className="admx-badges">
               <span>★ BI &amp; AUDITORIA</span>
               <strong>Somente Administradores</strong>
             </div>
@@ -257,77 +263,71 @@ export function AdminDashboardPage() {
             <p>Acompanhe em tempo real as vendas, faturamento, parcelas de promissórias e recebimentos consolidados.</p>
           </section>
 
-          <section className="customer-premium-target-card" style={{ background: 'var(--gold-card-bg)' }}>
+          <section className="admx-target">
             <div>
-              <span style={{ color: '#16110A', opacity: 0.85 }}>Índice de Recebimento</span>
-              <small style={{ color: '#16110A', opacity: 0.7 }}>Efetividade de Cobrança</small>
+              <span>Índice de Recebimento</span>
+              <small>Efetividade de Cobrança</small>
             </div>
-            <strong style={{ color: '#16110A', fontWeight: 800 }}>{receivedRatio}</strong>
-            <div className="customer-premium-progress" style={{ background: 'rgba(22, 17, 10, 0.15)' }}>
-              <span style={{ width: receivedRatio, background: '#16110A' }} />
+            <strong>{receivedRatio}</strong>
+            <div className="admx-progress">
+              <span style={{ width: `${receivedRatioValue}%` }} />
             </div>
           </section>
         </div>
 
-        {/* Barra de Filtros e Preset de Períodos */}
-        <section className="customer-premium-form-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="admin-dashboard-presets" style={{ display: 'flex', gap: '10px' }}>
-            <button className="customer-premium-secondary-button" type="button" onClick={() => applyPreset('today')} style={{ minHeight: '36px', fontSize: '0.72rem', flex: 1 }}>Hoje</button>
-            <button className="customer-premium-secondary-button" type="button" onClick={() => applyPreset('yesterday')} style={{ minHeight: '36px', fontSize: '0.72rem', flex: 1 }}>Ontem</button>
-            <button className="customer-premium-secondary-button" type="button" onClick={() => applyPreset('week')} style={{ minHeight: '36px', fontSize: '0.72rem', flex: 1 }}>Esta semana</button>
-            <button className="customer-premium-secondary-button" type="button" onClick={() => applyPreset('month')} style={{ minHeight: '36px', fontSize: '0.72rem', flex: 1 }}>Este mês</button>
+        <section className="admx-panel admx-filters">
+          <div className="admx-presets">
+            <button className="admx-btn" type="button" onClick={() => applyPreset('today')}>Hoje</button>
+            <button className="admx-btn" type="button" onClick={() => applyPreset('yesterday')}>Ontem</button>
+            <button className="admx-btn" type="button" onClick={() => applyPreset('week')}>Esta semana</button>
+            <button className="admx-btn" type="button" onClick={() => applyPreset('month')}>Este mês</button>
           </div>
 
-          <form className="history-filter-form" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '14px', alignItems: 'end', background: 'var(--surface-dark)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(226,232,240,0.06)' }}>
-            <div className="field-group">
+          <form className="admx-filter-form" onSubmit={handleSubmit}>
+            <div>
               <label htmlFor="dashboardStart">Início</label>
               <input
                 id="dashboardStart"
                 type="date"
                 value={draftFilters.startDate}
                 onChange={(event) => setDraftFilters((current) => ({ ...current, startDate: event.target.value }))}
-                style={{ colorScheme: 'dark', minHeight: '44px' }}
               />
             </div>
-            <div className="field-group">
+            <div>
               <label htmlFor="dashboardEnd">Fim</label>
               <input
                 id="dashboardEnd"
                 type="date"
                 value={draftFilters.endDate}
                 onChange={(event) => setDraftFilters((current) => ({ ...current, endDate: event.target.value }))}
-                style={{ colorScheme: 'dark', minHeight: '44px' }}
               />
             </div>
-            <button className="customer-premium-primary-button" type="submit" disabled={isLoading} style={{ minHeight: '44px' }}>
-              Filtrar Período
-            </button>
-            <button className="customer-premium-secondary-button" type="button" onClick={() => void handleReport()} style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <button className="admx-btn admx-btn--gold" type="submit" disabled={isLoading}>Filtrar Período</button>
+            <button className="admx-btn admx-btn--dark" type="button" onClick={() => void handleReport()}>
               <FileDown size={14} /> PDF Relatório
             </button>
           </form>
           {errorMessage ? <div className="feedback-message feedback-message--error">{errorMessage}</div> : null}
         </section>
 
-        {/* Métricas Principais (Grid 4 Colunas) */}
-        <div className="customer-premium-metrics">
-          <article className="gold-readable-surface" style={{ background: 'var(--gold-card-bg)', border: '1px solid #d7ad55', padding: '20px', borderRadius: '16px' }}>
+        <section className="admx-metrics">
+          <article className="admx-metric admx-metric--gold">
             <div>
-              <span style={{ color: '#16110A', opacity: 0.85, fontWeight: 600 }}>Faturamento total</span>
-              <strong style={{ color: '#16110A', fontSize: '1.75rem', fontWeight: 800 }}>{formatCurrency(summary.totalSold)}</strong>
+              <span>Faturamento total</span>
+              <strong>{formatCurrency(summary.totalSold)}</strong>
             </div>
-            <TrendingUp size={19} aria-hidden="true" style={{ color: '#16110A', background: 'rgba(22, 17, 10, 0.12)' }} />
+            <TrendingUp size={19} aria-hidden="true" />
           </article>
 
-          <article style={{ border: '1px solid rgba(45, 212, 191, 0.4)', background: 'linear-gradient(180deg, rgba(45,212,191,0.04), rgba(0,0,0,0))' }}>
+          <article className="admx-metric admx-metric--green">
             <div>
               <span>Total recebido</span>
-              <strong style={{ color: '#2dd4bf' }}>{formatCurrency(summary.totalReceived)}</strong>
+              <strong>{formatCurrency(summary.totalReceived)}</strong>
             </div>
-            <Banknote size={19} aria-hidden="true" style={{ color: '#2dd4bf', background: 'rgba(45, 212, 191, 0.1)' }} />
+            <Banknote size={19} aria-hidden="true" />
           </article>
 
-          <article>
+          <article className="admx-metric">
             <div>
               <span>Promissórias em aberto</span>
               <strong>{formatCurrency(summary.openReceivables)}</strong>
@@ -335,350 +335,258 @@ export function AdminDashboardPage() {
             <ReceiptText size={19} aria-hidden="true" />
           </article>
 
-          <article style={{ borderColor: summary.overdueReceivables > 0 ? 'rgba(251, 113, 133, 0.4)' : undefined }}>
+          <article className="admx-metric admx-metric--red">
             <div>
               <span>Montante vencido</span>
-              <strong style={{ color: summary.overdueReceivables > 0 ? '#fb7185' : '#fff' }}>{formatCurrency(summary.overdueReceivables)}</strong>
+              <strong>{formatCurrency(summary.overdueReceivables)}</strong>
             </div>
-            <CalendarDays size={19} aria-hidden="true" style={{ color: '#fb7185', background: 'rgba(251, 113, 133, 0.1)' }} />
+            <CalendarDays size={19} aria-hidden="true" />
           </article>
-        </div>
+        </section>
 
-        {/* Métricas Secundárias */}
-        <div className="customer-premium-metrics" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-          <article style={{ minHeight: '94px', padding: '16px 20px' }}>
+        <section className="admx-metrics admx-secondary-metrics">
+          <article className="admx-metric">
             <div>
-              <span style={{ fontSize: '0.6rem' }}>Volume de Vendas</span>
-              <strong style={{ fontSize: '1.4rem' }}>{summary.saleCount}</strong>
+              <span>Volume de Vendas</span>
+              <strong>{summary.saleCount}</strong>
             </div>
             <WalletCards size={16} />
           </article>
-          <article style={{ minHeight: '94px', padding: '16px 20px' }}>
+          <article className="admx-metric">
             <div>
-              <span style={{ fontSize: '0.6rem' }}>Ticket Médio</span>
-              <strong style={{ fontSize: '1.4rem' }}>{formatCurrency(summary.averageTicket)}</strong>
+              <span>Ticket Médio</span>
+              <strong>{formatCurrency(summary.averageTicket)}</strong>
             </div>
+            <span className="admx-metric-icon">◉</span>
           </article>
-          <article style={{ minHeight: '94px', padding: '16px 20px' }}>
+          <article className="admx-metric admx-metric--red">
             <div>
-              <span style={{ fontSize: '0.6rem' }}>Descontos Concedidos</span>
-              <strong style={{ fontSize: '1.4rem', color: '#fb7185' }}>{formatCurrency(summary.totalDiscounts)}</strong>
+              <span>Descontos Concedidos</span>
+              <strong>{formatCurrency(summary.totalDiscounts)}</strong>
             </div>
+            <span className="admx-metric-icon">%</span>
           </article>
-          <article style={{ minHeight: '94px', padding: '16px 20px', borderColor: summary.dueTodayReceivables > 0 ? 'rgba(215,173,85,0.3)' : undefined }}>
+          <article className="admx-metric admx-metric--gold">
             <div>
-              <span style={{ fontSize: '0.6rem' }}>Vencimentos de Hoje</span>
-              <strong style={{ fontSize: '1.4rem', color: summary.dueTodayReceivables > 0 ? '#f6d78b' : '#fff' }}>{formatCurrency(summary.dueTodayReceivables)}</strong>
+              <span>Vencimentos de Hoje</span>
+              <strong>{formatCurrency(summary.dueTodayReceivables)}</strong>
             </div>
+            <span className="admx-metric-icon">!</span>
           </article>
-        </div>
+        </section>
 
-        {/* Visão de Business Intelligence (BI) */}
-        <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
-          <header style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '18px' }}>
-            <BarChart3 size={22} style={{ color: '#d7ad55' }} />
+        <section className="admx-panel">
+          <header className="admx-section-head">
+            <BarChart3 size={22} aria-hidden="true" />
             <div>
-              <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Visão Analítica de BI</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Indicadores gráficos e métricas rápidas de performance.</p>
+              <h2>Visão Analítica de BI</h2>
+              <p>Indicadores gráficos e métricas rápidas de performance.</p>
             </div>
           </header>
 
-          <div className="admin-bi-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '22px' }}>
-            {/* Gráficos de Barras com degradê Gold */}
-            <div className="admin-mini-chart" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <span style={{ color: 'var(--gold-strong)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Faturamento por Forma</span>
+          <div className="admx-bi-grid">
+            <article className="admx-mini-chart">
+              <span className="admx-mini-title">Faturamento por Forma</span>
               {paymentMethods.length === 0 ? (
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '20px 0' }}>Sem movimentações no período.</div>
+                <div className="admx-muted-state">Sem movimentações no período.</div>
               ) : (
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {paymentMethods.map((payment) => {
-                    const isPhysical = payment.paymentMethod === 'CASH' || payment.paymentMethod === 'DEBIT'
-                    const barColor = isPhysical 
-                      ? 'linear-gradient(90deg, #f6d78b, #ffe9ad)' // Dourado Claro (Atelier Físico)
-                      : 'linear-gradient(90deg, #b77a1a, #d7ad55)' // Dourado Escuro Brilhante (Atelier Online)
-                    
-                    return (
-                      <div className="admin-chart-row" key={payment.paymentMethod} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <small style={{ width: '80px', color: 'var(--text-secondary)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{formatPaymentMethod(payment.paymentMethod)}</small>
-                        <div style={{ flex: 1, height: '8px', background: '#11141a', borderRadius: '4px', overflow: 'hidden' }}>
-                          <i style={{ 
-                            display: 'block', 
-                            height: '100%', 
-                            borderRadius: 'inherit',
-                            background: barColor, 
-                            width: `${Math.max(6, (payment.receivedAmount / maxPaymentAmount) * 100)}%` 
-                          }} />
-                        </div>
-                        <strong style={{ width: '90px', textAlign: 'right', color: '#fff', fontSize: '0.78rem' }}>{formatCurrency(payment.receivedAmount)}</strong>
+                paymentMethods.map((payment) => {
+                  const isPhysical = payment.paymentMethod === 'CASH' || payment.paymentMethod === 'DEBIT'
+                  const barColor = isPhysical
+                    ? 'linear-gradient(90deg, #f6d78b, #ffe9ad)'
+                    : 'linear-gradient(90deg, #b77a1a, #d7ad55)'
+
+                  return (
+                    <div className="admx-chart-row" key={payment.paymentMethod}>
+                      <small>{formatPaymentMethod(payment.paymentMethod)}</small>
+                      <div className="admx-chart-bar">
+                        <span
+                          style={{
+                            width: `${Math.max(6, (payment.receivedAmount / maxPaymentAmount) * 100)}%`,
+                            background: barColor,
+                          }}
+                        />
                       </div>
-                    )
-                  })}
-                </div>
+                      <strong>{formatCurrency(payment.receivedAmount)}</strong>
+                    </div>
+                  )
+                })
               )}
-            </div>
+            </article>
 
-            {/* Divisão de Recebíveis */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
-              <span style={{ color: 'var(--gold-strong)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recebíveis da Carteira</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Em aberto</small>
-                  <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{formatCurrency(receivables.openAmount)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: '#fb7185', fontSize: '0.75rem' }}>Vencido</small>
-                  <strong style={{ color: '#fb7185', fontSize: '0.85rem' }}>{formatCurrency(receivables.overdueAmount)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <small style={{ color: 'var(--gold-strong)', fontSize: '0.75rem' }}>Próximos 7 dias</small>
-                  <strong style={{ color: 'var(--gold-strong)', fontSize: '0.85rem' }}>{formatCurrency(receivables.dueNext7DaysAmount)}</strong>
-                </div>
+            <article className="admx-mini-chart">
+              <span className="admx-mini-title">Recebíveis da Carteira</span>
+              <div className="admx-split-list">
+                <div className="admx-split-line"><small>Em aberto</small><strong>{formatCurrency(receivables.openAmount)}</strong></div>
+                <div className="admx-split-line"><small style={{ color: '#fb7185' }}>Vencido</small><strong style={{ color: '#fb7185' }}>{formatCurrency(receivables.overdueAmount)}</strong></div>
+                <div className="admx-split-line"><small style={{ color: '#ffe9ad' }}>Próximos 7 dias</small><strong style={{ color: '#ffe9ad' }}>{formatCurrency(receivables.dueNext7DaysAmount)}</strong></div>
               </div>
-            </div>
+            </article>
 
-            {/* Métricas de BI Vendas */}
-            <div className="admin-mini-chart admin-mini-chart--split" style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.06)', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px' }}>
-              <span style={{ color: 'var(--gold-strong)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>BI de Operações</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Total de Vendas</small>
-                  <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{summary.saleCount} un.</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(226,232,240,0.04)', paddingBottom: '6px' }}>
-                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Ticket Médio</small>
-                  <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{formatCurrency(summary.averageTicket)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <small style={{ color: '#fb7185', fontSize: '0.75rem' }}>Desconto Total</small>
-                  <strong style={{ color: '#fb7185', fontSize: '0.85rem' }}>{formatCurrency(summary.totalDiscounts)}</strong>
-                </div>
+            <article className="admx-mini-chart">
+              <span className="admx-mini-title">BI de Operações</span>
+              <div className="admx-split-list">
+                <div className="admx-split-line"><small>Total de Vendas</small><strong>{summary.saleCount} un.</strong></div>
+                <div className="admx-split-line"><small>Ticket Médio</small><strong>{formatCurrency(summary.averageTicket)}</strong></div>
+                <div className="admx-split-line"><small>Lucro estimado</small><strong style={{ color: '#34d399' }}>{formatCurrency(summary.totalProfit)}</strong></div>
               </div>
-            </div>
+            </article>
           </div>
         </section>
 
-        {/* Calendário de Recebimentos com Halos Dourados */}
-        <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
-          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CalendarDays size={22} style={{ color: '#d7ad55' }} />
+        <section className="admx-admin-grid">
+          <article className="admx-panel">
+            <header className="admx-section-head">
+              <CalendarDays size={22} aria-hidden="true" />
               <div>
-                <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Calendário de recebimentos</h2>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Clique em uma data iluminada para filtrar os recebíveis agendados para aquele dia.</p>
+                <h2>Calendário de Recebíveis</h2>
+                <p>Dias com parcelas previstas e vencimentos.</p>
               </div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button className="customer-premium-secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))} style={{ minHeight: '34px', fontSize: '0.72rem' }}>
-                <ChevronLeft size={16} /> Anterior
-              </button>
-              <strong style={{ color: '#fff', fontSize: '0.9rem', textTransform: 'capitalize' }}>
-                {new Date(`${calendarMonth}-01T00:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-              </strong>
-              <button className="customer-premium-secondary-button" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))} style={{ minHeight: '34px', fontSize: '0.72rem' }}>
-                Próximo <ChevronRight size={16} />
-              </button>
-            </div>
-          </header>
-
-          <div className="calendar-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900, marginBottom: '10px' }}>
-            {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((day) => <span key={day}>{day}</span>)}
-          </div>
-          
-          <div className="collection-calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
-            {calendarDays.map((day, index) => {
-              const total = day.date ? receivableDayTotals.get(day.date) : undefined
-              const isSelected = day.date === selectedCalendarDate
-              const todayStr = toIsoDate(new Date())
-              const isToday = day.date === todayStr
-              
-              // Efeito de Halo Dourado Iluminando dias com recebíveis e Destaque do Dia Atual
-              const dayStyle: React.CSSProperties = {
-                minHeight: '64px',
-                background: isSelected 
-                  ? 'rgba(215, 173, 85, 0.25)' 
-                  : isToday 
-                    ? 'rgba(45, 212, 191, 0.15)' 
-                    : total 
-                      ? 'rgba(215, 173, 85, 0.06)' 
-                      : '#0d1016',
-                border: isSelected 
-                  ? '2px solid #d7ad55' 
-                  : isToday 
-                    ? '2px solid #2dd4bf' 
-                    : total 
-                      ? '1px solid rgba(215, 173, 85, 0.3)' 
-                      : '1px solid rgba(226, 232, 240, 0.04)',
-                boxShadow: isToday 
-                  ? '0 0 12px rgba(45, 212, 191, 0.15)' 
-                  : total && !isSelected 
-                    ? '0 0 10px rgba(215, 173, 85, 0.08)' 
-                    : undefined,
-                borderRadius: '8px',
-                color: day.muted ? '#7b8493' : isToday ? '#2dd4bf' : '#fff',
-                cursor: day.muted ? 'default' : 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                padding: '8px 10px',
-                transition: 'all 0.2s',
-                textAlign: 'left'
-              }
-
-              return (
-                <button
-                  key={day.date || `admin-cal-${index}`}
-                  className={day.date ? 'collection-calendar-day' : 'collection-calendar-day--empty'}
-                  type="button"
-                  disabled={day.muted}
-                  onClick={() => selectCalendarDate(day.date)}
-                  style={dayStyle}
-                >
-                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    {day.day || ''}
-                    {isToday && (
-                      <span style={{ fontSize: '0.55rem', background: '#2dd4bf', color: '#0d1016', padding: '1px 4px', borderRadius: '4px', fontWeight: 900 }}>HOJE</span>
-                    )}
-                  </span>
-                  {total ? (
-                    <small style={{ fontSize: '0.62rem', color: 'var(--gold-strong)', fontWeight: 'bold', display: 'block', width: '100%', borderTop: '1px solid rgba(215,173,85,0.15)', paddingTop: '4px', marginTop: '4px' }}>
-                      {total.count} nota(s) — {formatCurrency(total.amount)}
-                    </small>
-                  ) : null}
+              <div className="admx-calendar-toolbar">
+                <button className="admx-btn admx-btn--dark" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))}>
+                  <ChevronLeft size={16} /> Anterior
                 </button>
-              )
-            })}
-          </div>
-        </section>
-
-        {/* Resumos Secundários */}
-        <div className="admin-dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px' }}>
-          
-          {/* Resumo por Forma de Pagamento */}
-          <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
-            <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontWeight: 500 }}>Faturamento por Pagamento</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Resumo de vendas efetuadas e baixas ocorridas no período.</p>
+                <strong>{new Date(`${calendarMonth}-01T00:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</strong>
+                <button className="admx-btn admx-btn--dark" type="button" onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))}>
+                  Próximo <ChevronRight size={16} />
+                </button>
+              </div>
             </header>
 
-            <div className="admin-payment-list" style={{ display: 'grid', gap: '10px' }}>
-              {paymentMethods.length === 0 ? (
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '20px 0' }}>Nenhuma venda ou recebimento neste período.</div>
-              ) : (
-                paymentMethods.map((payment) => (
-                  <article key={payment.paymentMethod} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{formatPaymentMethod(payment.paymentMethod)}</strong>
-                      <small style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>{payment.saleCount} venda(s) — {payment.receiptCount} baixa(s)</small>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <strong style={{ color: 'var(--gold-strong)', fontSize: '0.95rem', display: 'block' }}>{formatCurrency(payment.soldAmount)}</strong>
-                      <small style={{ color: '#2dd4bf', fontSize: '0.72rem' }}>Recebido: {formatCurrency(payment.receivedAmount)}</small>
-                    </div>
-                  </article>
-                ))
-              )}
+            <div className="admx-weekdays">
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => <span key={day}>{day}</span>)}
             </div>
-          </section>
+            <div className="admx-calendar">
+              {calendarDays.map((day, index) => {
+                const total = day.date ? receivableDayTotals.get(day.date) : undefined
+                const isSelected = day.date === selectedCalendarDate
+                const isToday = day.date === toIsoDate(new Date())
+                const className = [
+                  'admx-day',
+                  total ? 'admx-day--has' : '',
+                  isSelected ? 'admx-day--selected' : '',
+                  isToday ? 'admx-day--today' : '',
+                ].filter(Boolean).join(' ')
 
-          {/* Maiores Devedores / Recebíveis do Período */}
-          <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
-            <header style={{ borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontWeight: 500 }}>Concentração de Devedores</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Maiores saldos a receber vinculados a clientes.</p>
+                return (
+                  <button
+                    className={className}
+                    type="button"
+                    key={`${day.date || 'empty'}-${index}`}
+                    disabled={!day.date}
+                    onClick={() => selectCalendarDate(day.date)}
+                  >
+                    <span>{day.day || ''}</span>
+                    {total ? <strong>{formatCurrency(total.amount)}</strong> : null}
+                  </button>
+                )
+              })}
+            </div>
+          </article>
+
+          <article className="admx-panel">
+            <header className="admx-section-head">
+              <ReceiptText size={22} aria-hidden="true" />
+              <div>
+                <h2>Top Clientes em Aberto</h2>
+                <p>Maiores saldos de promissórias e contas pendentes.</p>
+              </div>
             </header>
 
-            <div className="admin-top-customers" style={{ display: 'grid', gap: '10px' }}>
-              {receivables.topCustomers.length === 0 ? (
-                <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhum saldo pendente a receber de clientes.</div>
+            <div className="admx-top-customers">
+              {topCustomersPagination.items.length === 0 ? (
+                <div className="admx-muted-state">Nenhum cliente em aberto no período.</div>
               ) : (
-                topCustomersPagination.pageItems.map((customer) => (
-                  <div key={customer.customerId} style={{ background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.05)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                topCustomersPagination.items.map((customer) => (
+                  <div className="admx-customer-line" key={customer.customerId}>
                     <div>
-                      <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>{customer.customerName}</strong>
-                      <small style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>Possui {customer.openInstallments} parcela(s) em aberto</small>
+                      <span>{customer.customerName}</span>
+                      <small>{customer.openInstallments} parcela(s) aberta(s)</small>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <strong style={{ color: '#fb7185', fontSize: '#0.95rem' }}>{formatCurrency(customer.openAmount)}</strong>
-                    </div>
+                    <strong>{formatCurrency(customer.openAmount)}</strong>
                   </div>
                 ))
               )}
-              <PaginationControls itemLabel="clientes" page={topCustomersPagination.page} pageSize={topCustomersPagination.pageSize} totalItems={topCustomersPagination.totalItems} totalPages={topCustomersPagination.totalPages} onPageChange={topCustomersPagination.setPage} />
             </div>
-          </section>
-        </div>
+            <PaginationControls
+              itemLabel="clientes"
+              page={topCustomersPagination.page}
+              pageSize={topCustomersPagination.pageSize}
+              totalItems={topCustomersPagination.totalItems}
+              totalPages={topCustomersPagination.totalPages}
+              onPageChange={topCustomersPagination.setPage}
+            />
+          </article>
+        </section>
 
-        {/* Tabela de Recebíveis do Período */}
-        <section className="customer-premium-form-panel" style={{ padding: '24px' }}>
-          <style>{`
-            .admin-receivable-table .pagination-controls span,
-            .admin-receivable-table .pagination-controls strong,
-            .admin-top-customers .pagination-controls span,
-            .admin-top-customers .pagination-controls strong {
-              color: #94a3b8 !important;
-            }
-          `}</style>
-          
-          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid rgba(226,232,240,0.08)', paddingBottom: '14px', marginBottom: '18px' }}>
+        <section className="admx-panel">
+          <header className="admx-section-head">
+            <ReceiptText size={22} aria-hidden="true" />
             <div>
-              <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 500 }}>Histórico de parcelas no período</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Todas as parcelas com vencimento agendado para o intervalo filtrado.</p>
-            </div>
-            <div className="field-group" style={{ margin: 0, width: '100%', maxWidth: '380px' }}>
-              <input
-                type="text"
-                placeholder="Buscar por cliente ou venda..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  colorScheme: 'dark',
-                  height: '38px',
-                  background: 'rgba(0, 0, 0, 0.25)',
-                  borderRadius: '8px',
-                  fontSize: '0.8rem',
-                  padding: '0 12px',
-                  width: '100%'
-                }}
-              />
+              <h2>Recebíveis detalhados</h2>
+              <p>Consulta operacional dos títulos em aberto, vencidos e futuros.</p>
             </div>
           </header>
 
-          {isLoading ? (
-            <div className="product-empty">Atualizando listagem de parcelas...</div>
-          ) : filteredItems.length === 0 ? (
-            <div className="product-empty" style={{ background: 'var(--surface-dark)', borderRadius: '16px', padding: '40px' }}>Nenhuma parcela correspondente aos critérios.</div>
-          ) : (
-            <div className="admin-receivable-table" style={{ display: 'grid', gap: '8px' }}>
-              <div className="admin-receivable-head" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '10px 18px', background: 'var(--surface-dark)', borderRadius: '8px', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 900 }}>
-                <span>Cliente</span>
-                <span>Venda</span>
-                <span>Parcela</span>
-                <span>Vencimento</span>
-                <span>Status</span>
-                <span style={{ textAlign: 'right' }}>Valor</span>
-              </div>
-              
-              <div style={{ display: 'grid', gap: '8px' }}>
-                {receivableItemsPagination.pageItems.map((item) => (
-                  <article key={item.noteId} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', padding: '12px 18px', background: 'var(--surface-dark)', border: '1px solid rgba(226,232,240,0.04)', borderRadius: '10px', fontSize: '0.82rem', alignItems: 'center' }}>
-                    <span style={{ color: '#fff', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.customerName}</span>
-                    <span style={{ color: 'var(--text-secondary)' }}>#{item.saleId}</span>
-                    <span style={{ color: 'var(--text-secondary)' }}>{item.installmentNumber}/{item.totalInstallments}</span>
-                    <span style={{ color: '#fff' }}>{new Date(`${item.dueDate}T00:00:00`).toLocaleDateString('pt-BR')}</span>
-                    <span style={{ color: item.status === 'OVERDUE' ? '#fb7185' : item.status === 'PAID' ? '#2dd4bf' : '#f6d78b' }}>
-                      {statusLabels[item.status]}
-                    </span>
-                    <strong style={{ color: 'var(--gold-strong)', textAlign: 'right' }}>{formatCurrency(item.amount)}</strong>
-                  </article>
-                ))}
-              </div>
-              <PaginationControls itemLabel="parcelas" page={receivableItemsPagination.page} pageSize={receivableItemsPagination.pageSize} totalItems={receivableItemsPagination.totalItems} totalPages={receivableItemsPagination.totalPages} onPageChange={receivableItemsPagination.setPage} />
+          <div className="admx-table-tools">
+            <div className="admx-search">
+              <label htmlFor="receivableSearch">Buscar por cliente ou venda</label>
+              <input
+                id="receivableSearch"
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Digite cliente ou ID da venda..."
+              />
             </div>
-          )}
-        </section>
+            <span className="admx-muted-state">{filteredItems.length} título(s)</span>
+          </div>
 
+          <div className="admx-table-wrap">
+            <table className="admx-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Vencimento</th>
+                  <th>Status</th>
+                  <th>Parcela</th>
+                  <th>Valor</th>
+                  <th>Venda</th>
+                </tr>
+              </thead>
+              <tbody>
+                {receivableItemsPagination.items.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>Nenhum recebível encontrado.</td>
+                  </tr>
+                ) : (
+                  receivableItemsPagination.items.map((item) => (
+                    <tr key={item.noteId}>
+                      <td>{item.customerName}</td>
+                      <td>{formatDate(item.dueDate)}</td>
+                      <td>
+                        <span className={`admx-status admx-status--${item.status.toLowerCase().replace('_', '-')}`}>
+                          {statusLabels[item.status] ?? item.status}
+                        </span>
+                      </td>
+                      <td>{item.installmentNumber}/{item.totalInstallments}</td>
+                      <td>{formatCurrency(item.amount)}</td>
+                      <td>#{item.saleId}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <PaginationControls
+            itemLabel="recebíveis"
+            page={receivableItemsPagination.page}
+            pageSize={receivableItemsPagination.pageSize}
+            totalItems={receivableItemsPagination.totalItems}
+            totalPages={receivableItemsPagination.totalPages}
+            onPageChange={receivableItemsPagination.setPage}
+          />
+        </section>
       </div>
     </main>
   )
