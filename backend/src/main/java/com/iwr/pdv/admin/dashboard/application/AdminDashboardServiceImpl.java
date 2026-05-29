@@ -37,7 +37,6 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -244,7 +243,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             addHeader(notesTable, "Valor", boldFont);
             for (AdminDashboardReceivableResponse item : receivables.items().stream().limit(30).toList()) {
                 notesTable.addCell(cell(item.customerName(), normalFont));
-                notesTable.addCell(cell("#" + item.saleId(), normalFont));
+                notesTable.addCell(cell(item.saleId() == null ? "Manual" : "#" + item.saleId(), normalFont));
                 notesTable.addCell(cell(item.installmentNumber() + "/" + item.totalInstallments(), normalFont));
                 notesTable.addCell(cell(DATE_FORMAT.format(item.dueDate()), normalFont));
                 notesTable.addCell(right(format(item.amount()), normalFont));
@@ -299,9 +298,12 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     }
 
     private AdminDashboardReceivableResponse toReceivableResponse(PromissoryNote note) {
+        Sale sale = note.getSale();
+        Long saleId = sale == null ? null : sale.getId();
+
         return new AdminDashboardReceivableResponse(
                 note.getId(),
-                note.getSale().getId(),
+                saleId,
                 note.getCustomer().getName(),
                 note.getInstallmentNumber(),
                 note.getTotalInstallments(),
