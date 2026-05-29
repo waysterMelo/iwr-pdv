@@ -1,0 +1,516 @@
+/* Engineered Admin Dashboard UI
+ * Replaces the old admin dashboard visual layer with the approved dark/gold BI model.
+ * Scope: .admin-dashboard-shell only.
+ */
+
+:root {
+  --admin-bg: #070a0f;
+  --admin-surface: #0d1118;
+  --admin-surface-2: #111722;
+  --admin-surface-3: #151c29;
+  --admin-line: rgba(226, 232, 240, 0.10);
+  --admin-line-strong: rgba(216, 177, 94, 0.36);
+  --admin-gold: #d8b15e;
+  --admin-gold-light: #ffe9ad;
+  --admin-text: #f8fafc;
+  --admin-soft: #cbd5e1;
+  --admin-muted: #94a3b8;
+  --admin-cyan: #2dd4bf;
+  --admin-green: #34d399;
+  --admin-red: #fb7185;
+  --admin-warning: #f6d78b;
+  --admin-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+}
+
+/* Shell and workspace */
+.admin-dashboard-shell.app-shell {
+  width: 100% !important;
+  padding: 0 32px 48px !important;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(216, 177, 94, 0.11), transparent 28%),
+    radial-gradient(circle at 90% 0%, rgba(45, 212, 191, 0.06), transparent 28%),
+    var(--admin-bg) !important;
+}
+
+.admin-dashboard-shell .customer-premium-container {
+  width: 100% !important;
+  max-width: 1500px !important;
+  margin: 22px auto 0 !important;
+  display: grid !important;
+  gap: 18px !important;
+}
+
+/* Hero */
+.admin-dashboard-shell .customer-premium-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 360px !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+  margin: 0 !important;
+}
+
+.admin-dashboard-shell .customer-premium-banner,
+.admin-dashboard-shell .customer-premium-target-card,
+.admin-dashboard-shell .customer-premium-form-panel,
+.admin-dashboard-shell .customer-premium-metrics article,
+.admin-dashboard-shell .admin-mini-chart,
+.admin-dashboard-shell .admin-payment-list article,
+.admin-dashboard-shell .admin-top-customers > div,
+.admin-dashboard-shell .admin-receivable-table article,
+.admin-dashboard-shell .admin-receivable-head {
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.052), rgba(255,255,255,.018)),
+    var(--admin-surface) !important;
+  box-shadow: var(--admin-shadow) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-dashboard-shell .customer-premium-banner {
+  min-height: 190px !important;
+  padding: 28px !important;
+  display: grid !important;
+  align-content: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.admin-dashboard-shell .customer-premium-banner::after {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -110px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: rgba(216, 177, 94, 0.10);
+  pointer-events: none;
+}
+
+.admin-dashboard-shell .customer-premium-banner > * {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-dashboard-shell .customer-premium-badges {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-bottom: 15px !important;
+}
+
+.admin-dashboard-shell .customer-premium-badges span,
+.admin-dashboard-shell .customer-premium-badges strong {
+  min-height: 25px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  font-size: .68rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .10em !important;
+  text-transform: uppercase !important;
+  opacity: 1 !important;
+}
+
+.admin-dashboard-shell .customer-premium-badges span {
+  background: rgba(216,177,94,.14) !important;
+  color: var(--admin-gold-light) !important;
+  border: 1px solid rgba(216,177,94,.35) !important;
+}
+
+.admin-dashboard-shell .customer-premium-badges strong {
+  background: rgba(45,212,191,.10) !important;
+  color: var(--admin-cyan) !important;
+  border: 1px solid rgba(45,212,191,.30) !important;
+}
+
+.admin-dashboard-shell .customer-premium-banner h1 {
+  margin: 0 !important;
+  color: var(--admin-text) !important;
+  font-size: clamp(2.2rem, 4vw, 4.1rem) !important;
+  line-height: .93 !important;
+  letter-spacing: -.08em !important;
+  font-weight: 950 !important;
+}
+
+.admin-dashboard-shell .customer-premium-banner p {
+  margin: 14px 0 0 !important;
+  max-width: 650px !important;
+  color: var(--admin-soft) !important;
+  font-size: .98rem !important;
+  line-height: 1.55 !important;
+  font-weight: 650 !important;
+}
+
+/* Gold target card */
+.admin-dashboard-shell .customer-premium-target-card {
+  min-height: 190px !important;
+  padding: 22px !important;
+  display: grid !important;
+  align-content: space-between !important;
+  background: linear-gradient(135deg, #ffe9ad, #d8b15e 58%, #a97217) !important;
+  border-color: rgba(255,235,180,.72) !important;
+  color: #15100a !important;
+  box-shadow: 0 24px 80px rgba(183, 127, 22, 0.24) !important;
+}
+
+.admin-dashboard-shell .customer-premium-target-card span {
+  display: block !important;
+  color: #15100a !important;
+  font-size: .76rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-dashboard-shell .customer-premium-target-card small {
+  display: block !important;
+  margin-top: 5px !important;
+  color: rgba(21,16,10,.72) !important;
+  font-weight: 800 !important;
+}
+
+.admin-dashboard-shell .customer-premium-target-card strong {
+  color: #055e55 !important;
+  font-size: 3.3rem !important;
+  letter-spacing: -.08em !important;
+  font-weight: 950 !important;
+  text-shadow: none !important;
+}
+
+.admin-dashboard-shell .customer-premium-progress {
+  height: 10px !important;
+  border-radius: 999px !important;
+  background: rgba(21,16,10,.18) !important;
+  overflow: hidden !important;
+}
+
+.admin-dashboard-shell .customer-premium-progress span {
+  height: 100% !important;
+  border-radius: inherit !important;
+  background: linear-gradient(90deg, #0f766e, #2dd4bf) !important;
+  box-shadow: none !important;
+}
+
+/* Filter panel */
+.admin-dashboard-shell .customer-premium-form-panel {
+  padding: 22px !important;
+  display: grid !important;
+  gap: 16px !important;
+}
+
+.admin-dashboard-shell .admin-dashboard-presets {
+  display: flex !important;
+  gap: 10px !important;
+}
+
+.admin-dashboard-shell .admin-dashboard-presets .customer-premium-secondary-button {
+  min-height: 38px !important;
+  border: 1px solid var(--admin-line-strong) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, rgba(216,177,94,.13), rgba(255,255,255,.025)), #11141c !important;
+  color: var(--admin-gold-light) !important;
+  font-weight: 950 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-dashboard-shell .history-filter-form {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr auto auto !important;
+  gap: 14px !important;
+  align-items: end !important;
+  padding: 18px !important;
+  border: 1px solid rgba(226,232,240,.08) !important;
+  border-radius: 16px !important;
+  background: #0a0f16 !important;
+}
+
+.admin-dashboard-shell .field-group label {
+  display: block !important;
+  margin-bottom: 7px !important;
+  color: var(--admin-soft) !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-dashboard-shell input[type="date"] {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border: 1px solid var(--admin-line-strong) !important;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
+  background: #080d15 !important;
+  color: var(--admin-text) !important;
+  color-scheme: dark !important;
+  font-weight: 820 !important;
+}
+
+.admin-dashboard-shell input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1 !important;
+  cursor: pointer !important;
+  filter: invert(86%) sepia(73%) saturate(591%) hue-rotate(353deg) brightness(104%) contrast(102%) drop-shadow(0 0 5px rgba(255, 233, 173, .55)) !important;
+}
+
+.admin-dashboard-shell .customer-premium-primary-button {
+  min-height: 44px !important;
+  border: 1px solid rgba(255,235,180,.72) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #ffe9ad, #d8b15e) !important;
+  color: #15100a !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-dashboard-shell .history-filter-form .customer-premium-secondary-button {
+  min-height: 44px !important;
+  border: 1px solid rgba(226,232,240,.13) !important;
+  border-radius: 12px !important;
+  background: #11141c !important;
+  color: var(--admin-text) !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+}
+
+/* Metrics */
+.admin-dashboard-shell .customer-premium-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  margin: 0 !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics article {
+  min-height: 118px !important;
+  padding: 18px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  border-radius: 20px !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.28) !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics article span {
+  display: block !important;
+  color: var(--admin-soft) !important;
+  font-size: .70rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics article strong {
+  display: block !important;
+  margin-top: 8px !important;
+  color: var(--admin-text) !important;
+  font-size: 1.72rem !important;
+  line-height: 1 !important;
+  letter-spacing: -.06em !important;
+  font-weight: 950 !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics article svg {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 8px !important;
+  border: 1px solid rgba(216,177,94,.22) !important;
+  border-radius: 12px !important;
+  background: rgba(216,177,94,.12) !important;
+  color: var(--admin-gold-light) !important;
+  flex: 0 0 auto !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(1) {
+  border-color: rgba(216,177,94,.40) !important;
+}
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(1) strong,
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(1) svg {
+  color: var(--admin-gold-light) !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(2) {
+  border-color: rgba(45,212,191,.38) !important;
+}
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(2) strong,
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(2) svg {
+  color: var(--admin-cyan) !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(4) {
+  border-color: rgba(251,113,133,.38) !important;
+}
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(4) strong,
+.admin-dashboard-shell .customer-premium-metrics:first-of-type article:nth-child(4) svg {
+  color: var(--admin-red) !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics:nth-of-type(2) article {
+  min-height: 94px !important;
+  padding: 16px 20px !important;
+}
+
+.admin-dashboard-shell .customer-premium-metrics:nth-of-type(2) article strong {
+  font-size: 1.4rem !important;
+}
+
+/* BI section */
+.admin-dashboard-shell .customer-premium-form-panel header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-bottom: 14px !important;
+  margin-bottom: 18px !important;
+  border-bottom: 1px solid rgba(226,232,240,.08) !important;
+}
+
+.admin-dashboard-shell .customer-premium-form-panel header svg {
+  color: var(--admin-gold) !important;
+}
+
+.admin-dashboard-shell .customer-premium-form-panel header h2 {
+  margin: 0 !important;
+  color: var(--admin-text) !important;
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -.03em !important;
+}
+
+.admin-dashboard-shell .customer-premium-form-panel header p {
+  margin: 2px 0 0 !important;
+  color: var(--admin-soft) !important;
+  font-size: .80rem !important;
+}
+
+.admin-dashboard-shell .admin-bi-grid {
+  display: grid !important;
+  grid-template-columns: 1.5fr 1fr 1fr !important;
+  gap: 22px !important;
+}
+
+.admin-dashboard-shell .admin-mini-chart {
+  padding: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  box-shadow: none !important;
+  border-radius: 16px !important;
+}
+
+.admin-dashboard-shell .admin-mini-chart > span,
+.admin-dashboard-shell .admin-mini-chart .mini-title {
+  color: var(--admin-gold) !important;
+  font-size: .68rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-dashboard-shell .admin-chart-row small,
+.admin-dashboard-shell .admin-mini-chart small {
+  color: var(--admin-soft) !important;
+}
+
+.admin-dashboard-shell .admin-chart-row strong,
+.admin-dashboard-shell .admin-mini-chart strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-dashboard-shell .admin-chart-row i {
+  background: linear-gradient(90deg, #d7ad55, #f6d78b) !important;
+}
+
+/* Dashboard lower grids */
+.admin-dashboard-shell .admin-dashboard-grid,
+.admin-dashboard-shell .admin-bi-grid + .admin-dashboard-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 18px !important;
+}
+
+.admin-dashboard-shell .collection-calendar-grid {
+  gap: 8px !important;
+}
+
+.admin-dashboard-shell .collection-calendar-grid button {
+  min-height: 54px !important;
+  border: 1px solid rgba(226,232,240,.10) !important;
+  border-radius: 12px !important;
+  background: #0b1018 !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-dashboard-shell .collection-calendar-grid button:not(:disabled):has(small),
+.admin-dashboard-shell .collection-calendar-grid button[style*="215, 173, 85"] {
+  border-color: rgba(216,177,94,.42) !important;
+  background: rgba(216,177,94,.12) !important;
+}
+
+.admin-dashboard-shell .collection-calendar-grid button small {
+  color: var(--admin-gold-light) !important;
+}
+
+.admin-dashboard-shell .admin-top-customers > div,
+.admin-dashboard-shell .admin-payment-list article,
+.admin-dashboard-shell .admin-receivable-table article,
+.admin-dashboard-shell .admin-receivable-head {
+  border-radius: 12px !important;
+  background: #0b1018 !important;
+  box-shadow: none !important;
+}
+
+.admin-dashboard-shell .admin-top-customers span,
+.admin-dashboard-shell .admin-payment-list span,
+.admin-dashboard-shell .admin-receivable-table span,
+.admin-dashboard-shell .admin-receivable-head span,
+.admin-dashboard-shell .admin-top-customers small,
+.admin-dashboard-shell .admin-payment-list small,
+.admin-dashboard-shell .admin-receivable-table small {
+  color: var(--admin-soft) !important;
+}
+
+.admin-dashboard-shell .admin-top-customers strong,
+.admin-dashboard-shell .admin-payment-list strong,
+.admin-dashboard-shell .admin-receivable-table strong {
+  color: var(--admin-gold-light) !important;
+}
+
+.admin-dashboard-shell .admin-receivable-table article,
+.admin-dashboard-shell .admin-receivable-head {
+  grid-template-columns: minmax(180px, 2fr) repeat(5, minmax(92px, 1fr)) !important;
+}
+
+@media (max-width: 1180px) {
+  .admin-dashboard-shell.app-shell {
+    padding: 0 16px 40px !important;
+  }
+
+  .admin-dashboard-shell .customer-premium-hero,
+  .admin-dashboard-shell .admin-bi-grid,
+  .admin-dashboard-shell .admin-dashboard-grid,
+  .admin-dashboard-shell .history-filter-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-dashboard-shell .customer-premium-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .admin-dashboard-shell .customer-premium-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-dashboard-shell .admin-dashboard-presets {
+    flex-direction: column !important;
+  }
+}
